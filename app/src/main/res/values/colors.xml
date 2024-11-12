@@ -10,6 +10,7 @@
 
     <!-- My colors -->
     <color name="White">#FFFFFFFF</color>
+    <color name="Black">#000000</color>
     <color name="DarkGrey">#2B2828</color>
     <color name="LightGrey">#4D4747</color>
 </resources>

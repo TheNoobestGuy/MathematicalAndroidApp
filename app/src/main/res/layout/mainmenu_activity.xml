@@ -53,11 +53,11 @@
         app:layout_constraintWidth_percent="0.7" />
 
     <Button
-        android:id="@+id/Vulnerabilities"
+        android:id="@+id/Tools"
         style="@style/MenuButtonStyle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="@string/Vulnerabilities"
+        android:text="@string/Tools"
         android:layout_marginTop="5dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -73,7 +73,7 @@
         android:layout_marginTop="5dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/Vulnerabilities"
+        app:layout_constraintTop_toBottomOf="@+id/Tools"
         app:layout_constraintWidth_percent="0.7" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

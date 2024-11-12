@@ -165,7 +165,7 @@ class MixedActivity : ComponentActivity() {
 
         val equationTopMargin: Int = (screenHeight * 0.15).toInt()
 
-        // Adjust screen height to logo and first button from menu
+        // Adjust screen height equation
         val layoutParamsEquation = equation.layoutParams as ConstraintLayout.LayoutParams
         layoutParamsEquation.topMargin = equationTopMargin
         equation.layoutParams = layoutParamsEquation

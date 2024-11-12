@@ -84,17 +84,6 @@ class DivideActivity : ComponentActivity() {
         // Count before start of game
         handler.post(countBeforeStart)
 
-        // Get height of a screen
-        val displayMetrics = resources.displayMetrics
-        val screenHeight = displayMetrics.heightPixels
-
-        val equationTopMargin: Int = (screenHeight * 0.15).toInt()
-
-        // Adjust screen height to logo and first button from menu
-        val layoutParamsEquation = equation.layoutParams as ConstraintLayout.LayoutParams
-        layoutParamsEquation.topMargin = equationTopMargin
-        equation.layoutParams = layoutParamsEquation
-
         // Database
         var questionCounterValue = 0
         val numberOfQuestions = 15

@@ -135,4 +135,8 @@ class Keyboard @JvmOverloads constructor(
     fun resetTextField() {
         textField.text = context.getString(R.string.EnterNumber)
     }
+
+    fun clearTextField() {
+        textField.text = "";
+    }
 }

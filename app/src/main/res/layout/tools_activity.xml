@@ -6,6 +6,18 @@
     android:layout_height="match_parent">
 
     <Button
+        android:id="@+id/MatrixCalculator"
+        style="@style/MenuButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="@string/MatrixCalculator"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintWidth_percent="0.7" />
+
+    <Button
         android:id="@+id/Back"
         style="@style/MenuButtonStyle"
         android:layout_width="0dp"

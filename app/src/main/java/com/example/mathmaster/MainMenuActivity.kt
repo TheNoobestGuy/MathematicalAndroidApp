@@ -27,7 +27,7 @@ class MainMenuActivity : ComponentActivity() {
         val learnButton: Button = findViewById<Button>(R.id.Learn)
         val practiceButton: Button = findViewById<Button>(R.id.Practice)
         val challengeButton: Button = findViewById<Button>(R.id.Challenge)
-        val vulnerabilitiesButton: Button = findViewById<Button>(R.id.Vulnerabilities)
+        val toolsButton: Button = findViewById<Button>(R.id.Tools)
         val statisticsButton: Button = findViewById<Button>(R.id.Statistics)
 
         // Get height of a screen
@@ -53,8 +53,8 @@ class MainMenuActivity : ComponentActivity() {
         clickFunction(learnButton, clickedButtonStyle, LearnActivity())
         clickFunction(practiceButton, clickedButtonStyle, PracticeActivity())
         clickFunction(challengeButton, clickedButtonStyle, ChallengeActivity())
-        clickFunction(vulnerabilitiesButton, clickedButtonStyle, ToolsActivity())
-        clickFunction(statisticsButton, clickedButtonStyle, StatisticActivity())
+        clickFunction(toolsButton, clickedButtonStyle, ToolsActivity())
+        clickFunction(statisticsButton, clickedButtonStyle, StatisticsActivity())
     }
 
     override fun onBackPressed() {

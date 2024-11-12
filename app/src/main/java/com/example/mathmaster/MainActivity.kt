@@ -22,17 +22,22 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.mainmenu_activity)
 
+        // Menu content
+        val logo: TextView = findViewById<TextView>(R.id.Logo)
+        val learnButton: Button = findViewById<Button>(R.id.Learn)
+        val practiceButton: Button = findViewById<Button>(R.id.Practice)
+        val challengeButton: Button = findViewById<Button>(R.id.Challenge)
+        val toolsButton: Button = findViewById<Button>(R.id.Tools)
+        val statisticsButton: Button = findViewById<Button>(R.id.Statistics)
+
         // Get height of a screen
         val displayMetrics = resources.displayMetrics
         val screenHeight = displayMetrics.heightPixels
 
-        val logoTopMargin = (screenHeight * 0.12).toInt()
-        val menuTopMargin = (screenHeight * 0.3).toInt()
+        val logoTopMargin: Int = (screenHeight * 0.12).toInt()
+        val menuTopMargin: Int = (screenHeight * 0.3).toInt()
 
         // Adjust screen height to logo and first button from menu
-        val logo: TextView = findViewById<TextView>(R.id.Logo)
-        val learnButton: Button = findViewById<Button>(R.id.Learn)
-
         val layoutParamsLogo = logo.layoutParams as ConstraintLayout.LayoutParams
         layoutParamsLogo.topMargin = logoTopMargin
         logo.layoutParams = layoutParamsLogo
@@ -41,19 +46,15 @@ class MainActivity : ComponentActivity() {
         layoutParamsMenu.topMargin = menuTopMargin
         learnButton.layoutParams = layoutParamsMenu
 
-        // Other buttons
-        val practiceButton: Button = findViewById<Button>(R.id.Practice)
-        val challengeButton: Button = findViewById<Button>(R.id.Challenge)
-        val vulnerabilitiesButton: Button = findViewById<Button>(R.id.Vulnerabilities)
-        val statisticsButton: Button = findViewById<Button>(R.id.Statistics)
+        // Style of clicked button
+        val clickedButtonStyle = R.drawable.menubutton_background_clicked
 
         // On click functions
-        val clickedButtonStyle = R.drawable.menubutton_background_clicked
         clickFunction(learnButton, clickedButtonStyle, LearnActivity())
         clickFunction(practiceButton, clickedButtonStyle, PracticeActivity())
         clickFunction(challengeButton, clickedButtonStyle, ChallengeActivity())
-        clickFunction(vulnerabilitiesButton, clickedButtonStyle, ToolsActivity())
-        clickFunction(statisticsButton, clickedButtonStyle, StatisticActivity())
+        clickFunction(toolsButton, clickedButtonStyle, ToolsActivity())
+        clickFunction(statisticsButton, clickedButtonStyle, StatisticsActivity())
     }
 
     override fun onBackPressed() {

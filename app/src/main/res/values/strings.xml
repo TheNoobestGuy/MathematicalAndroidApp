@@ -7,7 +7,7 @@
     <string name="Challenge" translatable="false">Challenge</string>
     <string name="Learn" translatable="false">Learn</string>
     <string name="Statistics" translatable="false">Statistics</string>
-    <string name="Vulnerabilities" translatable="false">Vulnerabilities</string>
+    <string name="Tools" translatable="false">Tools</string>
 
     <string name="Back" translatable="false">Back</string>
     <string name="Exit" translatable="false">Exit</string>
@@ -41,7 +41,11 @@
     <string name="FinishedHard" translatable="false">Total finished hard:</string>
     <string name="FinishedMaster" translatable="false">Total finished master:</string>
 
-    // Vulnerabilities
+    // Tools
+    <string name="MatrixCalculator" translatable="false">Matrix calculator</string>
+
+    // Matrix calculator
+
 
     // Statistics
     <string name="StatisticsOverview" translatable="false">Statistics Overview</string>

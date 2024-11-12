@@ -19,6 +19,8 @@
             android:theme="@style/Theme.MathMaster"
             android:screenOrientation="portrait">
         </activity>
+
+        <!-- Learn -->
         <activity
             android:name=".LearnActivity"
             android:exported="true"
@@ -26,6 +28,8 @@
             android:theme="@style/Theme.MathMaster"
             android:screenOrientation="portrait">
         </activity>
+
+        <!-- Practice -->
         <activity
             android:name=".PracticeActivity"
             android:exported="true"
@@ -33,27 +37,8 @@
             android:theme="@style/Theme.MathMaster"
             android:screenOrientation="portrait">
         </activity>
-        <activity
-            android:name=".ChallengeActivity"
-            android:exported="true"
-            android:label="Math Master"
-            android:theme="@style/Theme.MathMaster"
-            android:screenOrientation="portrait">
-        </activity>
-        <activity
-            android:name=".StatisticActivity"
-            android:exported="true"
-            android:label="Math Master"
-            android:theme="@style/Theme.MathMaster"
-            android:screenOrientation="portrait">
-        </activity>
-        <activity
-            android:name=".ToolsActivity"
-            android:exported="true"
-            android:label="Math Master"
-            android:theme="@style/Theme.MathMaster"
-            android:screenOrientation="portrait">
-        </activity>
+
+        <!-- Basic -->
         <activity
             android:name=".MultiplyActivity"
             android:exported="true"
@@ -105,6 +90,42 @@
         </activity>
         <activity
             android:name=".MixedEndActivity"
+            android:exported="true"
+            android:label="Math Master"
+            android:theme="@style/Theme.MathMaster"
+            android:screenOrientation="portrait">
+        </activity>
+
+        <!-- Challenge -->
+        <activity
+            android:name=".ChallengeActivity"
+            android:exported="true"
+            android:label="Math Master"
+            android:theme="@style/Theme.MathMaster"
+            android:screenOrientation="portrait">
+        </activity>
+
+        <!-- Tools -->
+        <activity
+            android:name=".ToolsActivity"
+            android:exported="true"
+            android:label="Math Master"
+            android:theme="@style/Theme.MathMaster"
+            android:screenOrientation="portrait">
+        </activity>
+
+        <!-- Matrix calculator -->
+        <activity
+            android:name=".MatrixCalculatorActivity"
+            android:exported="true"
+            android:label="Math Master"
+            android:theme="@style/Theme.MathMaster"
+            android:screenOrientation="portrait">
+        </activity>
+
+        <!-- Statistics -->
+        <activity
+            android:name=".StatisticsActivity"
             android:exported="true"
             android:label="Math Master"
             android:theme="@style/Theme.MathMaster"

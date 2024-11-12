@@ -5,7 +5,7 @@ import android.os.Bundle
 import android.widget.Button
 import androidx.activity.ComponentActivity
 
-class ToolsActivity : ComponentActivity() {
+class StatisticsActivity : ComponentActivity() {
 
     private fun clickFunction (button: Button, drawable: Int, view: ComponentActivity) {
         button.setOnClickListener {
@@ -18,17 +18,15 @@ class ToolsActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.tools_activity)
+        setContentView(R.layout.statistics_activity)
 
         // Menu buttons
-        val matrixCalcButton: Button = findViewById<Button>(R.id.MatrixCalculator)
         val backButton: Button = findViewById<Button>(R.id.Back)
 
         // Style of clicked button
         val clickedButtonStyle = R.drawable.menubutton_background_clicked
 
         // On click functions
-        clickFunction(matrixCalcButton, clickedButtonStyle, MatrixCalculatorActivity())
         clickFunction(backButton, clickedButtonStyle, MainActivity())
     }
 
