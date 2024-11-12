@@ -3,9 +3,9 @@ package com.example.mathmaster
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
-import android.widget.TextView
 import androidx.activity.ComponentActivity
 import com.example.mathmaster.customviews.Keyboard
+import com.example.mathmaster.customviews.MatrixKeyboard
 
 class MatrixCalculatorActivity : ComponentActivity() {
 
@@ -23,7 +23,7 @@ class MatrixCalculatorActivity : ComponentActivity() {
         setContentView(R.layout.matrixcalculator_activity)
 
         // Interactive menu
-        val keyboard: Keyboard = findViewById<Keyboard>(R.id.Keyboard)
+        val keyboard: MatrixKeyboard = findViewById<MatrixKeyboard>(R.id.Keyboard)
 
         // Menu buttons
         val backButton: Button = findViewById<Button>(R.id.Back)
@@ -35,7 +35,6 @@ class MatrixCalculatorActivity : ComponentActivity() {
         clickFunction(backButton, clickedButtonStyle, ToolsActivity())
 
         // Keyboard
-        keyboard.clearTextField()
         keyboard.numberButtonClick()
         keyboard.deleteButtonClick()
     }

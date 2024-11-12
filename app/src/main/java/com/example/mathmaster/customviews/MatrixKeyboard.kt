@@ -5,11 +5,10 @@ import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.widget.LinearLayout
 import android.widget.Button
-import android.widget.TextView
 import com.example.mathmaster.R
 import kotlinx.coroutines.*
 
-class Keyboard @JvmOverloads constructor(
+class MatrixKeyboard @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
@@ -17,7 +16,6 @@ class Keyboard @JvmOverloads constructor(
 
     private val clickedButtonStyle: Int
     private val unClickedButtonStyle: Int
-    private val textField: TextView
     private val buttons: Array<Button>
     private val enterButton: Button
     private val deleteButton: Button
@@ -34,10 +32,7 @@ class Keyboard @JvmOverloads constructor(
 
     init {
         // Inflate the custom XML layout
-        LayoutInflater.from(context).inflate(R.layout.keyboard_layout, this, true)
-
-        // Text field
-        textField = findViewById<Button>(R.id.TextField)
+        LayoutInflater.from(context).inflate(R.layout.matrixkeyboard_layout, this, true)
 
         // Buttons
         enterButton = findViewById<Button>(R.id.Enter)
@@ -74,12 +69,7 @@ class Keyboard @JvmOverloads constructor(
             buttons[i].setOnClickListener {
                 buttons[i].setBackgroundResource(clickedButtonStyle)
 
-                if (textField.text.length > 4) {
-                    textField.text = ""
-                }
-
-                if (textField.text.length < 4)
-                    textField.append(i.toString())
+                // Type what is doing
 
                 GlobalScope.launch(Dispatchers.Main) {
                     delay(200)
@@ -91,21 +81,13 @@ class Keyboard @JvmOverloads constructor(
 
     fun deleteButtonClick() {
         deleteButton.setOnClickListener {
-            if (textField.text.isNotEmpty()) {
-                deleteButton.setBackgroundResource(clickedButtonStyle)
+            deleteButton.setBackgroundResource(clickedButtonStyle)
 
-                if (textField.text.length > 4) {
-                } else if (textField.text.length == 1) {
-                    textField.text = context.getString(R.string.EnterNumber)
-                } else {
-                    val currentText = textField.text.toString()
-                    textField.text = currentText.substring(0, currentText.length - 1)
-                }
+            // Type what is doing
 
-                GlobalScope.launch(Dispatchers.Main) {
-                    delay(200)
-                    deleteButton.setBackgroundResource(unClickedButtonStyle)
-                }
+            GlobalScope.launch(Dispatchers.Main) {
+                delay(200)
+                deleteButton.setBackgroundResource(unClickedButtonStyle)
             }
         }
     }
@@ -123,16 +105,5 @@ class Keyboard @JvmOverloads constructor(
 
     fun getEnterButton(): Button {
         return enterButton
-    }
-
-    fun getTextField (): Int {
-        if (textField.text.length > 4)
-            return 0
-
-        return textField.text.toString().toInt()
-    }
-
-    fun resetTextField() {
-        textField.text = context.getString(R.string.EnterNumber)
     }
 }

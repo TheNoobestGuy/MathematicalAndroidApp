@@ -6,10 +6,11 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
 import androidx.activity.ComponentActivity
-import androidx.constraintlayout.widget.ConstraintLayout
 import android.os.Handler
 import android.os.Looper
 import android.view.View
+import androidx.constraintlayout.widget.ConstraintLayout
+import com.example.mathmaster.customviews.BackButtonWithBar
 import kotlin.random.Random
 
 class DivideActivity : ComponentActivity() {
@@ -26,13 +27,13 @@ class DivideActivity : ComponentActivity() {
             val questionCounter: TextView = findViewById<TextView>(R.id.QuestionCounter)
             val equation: TextView = findViewById<TextView>(R.id.Equation)
             val keyboard: Keyboard = findViewById<Keyboard>(R.id.Keyboard)
-            val exitButton: Button = findViewById(R.id.Exit)
+            val bottomBar: BackButtonWithBar = findViewById<BackButtonWithBar>(R.id.BottomBar)
 
             // Disable visibility of content
             questionCounter.visibility = View.INVISIBLE
             equation.visibility = View.INVISIBLE
             keyboard.visibility = View.INVISIBLE
-            exitButton.visibility = View.INVISIBLE
+            bottomBar.visibility = View.INVISIBLE
 
             // Update counter
             if (waitCounterValue > 0) {
@@ -46,7 +47,7 @@ class DivideActivity : ComponentActivity() {
                 questionCounter.visibility = View.VISIBLE
                 equation.visibility = View.VISIBLE
                 keyboard.visibility = View.VISIBLE
-                exitButton.visibility = View.VISIBLE
+                bottomBar.visibility = View.VISIBLE
 
                 handler.removeCallbacks(this)
             }
@@ -77,9 +78,18 @@ class DivideActivity : ComponentActivity() {
         val questionCounter: TextView = findViewById<TextView>(R.id.QuestionCounter)
         val equation: TextView = findViewById<TextView>(R.id.Equation)
         val keyboard: Keyboard = findViewById<Keyboard>(R.id.Keyboard)
+        val bottomBar: BackButtonWithBar = findViewById<BackButtonWithBar>(R.id.BottomBar)
+        bottomBar.changeBackToExit()
 
-        // Menu buttons
-        val exitButton: Button = findViewById<Button>(R.id.Exit)
+        // Get height of a screen
+        val displayMetrics = resources.displayMetrics
+        val screenHeight = displayMetrics.heightPixels
+        val equationTopMargin: Int = (screenHeight * 0.17).toInt()
+
+        // Adjust screen height to equation
+        val layoutParamsLogo = equation.layoutParams as ConstraintLayout.LayoutParams
+        layoutParamsLogo.topMargin = equationTopMargin
+        equation.layoutParams = layoutParamsLogo
 
         // Count before start of game
         handler.post(countBeforeStart)
@@ -145,7 +155,7 @@ class DivideActivity : ComponentActivity() {
         val clickedButtonStyle = R.drawable.menubutton_background_clicked
 
         // On click functions
-        clickFunction(exitButton, clickedButtonStyle, PracticeActivity())
+        clickFunction(bottomBar.returnBackButton(), clickedButtonStyle, PracticeActivity())
 
         // Keyboard
         keyboard.numberButtonClick()
@@ -154,7 +164,7 @@ class DivideActivity : ComponentActivity() {
         // Enter button
         keyboard.getEnterButton().setOnClickListener {
             keyboard.clickEnterButton()
-            questionCounterValue++;
+            questionCounterValue++
 
             // End game statement
             if (questionCounterValue >= numberOfQuestions) {
