@@ -5,6 +5,9 @@ import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.widget.LinearLayout
 import android.widget.Button
+import android.widget.EditText
+import android.widget.TextView
+import androidx.constraintlayout.widget.ConstraintLayout
 import com.example.mathmaster.R
 import kotlinx.coroutines.*
 
@@ -16,9 +19,20 @@ class MatrixKeyboard @JvmOverloads constructor(
 
     private val clickedButtonStyle: Int
     private val unClickedButtonStyle: Int
+
     private val buttons: Array<Button>
+
+    private val matrixButtonsRow: Array<Button>
+    private val matrixButtonsCol: Array<Button>
+
     private val enterButton: Button
     private val deleteButton: Button
+
+    private val rowPlusButton: Button
+    private val rowMinusButton: Button
+    private val colPlusButton: Button
+    private val colMinusButton: Button
+
     private val oneButton: Button
     private val twoButton: Button
     private val threeButton: Button
@@ -37,6 +51,12 @@ class MatrixKeyboard @JvmOverloads constructor(
         // Buttons
         enterButton = findViewById<Button>(R.id.Enter)
         deleteButton = findViewById<Button>(R.id.Delete)
+
+        rowPlusButton = findViewById<Button>(R.id.RowPlus)
+        rowMinusButton = findViewById<Button>(R.id.RowMinus)
+        colPlusButton = findViewById<Button>(R.id.ColPlus)
+        colMinusButton = findViewById<Button>(R.id.ColMinus)
+
         zeroButton = findViewById<Button>(R.id.Zero)
         oneButton = findViewById<Button>(R.id.One)
         twoButton = findViewById<Button>(R.id.Two)
@@ -62,14 +82,94 @@ class MatrixKeyboard @JvmOverloads constructor(
             eightButton,
             nineButton
         )
+
+        matrixButtonsRow = arrayOf(
+            rowPlusButton,
+            rowMinusButton
+        )
+
+        matrixButtonsCol = arrayOf(
+            colPlusButton,
+            colMinusButton
+        )
     }
 
-    fun numberButtonClick() {
+    fun addRow(matrix: Matrix) {
+        rowPlusButton.setOnClickListener {
+            rowPlusButton.setBackgroundResource(clickedButtonStyle)
+
+            // Add row to matrix
+            matrix.addRow()
+
+            // Inflate matrix size
+            val newHeight: Float = (matrix.getMatrixRows() * 0.25f)
+            val params = matrix.layoutParams as ConstraintLayout.LayoutParams
+            params.matchConstraintPercentHeight = newHeight
+            matrix.layoutParams = params
+
+            GlobalScope.launch(Dispatchers.Main) {
+                delay(200)
+                rowPlusButton.setBackgroundResource(unClickedButtonStyle)
+            }
+        }
+    }
+
+    fun removeRow(matrix: Matrix) {
+        rowMinusButton.setOnClickListener {
+            rowMinusButton.setBackgroundResource(clickedButtonStyle)
+
+            // Remove row from matrix
+            matrix.removeRow()
+
+            // Cut down matrix size
+
+
+            GlobalScope.launch(Dispatchers.Main) {
+                delay(200)
+                rowMinusButton.setBackgroundResource(unClickedButtonStyle)
+            }
+        }
+    }
+
+    fun addColumn(matrix: Matrix) {
+        colPlusButton.setOnClickListener {
+            colPlusButton.setBackgroundResource(clickedButtonStyle)
+
+            // Add col to matrix
+            matrix.addColumn()
+
+            // Inflate matrix size
+
+            GlobalScope.launch(Dispatchers.Main) {
+                delay(200)
+                colPlusButton.setBackgroundResource(unClickedButtonStyle)
+            }
+        }
+    }
+
+    fun removeColumn(matrix: Matrix) {
+        colMinusButton.setOnClickListener {
+            colMinusButton.setBackgroundResource(clickedButtonStyle)
+
+            // Remove column from matrix
+            matrix.removeColumn()
+
+            // Cut down matrix size
+
+
+            GlobalScope.launch(Dispatchers.Main) {
+                delay(200)
+                colMinusButton.setBackgroundResource(unClickedButtonStyle)
+            }
+        }
+    }
+
+    fun numberButtonClick(editText: EditText?) {
         for (i in buttons.indices) {
             buttons[i].setOnClickListener {
                 buttons[i].setBackgroundResource(clickedButtonStyle)
 
-                // Type what is doing
+                editText?.append(i.toString())
 
                 GlobalScope.launch(Dispatchers.Main) {
                     delay(200)
@@ -79,11 +179,15 @@ class MatrixKeyboard @JvmOverloads constructor(
         }
     }
 
-    fun deleteButtonClick() {
+    fun deleteButtonClick(editText: EditText?) {
         deleteButton.setOnClickListener {
             deleteButton.setBackgroundResource(clickedButtonStyle)
 
-            // Type what is doing
+            if (editText != null) {
+                val currentText = editText.text.toString()
+                val newText = currentText.substring(0, currentText.length - 1)
+                editText.setText(newText)
+            }
 
             GlobalScope.launch(Dispatchers.Main) {
                 delay(200)

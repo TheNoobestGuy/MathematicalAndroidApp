@@ -45,7 +45,10 @@
     <string name="MatrixCalculator" translatable="false">Matrix calculator</string>
 
     // Matrix calculator
-
+    <string name="RowPlus" translatable="false">Row+</string>
+    <string name="RowMinus" translatable="false">Row-</string>
+    <string name="ColPlus" translatable="false">Col+</string>
+    <string name="ColMinus" translatable="false">Col-</string>
 
     // Statistics
     <string name="StatisticsOverview" translatable="false">Statistics Overview</string>
