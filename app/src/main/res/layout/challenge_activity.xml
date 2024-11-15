@@ -6,186 +6,207 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <androidx.cardview.widget.CardView
-        android:id="@+id/ChallengeStatistics"
+    <LinearLayout
+        android:id="@+id/MenuBlock"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
+        android:orientation="vertical"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_percent="0.65"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintWidth_percent="0.83"
-        app:cardCornerRadius="10dp">
+        app:layout_constraintWidth_percent="0.9">
 
-        <LinearLayout
-            style="@style/MenuButtonStyle"
+        <androidx.cardview.widget.CardView
+            android:id="@+id/ChallengeStatistics"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical">
+            android:layout_height="wrap_content"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:cardCornerRadius="10dp">
 
-            <!-- Card Title -->
-            <TextView
-                android:id="@+id/ChallengeStatisticsTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="20dp"
-                android:text="@string/StatisticsOverview"
-                android:textColor="@color/White"
-                android:textSize="18sp"
-                android:textStyle="bold" />
-
-            <!-- Statistic 1: Total finished easy -->
             <LinearLayout
+                style="@style/MenuButtonStyle"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:paddingVertical="4dp">
+                android:layout_height="match_parent"
+                android:orientation="vertical">
 
+                <!-- Card Title -->
                 <TextView
-                    android:id="@+id/ChallengeStatisticsTotalFinishedEasy"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/FinishedEasy"
-                    android:textColor="@color/White" />
-
-                <TextView
-                    android:id="@+id/ChallengeStatisticsTotalFinishedEasyValue"
+                    android:id="@+id/ChallengeStatisticsTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="0"
+                    android:layout_marginBottom="20dp"
+                    android:text="@string/StatisticsOverview"
                     android:textColor="@color/White"
+                    android:textSize="18sp"
                     android:textStyle="bold" />
-            </LinearLayout>
 
-            <!-- Statistic 2: Total finished medium -->
-            <LinearLayout
+                <!-- Statistic 1: Total finished easy -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingVertical="4dp">
+
+                    <TextView
+                        android:id="@+id/ChallengeStatisticsTotalFinishedEasy"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/FinishedEasy"
+                        android:textColor="@color/White" />
+
+                    <TextView
+                        android:id="@+id/ChallengeStatisticsTotalFinishedEasyValue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0"
+                        android:textColor="@color/White"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <!-- Statistic 2: Total finished medium -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingVertical="4dp">
+
+                    <TextView
+                        android:id="@+id/ChallengeStatisticsTotalFinishedMedium"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/FinishedMedium"
+                        android:textColor="@color/White" />
+
+                    <TextView
+                        android:id="@+id/ChallengeStatisticsTotalFinishedMediumValue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0"
+                        android:textColor="@color/White"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <!-- Statistic 3: Total finished hard -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingVertical="4dp">
+
+                    <TextView
+                        android:id="@+id/ChallengeStatisticsTotalFinishedHard"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/FinishedHard"
+                        android:textColor="@color/White" />
+
+                    <TextView
+                        android:id="@+id/ChallengeStatisticsTotalFinishedHardValue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0"
+                        android:textColor="@color/White"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <!-- Statistic 4: Total finished master -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingVertical="4dp">
+
+                    <TextView
+                        android:id="@+id/ChallengeStatisticsTotalFinishedMaster"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/FinishedMaster"
+                        android:textColor="@color/White" />
+
+                    <TextView
+                        android:id="@+id/ChallengeStatisticsTotalFinishedMasterValue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0"
+                        android:textColor="@color/White"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <GridLayout
+                android:id="@+id/Menu"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:paddingVertical="4dp">
+                android:layout_height="match_parent"
+                android:layout_marginTop="12dp"
+                android:columnCount="2"
+                android:rowCount="2">
 
-                <TextView
-                    android:id="@+id/ChallengeStatisticsTotalFinishedMedium"
+                <Button
+                    android:id="@+id/Easy"
+                    style="@style/MenuButtonStyle"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/FinishedMedium"
-                    android:textColor="@color/White" />
+                    android:layout_height="0dp"
+                    android:layout_row="0"
+                    android:layout_rowWeight="1"
+                    android:layout_column="0"
+                    android:layout_columnWeight="1"
+                    android:layout_marginEnd="6dp"
+                    android:layout_marginBottom="6dp"
+                    android:text="@string/Easy" />
 
-                <TextView
-                    android:id="@+id/ChallengeStatisticsTotalFinishedMediumValue"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="0"
-                    android:textColor="@color/White"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <!-- Statistic 3: Total finished hard -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:paddingVertical="4dp">
-
-                <TextView
-                    android:id="@+id/ChallengeStatisticsTotalFinishedHard"
+                <Button
+                    android:id="@+id/Medium"
+                    style="@style/MenuButtonStyle"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/FinishedHard"
-                    android:textColor="@color/White" />
+                    android:layout_height="0dp"
+                    android:layout_row="0"
+                    android:layout_rowWeight="1"
+                    android:layout_column="1"
+                    android:layout_columnWeight="1"
+                    android:layout_marginStart="6dp"
+                    android:layout_marginBottom="6dp"
+                    android:text="@string/Medium" />
 
-                <TextView
-                    android:id="@+id/ChallengeStatisticsTotalFinishedHardValue"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="0"
-                    android:textColor="@color/White"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <!-- Statistic 4: Total finished master -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:paddingVertical="4dp">
-
-                <TextView
-                    android:id="@+id/ChallengeStatisticsTotalFinishedMaster"
+                <Button
+                    android:id="@+id/Hard"
+                    style="@style/MenuButtonStyle"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/FinishedMaster"
-                    android:textColor="@color/White" />
+                    android:layout_height="0dp"
+                    android:layout_row="1"
+                    android:layout_rowWeight="1"
+                    android:layout_column="0"
+                    android:layout_columnWeight="1"
+                    android:layout_marginTop="6dp"
+                    android:layout_marginEnd="6dp"
+                    android:text="@string/Hard" />
 
-                <TextView
-                    android:id="@+id/ChallengeStatisticsTotalFinishedMasterValue"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="0"
-                    android:textColor="@color/White"
-                    android:textStyle="bold" />
-            </LinearLayout>
-        </LinearLayout>
-    </androidx.cardview.widget.CardView>
-
-    <Button
-        android:id="@+id/Easy"
-        style="@style/MenuButtonStyle"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginStart="32dp"
-        android:layout_marginTop="12dp"
-        android:text="@string/Easy"
-        app:layout_constraintHeight_percent="0.18"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/ChallengeStatistics"
-        app:layout_constraintWidth_percent="0.4" />
-
-    <Button
-        android:id="@+id/Medium"
-        style="@style/MenuButtonStyle"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginTop="12dp"
-        android:layout_marginEnd="32dp"
-        android:text="@string/Medium"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.18"
-        app:layout_constraintHorizontal_bias="0.823"
-        app:layout_constraintStart_toEndOf="@+id/Easy"
-        app:layout_constraintTop_toBottomOf="@+id/ChallengeStatistics"
-        app:layout_constraintWidth_percent="0.4" />
-
-    <Button
-        android:id="@+id/Hard"
-        style="@style/MenuButtonStyle"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginStart="32dp"
-        android:layout_marginTop="12dp"
-        android:text="@string/Hard"
-        app:layout_constraintHeight_percent="0.18"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/Easy"
-        app:layout_constraintWidth_percent="0.4" />
-
-    <Button
-        android:id="@+id/Master"
-        style="@style/MenuButtonStyle"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginTop="12dp"
-        android:layout_marginEnd="32dp"
-        android:text="@string/Master"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.18"
-        app:layout_constraintHorizontal_bias="0.777"
-        app:layout_constraintStart_toEndOf="@+id/Hard"
-        app:layout_constraintTop_toBottomOf="@+id/Medium"
-        app:layout_constraintWidth_percent="0.4" />
+                <Button
+                    android:id="@+id/Master"
+                    style="@style/MenuButtonStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_row="1"
+                    android:layout_rowWeight="1"
+                    android:layout_column="1"
+                    android:layout_columnWeight="1"
+                    android:layout_marginStart="6dp"
+                    android:layout_marginTop="6dp"
+                    android:text="@string/Master" />
+            </GridLayout>
+        </RelativeLayout>
+    </LinearLayout>
 
     <Button
         android:id="@+id/Back"

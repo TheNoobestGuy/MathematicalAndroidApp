@@ -20,7 +20,7 @@ class MixedActivity : ComponentActivity() {
     private var waitCounterValue = 3
     private val handler = Handler(Looper.getMainLooper())
 
-    // Waiter for counting down before start of practice
+    // Counter function for counting down before start of practice
     private val countBeforeStart = object : Runnable {
         override fun run() {
             // Get content

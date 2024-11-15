@@ -11,7 +11,6 @@ import android.widget.EditText
 import android.widget.GridLayout
 import android.widget.LinearLayout
 import androidx.appcompat.content.res.AppCompatResources
-import androidx.constraintlayout.helper.widget.Grid
 import androidx.core.content.ContextCompat
 import androidx.core.view.setMargins
 import androidx.core.view.setPadding
@@ -62,6 +61,8 @@ class Matrix @JvmOverloads constructor(
         }
         cell.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
         cell.setTextColor(ContextCompat.getColor(context, R.color.White))
+        cell.hint = "0"
+        cell.setHintTextColor(ContextCompat.getColor(context, R.color.White))
         cell.setPadding(0)
 
         return MutableTriple(0, 0, cell)
@@ -217,6 +218,33 @@ class Matrix @JvmOverloads constructor(
         // Update grid
         gridLayout.columnCount--
         updateGrid()
+    }
+
+    fun getMatrixValues(): MutableList<Int> {
+        val listOfValues: MutableList<Int> = mutableListOf()
+
+        for (cell in cellsArray) {
+            val value = cell.cell.text.toString()
+            if (value == "") {
+                listOfValues.add(0)
+            }
+            else {
+                listOfValues.add(value.toInt())
+            }
+        }
+
+        return listOfValues
+    }
+
+    fun clearMatrix() {
+        for (cell in cellsArray) {
+            cell.cell.setText("")
+        }
+
+        gridLayout.removeAllViews()
+        for(cell in cellsArray) {
+            gridLayout.addView(cell.cell)
+        }
     }
 
     fun getMatrixRows(): Int {

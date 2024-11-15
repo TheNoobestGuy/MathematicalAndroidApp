@@ -3,6 +3,7 @@ package com.example.mathmaster
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
+import android.widget.LinearLayout
 import androidx.activity.ComponentActivity
 import androidx.cardview.widget.CardView
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -23,7 +24,7 @@ class PracticeActivity : ComponentActivity() {
         setContentView(R.layout.practice_activity)
 
         // Statistics
-        val statisticsView: CardView = findViewById<CardView>(R.id.PracticeStatistics)
+        val menuBlockView: LinearLayout = findViewById<LinearLayout>(R.id.MenuBlock)
 
         // Menu buttons
         val multiplyButton: Button = findViewById<Button>(R.id.Multiply)
@@ -36,11 +37,11 @@ class PracticeActivity : ComponentActivity() {
         val displayMetrics = resources.displayMetrics
         val screenHeight = displayMetrics.heightPixels
 
-        val statisticsTopMargin: Int = (screenHeight * 0.12).toInt()
+        val menuBlockTopMargin: Int = (screenHeight * 0.12).toInt()
 
-        val layoutParamsStatistics = statisticsView.layoutParams as ConstraintLayout.LayoutParams
-        layoutParamsStatistics.topMargin = statisticsTopMargin
-        statisticsView.layoutParams = layoutParamsStatistics
+        val layoutParamsStatistics = menuBlockView.layoutParams as ConstraintLayout.LayoutParams
+        layoutParamsStatistics.topMargin = menuBlockTopMargin
+        menuBlockView.layoutParams = layoutParamsStatistics
 
         // Style of clicked button
         val clickedButtonStyle = R.drawable.menubutton_background_clicked

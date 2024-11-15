@@ -19,42 +19,40 @@ class MultiplyActivity : ComponentActivity() {
     private var waitCounterValue = 3
     private val handler = Handler(Looper.getMainLooper())
 
-    // Waiter for counting down before start of practice
+    // Counter function for counting down before start of practice
     private val countBeforeStart = object : Runnable {
-            override fun run() {
-                // Get content
-                val timeCounter: TextView = findViewById<TextView>(R.id.TimeCounter)
-                val questionCounter: TextView = findViewById<TextView>(R.id.QuestionCounter)
-                val equation: TextView = findViewById<TextView>(R.id.Equation)
-                val keyboard: Keyboard = findViewById<Keyboard>(R.id.Keyboard)
-                val bottomBar: BackButtonWithBar = findViewById<BackButtonWithBar>(R.id.BottomBar)
+        override fun run() {
+            // Get content
+            val timeCounter: TextView = findViewById<TextView>(R.id.TimeCounter)
+            val questionCounter: TextView = findViewById<TextView>(R.id.QuestionCounter)
+            val equation: TextView = findViewById<TextView>(R.id.Equation)
+            val keyboard: Keyboard = findViewById<Keyboard>(R.id.Keyboard)
+            val bottomBar: BackButtonWithBar = findViewById<BackButtonWithBar>(R.id.BottomBar)
 
-                // Disable visibility of content
-                questionCounter.visibility = View.INVISIBLE
-                equation.visibility = View.INVISIBLE
-                keyboard.visibility = View.INVISIBLE
-                bottomBar.visibility = View.INVISIBLE
+            // Disable visibility of content
+            questionCounter.visibility = View.INVISIBLE
+            equation.visibility = View.INVISIBLE
+            keyboard.visibility = View.INVISIBLE
+            bottomBar.visibility = View.INVISIBLE
 
-                // Update counter
-                if (waitCounterValue > 0) {
-                    timeCounter.text = waitCounterValue.toString()
-                    handler.postDelayed(this, 1000)
+            // Update counter
+            if (waitCounterValue > 0) {
+                timeCounter.text = waitCounterValue.toString()
+                handler.postDelayed(this, 1000)
 
-                // Show content
-                } else {
-                    timeCounter.visibility = View.INVISIBLE
-
-                    questionCounter.visibility = View.VISIBLE
-                    equation.visibility = View.VISIBLE
-                    keyboard.visibility = View.VISIBLE
-                    bottomBar.visibility = View.VISIBLE
-
-                    handler.removeCallbacks(this)
-                }
-
-                waitCounterValue--
+            // Show content
+            } else {
+                timeCounter.visibility = View.INVISIBLE
+                questionCounter.visibility = View.VISIBLE
+                equation.visibility = View.VISIBLE
+                keyboard.visibility = View.VISIBLE
+                bottomBar.visibility = View.VISIBLE
+                handler.removeCallbacks(this)
             }
+
+            waitCounterValue--
         }
+    }
 
     // Change page with intent after click
     private fun clickFunction (button: Button, drawable: Int, view: ComponentActivity) {

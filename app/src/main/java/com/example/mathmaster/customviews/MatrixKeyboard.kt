@@ -6,7 +6,7 @@ import android.view.LayoutInflater
 import android.widget.LinearLayout
 import android.widget.Button
 import android.widget.EditText
-import android.widget.TextView
+import android.widget.GridLayout
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.example.mathmaster.R
 import kotlinx.coroutines.*
@@ -20,10 +20,9 @@ class MatrixKeyboard @JvmOverloads constructor(
     private val clickedButtonStyle: Int
     private val unClickedButtonStyle: Int
 
-    private val buttons: Array<Button>
-
-    private val matrixButtonsRow: Array<Button>
-    private val matrixButtonsCol: Array<Button>
+    private val calculatorGrid: GridLayout
+    private val calculatorButtons: Array<Button>
+    private val matrixButtons: Array<Button>
 
     private val enterButton: Button
     private val deleteButton: Button
@@ -48,6 +47,9 @@ class MatrixKeyboard @JvmOverloads constructor(
         // Inflate the custom XML layout
         LayoutInflater.from(context).inflate(R.layout.matrixkeyboard_layout, this, true)
 
+        // Get grid layout
+        calculatorGrid = findViewById<GridLayout>(R.id.MatrixKeyboard)
+
         // Buttons
         enterButton = findViewById<Button>(R.id.Enter)
         deleteButton = findViewById<Button>(R.id.Delete)
@@ -70,7 +72,7 @@ class MatrixKeyboard @JvmOverloads constructor(
 
         clickedButtonStyle = R.drawable.menubutton_background_clicked
         unClickedButtonStyle = R.drawable.menubutton_background
-        buttons = arrayOf(
+        calculatorButtons = arrayOf(
             zeroButton,
             oneButton,
             twoButton,
@@ -83,12 +85,9 @@ class MatrixKeyboard @JvmOverloads constructor(
             nineButton
         )
 
-        matrixButtonsRow = arrayOf(
+        matrixButtons = arrayOf(
             rowPlusButton,
-            rowMinusButton
-        )
-
-        matrixButtonsCol = arrayOf(
+            rowMinusButton,
             colPlusButton,
             colMinusButton
         )
@@ -122,7 +121,10 @@ class MatrixKeyboard @JvmOverloads constructor(
             matrix.removeRow()
 
             // Cut down matrix size
-
+            val newHeight: Float = (matrix.getMatrixRows() * 0.25f)
+            val params = matrix.layoutParams as ConstraintLayout.LayoutParams
+            params.matchConstraintPercentHeight = newHeight
+            matrix.layoutParams = params
 
             GlobalScope.launch(Dispatchers.Main) {
                 delay(200)
@@ -139,6 +141,10 @@ class MatrixKeyboard @JvmOverloads constructor(
             matrix.addColumn()
 
             // Inflate matrix size
+            val newWidth: Float = (matrix.getMatrixColumns() * 0.25f)
+            val params = matrix.layoutParams as ConstraintLayout.LayoutParams
+            params.matchConstraintPercentWidth = newWidth
+            matrix.layoutParams = params
 
             GlobalScope.launch(Dispatchers.Main) {
                 delay(200)
@@ -155,7 +161,10 @@ class MatrixKeyboard @JvmOverloads constructor(
             matrix.removeColumn()
 
             // Cut down matrix size
-
+            val newWidth: Float = (matrix.getMatrixColumns() * 0.25f)
+            val params = matrix.layoutParams as ConstraintLayout.LayoutParams
+            params.matchConstraintPercentWidth = newWidth
+            matrix.layoutParams = params
 
             GlobalScope.launch(Dispatchers.Main) {
                 delay(200)
@@ -164,16 +173,53 @@ class MatrixKeyboard @JvmOverloads constructor(
         }
     }
 
+    fun removeMatrixButtons() {
+        // Remove buttons
+        var i = 0
+        var limit = calculatorGrid.childCount
+        val paramsFirst = matrixButtons[0].layoutParams as GridLayout.LayoutParams
+        while (i < limit) {
+            val paramsSecond = calculatorGrid.getChildAt(i).layoutParams as GridLayout.LayoutParams
+
+            if (paramsFirst.rowSpec == paramsSecond.rowSpec) {
+                println("error: x")
+                calculatorGrid.removeView(calculatorGrid.getChildAt(i))
+            }
+            i++
+        }
+        /*
+        // Update gird
+        val secondRowParams = calculatorButtons[4].layoutParams as GridLayout.LayoutParams
+        val thirdRowParams = calculatorButtons[7].layoutParams as GridLayout.LayoutParams
+
+        for(k in 0 until calculatorGrid.childCount) {
+            val childParams = calculatorGrid.getChildAt(k).layoutParams as GridLayout.LayoutParams
+            var row = 0
+            println(row)
+            if (childParams.rowSpec == secondRowParams.rowSpec) {
+                row = 1
+            }
+            else if (childParams.rowSpec == thirdRowParams.rowSpec) {
+                row = 2
+            }
+
+            childParams.rowSpec = GridLayout.spec(row, 1f)
+            calculatorGrid.getChildAt(k).layoutParams = childParams
+        }*/
+
+        calculatorGrid.rowCount--
+    }
+
     fun numberButtonClick(editText: EditText?) {
-        for (i in buttons.indices) {
-            buttons[i].setOnClickListener {
-                buttons[i].setBackgroundResource(clickedButtonStyle)
+        for (i in calculatorButtons.indices) {
+            calculatorButtons[i].setOnClickListener {
+                calculatorButtons[i].setBackgroundResource(clickedButtonStyle)
 
                 editText?.append(i.toString())
 
                 GlobalScope.launch(Dispatchers.Main) {
                     delay(200)
-                    buttons[i].setBackgroundResource(unClickedButtonStyle)
+                    calculatorButtons[i].setBackgroundResource(unClickedButtonStyle)
                 }
             }
         }
