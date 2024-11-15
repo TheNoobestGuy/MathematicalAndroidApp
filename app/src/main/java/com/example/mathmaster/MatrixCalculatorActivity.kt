@@ -7,8 +7,10 @@ import android.os.Looper
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
+import android.widget.GridLayout
 import android.widget.TextView
 import androidx.activity.ComponentActivity
+import androidx.constraintlayout.widget.ConstraintLayout
 import com.example.mathmaster.customviews.BackButtonWithBar
 import com.example.mathmaster.customviews.Keyboard
 import com.example.mathmaster.customviews.Matrix
@@ -109,10 +111,14 @@ class MatrixCalculatorActivity : ComponentActivity() {
                 firstMatrix = matrix.getMatrixValues()
 
                 handler.post(showSign)
-
-                //keyboard.removeMatrixButtons()
                 matrix.clearMatrix()
+
+                // Remove redundant buttons and change size of keyboard
                 keyboard.removeMatrixButtons()
+                // Change calculator size
+                val params = keyboard.layoutParams as ConstraintLayout.LayoutParams
+                params.matchConstraintPercentHeight = 0.3f
+
                 matrixCounter++
             }
             else {

@@ -21,8 +21,8 @@ class MatrixKeyboard @JvmOverloads constructor(
     private val unClickedButtonStyle: Int
 
     private val calculatorGrid: GridLayout
-    private val calculatorButtons: Array<Button>
     private val matrixButtons: Array<Button>
+    private val calculatorButtons: Array<Button>
 
     private val enterButton: Button
     private val deleteButton: Button
@@ -72,8 +72,15 @@ class MatrixKeyboard @JvmOverloads constructor(
 
         clickedButtonStyle = R.drawable.menubutton_background_clicked
         unClickedButtonStyle = R.drawable.menubutton_background
+
+        matrixButtons = arrayOf(
+            rowPlusButton,
+            rowMinusButton,
+            colPlusButton,
+            colMinusButton
+        )
+
         calculatorButtons = arrayOf(
-            zeroButton,
             oneButton,
             twoButton,
             threeButton,
@@ -82,14 +89,8 @@ class MatrixKeyboard @JvmOverloads constructor(
             sixButton,
             sevenButton,
             eightButton,
-            nineButton
-        )
-
-        matrixButtons = arrayOf(
-            rowPlusButton,
-            rowMinusButton,
-            colPlusButton,
-            colMinusButton
+            nineButton,
+            zeroButton
         )
     }
 
@@ -182,31 +183,24 @@ class MatrixKeyboard @JvmOverloads constructor(
             val paramsSecond = calculatorGrid.getChildAt(i).layoutParams as GridLayout.LayoutParams
 
             if (paramsFirst.rowSpec == paramsSecond.rowSpec) {
-                println("error: x")
                 calculatorGrid.removeView(calculatorGrid.getChildAt(i))
+                limit--
+                i--
             }
             i++
         }
-        /*
+
         // Update gird
-        val secondRowParams = calculatorButtons[4].layoutParams as GridLayout.LayoutParams
-        val thirdRowParams = calculatorButtons[7].layoutParams as GridLayout.LayoutParams
-
+        var row = -1
         for(k in 0 until calculatorGrid.childCount) {
-            val childParams = calculatorGrid.getChildAt(k).layoutParams as GridLayout.LayoutParams
-            var row = 0
-            println(row)
-            if (childParams.rowSpec == secondRowParams.rowSpec) {
-                row = 1
-            }
-            else if (childParams.rowSpec == thirdRowParams.rowSpec) {
-                row = 2
+            if (k % 4 == 0) {
+                row++
             }
 
+            val childParams = calculatorGrid.getChildAt(k).layoutParams as GridLayout.LayoutParams
             childParams.rowSpec = GridLayout.spec(row, 1f)
             calculatorGrid.getChildAt(k).layoutParams = childParams
-        }*/
-
+        }
         calculatorGrid.rowCount--
     }
 
