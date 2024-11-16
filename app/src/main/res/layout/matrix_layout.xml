@@ -12,9 +12,10 @@
         android:background="@drawable/matrix_cell_background"
         android:textColor="@color/White"
         android:inputType="text"
-        android:maxLength="3"
+        android:maxLength="4"
         android:hint = "0"
         android:textColorHint="@color/White"
+        android:focusable="false"
         android:textSize="16sp"
         android:textAlignment="center"
         android:layout_width="0dp"
@@ -24,6 +25,7 @@
         android:layout_rowWeight="1"
         android:layout_columnWeight="1"
         android:layout_margin="4dp"
+        android:cursorVisible="false"
         />
 
     <EditText
@@ -31,8 +33,9 @@
         android:background="@drawable/matrix_cell_background"
         android:textColor="@color/white"
         android:inputType="text"
-        android:maxLength="3"
+        android:maxLength="4"
         android:textSize="16sp"
+        android:focusable="false"
         android:hint = "0"
         android:textColorHint="@color/White"
         android:textAlignment="center"
@@ -43,6 +46,7 @@
         android:layout_rowWeight="1"
         android:layout_columnWeight="1"
         android:layout_margin="4dp"
+        android:cursorVisible="false"
         />
 
     <EditText
@@ -50,8 +54,9 @@
         android:background="@drawable/matrix_cell_background"
         android:textColor="@color/white"
         android:inputType="text"
-        android:maxLength="3"
+        android:maxLength="4"
         android:textSize="16sp"
+        android:focusable="false"
         android:hint = "0"
         android:textColorHint="@color/White"
         android:textAlignment="center"
@@ -62,6 +67,7 @@
         android:layout_rowWeight="1"
         android:layout_columnWeight="1"
         android:layout_margin="4dp"
+        android:cursorVisible="false"
         />
 
     <EditText
@@ -69,8 +75,9 @@
         android:background="@drawable/matrix_cell_background"
         android:textColor="@color/white"
         android:inputType="text"
-        android:maxLength="3"
+        android:maxLength="4"
         android:textSize="16sp"
+        android:focusable="false"
         android:hint = "0"
         android:textColorHint="@color/White"
         android:textAlignment="center"
@@ -81,6 +88,7 @@
         android:layout_rowWeight="1"
         android:layout_columnWeight="1"
         android:layout_margin="4dp"
+        android:cursorVisible="false"
         />
 
 </GridLayout>

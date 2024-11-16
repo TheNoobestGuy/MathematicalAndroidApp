@@ -81,6 +81,7 @@ class MatrixKeyboard @JvmOverloads constructor(
         )
 
         calculatorButtons = arrayOf(
+            zeroButton,
             oneButton,
             twoButton,
             threeButton,
@@ -89,8 +90,7 @@ class MatrixKeyboard @JvmOverloads constructor(
             sixButton,
             sevenButton,
             eightButton,
-            nineButton,
-            zeroButton
+            nineButton
         )
     }
 
@@ -204,12 +204,16 @@ class MatrixKeyboard @JvmOverloads constructor(
         calculatorGrid.rowCount--
     }
 
-    fun numberButtonClick(editText: EditText?) {
+    fun numberButtonClick(matrix: Matrix) {
         for (i in calculatorButtons.indices) {
             calculatorButtons[i].setOnClickListener {
                 calculatorButtons[i].setBackgroundResource(clickedButtonStyle)
 
-                editText?.append(i.toString())
+                val clickedCell: EditText? = matrix.getClickedCell()
+
+                if (clickedCell != null) {
+                    clickedCell.append(i.toString())
+                }
 
                 GlobalScope.launch(Dispatchers.Main) {
                     delay(200)
@@ -219,14 +223,23 @@ class MatrixKeyboard @JvmOverloads constructor(
         }
     }
 
-    fun deleteButtonClick(editText: EditText?) {
+    fun deleteButtonClick(matrix: Matrix) {
         deleteButton.setOnClickListener {
             deleteButton.setBackgroundResource(clickedButtonStyle)
 
-            if (editText != null) {
-                val currentText = editText.text.toString()
-                val newText = currentText.substring(0, currentText.length - 1)
-                editText.setText(newText)
+            val clickedCell: EditText? = matrix.getClickedCell()
+
+            if (clickedCell != null) {
+                val currentText = clickedCell.text.toString()
+
+                if (currentText.isNotEmpty()) {
+                    val newText = currentText.substring(0, currentText.length - 1)
+                    clickedCell.setText(newText)
+                }
+
+                if(clickedCell.text.isEmpty()) {
+                    clickedCell.hint = "0"
+                }
             }
 
             GlobalScope.launch(Dispatchers.Main) {

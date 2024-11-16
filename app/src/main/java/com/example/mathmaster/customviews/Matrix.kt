@@ -11,6 +11,7 @@ import android.widget.EditText
 import android.widget.GridLayout
 import android.widget.LinearLayout
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.core.view.setMargins
 import androidx.core.view.setPadding
@@ -26,6 +27,10 @@ class Matrix @JvmOverloads constructor(
 
     private val cellsArray: MutableList<MutableTriple<Int, Int, EditText>> = mutableListOf()
     private val gridLayout: GridLayout
+    private var clickedCell: EditText? = null
+
+    private val clickedButtonStyle: Int
+    private val unClickedButtonStyle: Int
 
     init {
         // Inflate the custom XML layout
@@ -46,13 +51,16 @@ class Matrix @JvmOverloads constructor(
             cellsArray.add(buffor)
             col++
         }
+
+        clickedButtonStyle = R.drawable.menubutton_background_clicked
+        unClickedButtonStyle = R.drawable.menubutton_background
     }
 
     private fun createCell(): MutableTriple<Int, Int, EditText> {
         val cell = EditText(context).apply {
             inputType = InputType.TYPE_CLASS_TEXT
             textAlignment = View.TEXT_ALIGNMENT_CENTER
-            filters = arrayOf(InputFilter.LengthFilter(3))
+            filters = arrayOf(InputFilter.LengthFilter(4))
             background = AppCompatResources.getDrawable(context, R.drawable.matrix_cell_background)
             layoutParams = GridLayout.LayoutParams().apply {
                 width = 0
@@ -61,6 +69,8 @@ class Matrix @JvmOverloads constructor(
         }
         cell.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
         cell.setTextColor(ContextCompat.getColor(context, R.color.White))
+        cell.isFocusable = false
+        cell.isCursorVisible = false
         cell.hint = "0"
         cell.setHintTextColor(ContextCompat.getColor(context, R.color.White))
         cell.setPadding(0)
@@ -81,7 +91,6 @@ class Matrix @JvmOverloads constructor(
             params.rowSpec = GridLayout.spec(row, 1f)
             params.columnSpec = GridLayout.spec(col, 1f)
             params.setMargins(4)
-
             cell.row = row
             cell.col = col
             cell.cell.layoutParams = params
@@ -153,7 +162,10 @@ class Matrix @JvmOverloads constructor(
         if (gridLayout.columnCount >= 4) {
             return
         }
-
+        gridLayout.removeAllViews()
+        for(cell in cellsArray) {
+            gridLayout.addView(cell.cell)
+        }
         // Variables for creating cells
         val rowCount = gridLayout.rowCount
         var leap = gridLayout.columnCount
@@ -220,6 +232,37 @@ class Matrix @JvmOverloads constructor(
         updateGrid()
     }
 
+    fun setResultMatrix(matrix: Matrix, resultMatrix: IntArray, rows: Int, columns: Int) {
+        // Fill matrix
+        cellsArray.clear()
+        for(i in resultMatrix) {
+            val cell = createCell()
+            cell.cell.setText(i.toString())
+            cell.cell.isFocusable = false
+            cell.cell.isClickable = false
+            cellsArray.add(cell)
+        }
+
+        // Change matrix properties
+        gridLayout.removeAllViews()
+        gridLayout.rowCount = rows
+        gridLayout.columnCount = columns
+
+        // Update matrix
+        updateGrid()
+        for(cell in cellsArray) {
+            gridLayout.addView(cell.cell)
+        }
+
+        // Change matrix size
+        val newWidth: Float = (columns * 0.25f)
+        val newHeight: Float = (rows * 0.25f)
+        val params = matrix.layoutParams as ConstraintLayout.LayoutParams
+        params.matchConstraintPercentWidth = newWidth
+        params.matchConstraintPercentHeight = newHeight
+        matrix.layoutParams = params
+    }
+
     fun getMatrixValues(): MutableList<Int> {
         val listOfValues: MutableList<Int> = mutableListOf()
 
@@ -236,9 +279,25 @@ class Matrix @JvmOverloads constructor(
         return listOfValues
     }
 
+    fun getClickedMatrixCell() {
+        for(i in 0 until gridLayout.childCount) {
+            val child = gridLayout.getChildAt(i) as EditText
+            child.setOnClickListener {
+                if (clickedCell != null) {
+                    clickedCell!!.setBackgroundResource(unClickedButtonStyle)
+                    clickedCell!!.hint = "0"
+                }
+                child.hint = ""
+                child.setBackgroundResource(clickedButtonStyle)
+                clickedCell = child
+            }
+        }
+    }
+
     fun clearMatrix() {
         for (cell in cellsArray) {
             cell.cell.setText("")
+            cell.cell.hint = "0"
         }
 
         gridLayout.removeAllViews()
@@ -253,5 +312,9 @@ class Matrix @JvmOverloads constructor(
 
     fun getMatrixColumns(): Int {
         return gridLayout.columnCount
+    }
+
+    fun getClickedCell(): EditText? {
+        return clickedCell
     }
 }

@@ -7,12 +7,10 @@ import android.os.Looper
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
-import android.widget.GridLayout
 import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.example.mathmaster.customviews.BackButtonWithBar
-import com.example.mathmaster.customviews.Keyboard
 import com.example.mathmaster.customviews.Matrix
 import com.example.mathmaster.customviews.MatrixKeyboard
 
@@ -20,16 +18,15 @@ class MatrixCalculatorActivity : ComponentActivity() {
 
     // Variables
     private val sign = "+"
-    private var showSignCounter = 2
+    private var showSignCounter = 1
     private var matrixCounter = 1
     private val handler = Handler(Looper.getMainLooper())
 
     // Matrix
     private var firstMatrix: MutableList<Int> = mutableListOf()
     private var secondMatrix: MutableList<Int> = mutableListOf()
-    private var resultMatrix: MutableList<Int> = mutableListOf()
 
-    // Counter function for counting down before start of practice
+    // Counter function to show equation sign after pressing enter
     private val showSign = object : Runnable {
         override fun run() {
             // Get content
@@ -81,7 +78,6 @@ class MatrixCalculatorActivity : ComponentActivity() {
 
         // Matrix
         val matrix: Matrix = findViewById<Matrix>(R.id.Matrix)
-        val currentCell: EditText = findViewById<EditText>(R.id.text) // TEST
 
         // Interactive menu
         val keyboard: MatrixKeyboard = findViewById<MatrixKeyboard>(R.id.Keyboard)
@@ -96,14 +92,18 @@ class MatrixCalculatorActivity : ComponentActivity() {
         // On click functions
         clickFunction(bottomBar.returnBackButton(), clickedButtonStyle, ToolsActivity())
 
+        // Matrix event listener
+        matrix.getClickedMatrixCell()
+        keyboard.numberButtonClick(matrix)
+        keyboard.deleteButtonClick(matrix)
+
         // Keyboard
         keyboard.addRow(matrix)
         keyboard.addColumn(matrix)
         keyboard.removeRow(matrix)
         keyboard.removeColumn(matrix)
-        keyboard.numberButtonClick(currentCell)
-        keyboard.deleteButtonClick(currentCell)
 
+        // Enter Button
         keyboard.getEnterButton().setOnClickListener {
             keyboard.clickEnterButton()
 
@@ -115,6 +115,7 @@ class MatrixCalculatorActivity : ComponentActivity() {
 
                 // Remove redundant buttons and change size of keyboard
                 keyboard.removeMatrixButtons()
+
                 // Change calculator size
                 val params = keyboard.layoutParams as ConstraintLayout.LayoutParams
                 params.matchConstraintPercentHeight = 0.3f
@@ -125,11 +126,19 @@ class MatrixCalculatorActivity : ComponentActivity() {
                 secondMatrix = matrix.getMatrixValues()
 
                 // Make calculations
+                val resultMatrix: IntArray = IntArray(secondMatrix.size)
+
                 for(i in firstMatrix.indices) {
-                    resultMatrix.add(firstMatrix[i] + secondMatrix[i])
+                    resultMatrix[i] = firstMatrix[i] + secondMatrix[i]
                 }
 
-                matrixCounter = 1
+                // Go to end page
+                val intent = Intent(this, MatrixResultActivity()::class.java)
+                intent.putExtra("resultMatrix", resultMatrix)
+                intent.putExtra("matrixRows", matrix.getMatrixRows())
+                intent.putExtra("matrixColumns", matrix.getMatrixColumns())
+
+                startActivity(intent)
             }
 
             keyboard.unClickEnterButton()

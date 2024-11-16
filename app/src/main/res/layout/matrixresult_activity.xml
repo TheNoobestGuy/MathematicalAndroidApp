@@ -10,13 +10,13 @@
         style="@style/CounterStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:lineSpacingExtra="0dp"
+        android:text="="
         android:textSize="200sp"
-        android:text=""
         android:textStyle="bold"
         android:visibility="invisible"
-        android:gravity="center"
-        android:lineSpacingExtra="0dp"
-        android:includeFontPadding="false"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -25,7 +25,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintBottom_toTopOf="@+id/Keyboard"
+        app:layout_constraintBottom_toTopOf="@+id/MenuBlock"
         app:layout_constraintDimensionRatio="1:1"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHeight_percent="0.4"
@@ -45,8 +45,8 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <com.example.mathmaster.customviews.MatrixKeyboard
-        android:id="@+id/Keyboard"
+    <com.example.mathmaster.customviews.MatrixResultMenu
+        android:id="@+id/MenuBlock"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginBottom="16dp"

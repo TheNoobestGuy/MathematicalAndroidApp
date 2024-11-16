@@ -49,6 +49,9 @@
     <string name="RowMinus" translatable="false">Row-</string>
     <string name="ColPlus" translatable="false">Col+</string>
     <string name="ColMinus" translatable="false">Col-</string>
+    <string name="Add" translatable="false">Add</string>
+    <string name="Subtract" translatable="false">Subtract</string>
+    <string name="Info" translatable="false">Info</string>
 
     // Statistics
     <string name="StatisticsOverview" translatable="false">Statistics Overview</string>
