@@ -94,6 +94,10 @@ class MatrixKeyboard @JvmOverloads constructor(
         )
     }
 
+    fun refreshClickListeners(matrix: Matrix) {
+        matrix.getClickedMatrixCell()
+    }
+
     fun addRow(matrix: Matrix) {
         rowPlusButton.setOnClickListener {
             rowPlusButton.setBackgroundResource(clickedButtonStyle)
@@ -107,6 +111,7 @@ class MatrixKeyboard @JvmOverloads constructor(
             params.matchConstraintPercentHeight = newHeight
             matrix.layoutParams = params
 
+            refreshClickListeners(matrix)
             GlobalScope.launch(Dispatchers.Main) {
                 delay(200)
                 rowPlusButton.setBackgroundResource(unClickedButtonStyle)
@@ -127,6 +132,7 @@ class MatrixKeyboard @JvmOverloads constructor(
             params.matchConstraintPercentHeight = newHeight
             matrix.layoutParams = params
 
+            refreshClickListeners(matrix)
             GlobalScope.launch(Dispatchers.Main) {
                 delay(200)
                 rowMinusButton.setBackgroundResource(unClickedButtonStyle)
@@ -147,6 +153,7 @@ class MatrixKeyboard @JvmOverloads constructor(
             params.matchConstraintPercentWidth = newWidth
             matrix.layoutParams = params
 
+            refreshClickListeners(matrix)
             GlobalScope.launch(Dispatchers.Main) {
                 delay(200)
                 colPlusButton.setBackgroundResource(unClickedButtonStyle)
@@ -167,6 +174,7 @@ class MatrixKeyboard @JvmOverloads constructor(
             params.matchConstraintPercentWidth = newWidth
             matrix.layoutParams = params
 
+            refreshClickListeners(matrix)
             GlobalScope.launch(Dispatchers.Main) {
                 delay(200)
                 colMinusButton.setBackgroundResource(unClickedButtonStyle)

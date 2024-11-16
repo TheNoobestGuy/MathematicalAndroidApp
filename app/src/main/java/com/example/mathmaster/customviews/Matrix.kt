@@ -71,6 +71,7 @@ class Matrix @JvmOverloads constructor(
         cell.setTextColor(ContextCompat.getColor(context, R.color.White))
         cell.isFocusable = false
         cell.isCursorVisible = false
+        cell.isClickable = true
         cell.hint = "0"
         cell.setHintTextColor(ContextCompat.getColor(context, R.color.White))
         cell.setPadding(0)
