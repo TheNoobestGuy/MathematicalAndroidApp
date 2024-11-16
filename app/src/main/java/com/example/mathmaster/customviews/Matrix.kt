@@ -295,6 +295,12 @@ class Matrix @JvmOverloads constructor(
     }
 
     fun clearMatrix() {
+        if (clickedCell != null) {
+            clickedCell!!.setBackgroundResource(unClickedButtonStyle)
+            clickedCell!!.hint = "0"
+            clickedCell = null
+        }
+
         for (cell in cellsArray) {
             cell.cell.setText("")
             cell.cell.hint = "0"
