@@ -118,10 +118,14 @@ class MatrixCalculatorActivity : ComponentActivity() {
                     matrix.removeColumn()
                 }
 
-                var i = firstMatrixRows
-                while (i > firstMatrixColumns) {
+                var limit = matrix.getMatrixRows()
+                while (limit > firstMatrixColumns) {
                     matrix.removeRow()
-                    i--
+                    limit--
+                }
+                while (limit < firstMatrixColumns) {
+                    matrix.addRow()
+                    limit++
                 }
 
                 val newWidth: Float = (matrix.getMatrixColumns() * 0.25f)
