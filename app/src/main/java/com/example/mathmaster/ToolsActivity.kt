@@ -28,7 +28,7 @@ class ToolsActivity : ComponentActivity() {
         val clickedButtonStyle = R.drawable.menubutton_background_clicked
 
         // On click functions
-        clickFunction(matrixCalcButton, clickedButtonStyle, MatrixCalculatorActivity())
+        clickFunction(matrixCalcButton, clickedButtonStyle, MatrixCalculatorMenuActivity())
         clickFunction(backButton, clickedButtonStyle, MainActivity())
     }
 

@@ -71,9 +71,9 @@ class MatrixResultActivity : ComponentActivity() {
         // Matrix
         val matrix: Matrix = findViewById<Matrix>(R.id.Matrix)
         val resultMatrix: IntArray = intent.getIntArrayExtra("resultMatrix")!!
-        val matrixRows: Int = intent.getIntExtra("matrixRows", 0)
-        val matrixColumns: Int = intent.getIntExtra("matrixColumns", 0)
-        matrix.setResultMatrix(matrix, resultMatrix, matrixRows, matrixColumns)
+        val resultMatrixRows: Int = intent.getIntExtra("resultMatrixRows", 0)
+        val resultMatrixColumns: Int = intent.getIntExtra("resultMatrixColumns", 0)
+        matrix.setResultMatrix(matrix, resultMatrix, resultMatrixRows, resultMatrixColumns)
 
         // Menu buttons
         val matrixMenu: MatrixResultMenu = findViewById<MatrixResultMenu>(R.id.MenuBlock)
@@ -84,6 +84,6 @@ class MatrixResultActivity : ComponentActivity() {
         val clickedButtonStyle = R.drawable.menubutton_background_clicked
 
         // On click functions
-        clickFunction(bottomBar.returnBackButton(), clickedButtonStyle, ToolsActivity())
+        clickFunction(bottomBar.returnBackButton(), clickedButtonStyle, MatrixCalculatorMenuActivity())
     }
 }

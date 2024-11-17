@@ -60,7 +60,7 @@ class Matrix @JvmOverloads constructor(
         val cell = EditText(context).apply {
             inputType = InputType.TYPE_CLASS_TEXT
             textAlignment = View.TEXT_ALIGNMENT_CENTER
-            filters = arrayOf(InputFilter.LengthFilter(4))
+            filters = arrayOf(InputFilter.LengthFilter(3))
             background = AppCompatResources.getDrawable(context, R.drawable.matrix_cell_background)
             layoutParams = GridLayout.LayoutParams().apply {
                 width = 0

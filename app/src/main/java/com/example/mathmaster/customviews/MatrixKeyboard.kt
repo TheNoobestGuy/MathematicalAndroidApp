@@ -7,6 +7,7 @@ import android.widget.LinearLayout
 import android.widget.Button
 import android.widget.EditText
 import android.widget.GridLayout
+import androidx.constraintlayout.helper.widget.Grid
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.example.mathmaster.R
 import kotlinx.coroutines.*
@@ -132,7 +133,6 @@ class MatrixKeyboard @JvmOverloads constructor(
             params.matchConstraintPercentHeight = newHeight
             matrix.layoutParams = params
 
-            refreshClickListeners(matrix)
             GlobalScope.launch(Dispatchers.Main) {
                 delay(200)
                 rowMinusButton.setBackgroundResource(unClickedButtonStyle)
@@ -174,7 +174,6 @@ class MatrixKeyboard @JvmOverloads constructor(
             params.matchConstraintPercentWidth = newWidth
             matrix.layoutParams = params
 
-            refreshClickListeners(matrix)
             GlobalScope.launch(Dispatchers.Main) {
                 delay(200)
                 colMinusButton.setBackgroundResource(unClickedButtonStyle)
@@ -187,11 +186,14 @@ class MatrixKeyboard @JvmOverloads constructor(
         var i = 0
         var limit = calculatorGrid.childCount
         val paramsFirst = matrixButtons[0].layoutParams as GridLayout.LayoutParams
-        while (i < limit) {
+        var removedCount = 0
+        while (i < limit && removedCount < 4) {
             val paramsSecond = calculatorGrid.getChildAt(i).layoutParams as GridLayout.LayoutParams
 
             if (paramsFirst.rowSpec == paramsSecond.rowSpec) {
                 calculatorGrid.removeView(calculatorGrid.getChildAt(i))
+
+                removedCount++
                 limit--
                 i--
             }
@@ -211,6 +213,39 @@ class MatrixKeyboard @JvmOverloads constructor(
         }
         calculatorGrid.rowCount--
     }
+
+    fun matrixMultiplicationMode() {
+        var i = 0
+        var limit = calculatorGrid.childCount
+        var removedCount = 0
+        var changedButtons = 0
+        while (i < limit && (removedCount < 2 || changedButtons < 2)) {
+            val button = calculatorGrid.getChildAt(i) as Button
+            if (button.text == context.getString(R.string.RowPlus) || button.text == context.getString(R.string.RowMinus)) {
+                calculatorGrid.removeView(button)
+                removedCount++
+                limit--
+                i--
+            }
+            else if (button.text == context.getString(R.string.ColPlus)) {
+                val params = button.layoutParams as GridLayout.LayoutParams
+                params.columnSpec = GridLayout.spec(0, 2, 1f)
+                params.rowSpec = GridLayout.spec(0, 1,1f)
+                button.layoutParams = params
+                changedButtons++
+            }
+            else if (button.text == context.getString(R.string.ColMinus)) {
+                val params = button.layoutParams as GridLayout.LayoutParams
+                params.columnSpec = GridLayout.spec(2, 2, 1f)
+                params.rowSpec = GridLayout.spec(0, 1,1f)
+                button.layoutParams = params
+                changedButtons++
+            }
+
+            i++
+        }
+    }
+
 
     fun numberButtonClick(matrix: Matrix) {
         for (i in calculatorButtons.indices) {

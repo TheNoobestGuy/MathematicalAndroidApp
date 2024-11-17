@@ -17,19 +17,21 @@ import com.example.mathmaster.customviews.MatrixKeyboard
 class MatrixCalculatorActivity : ComponentActivity() {
 
     // Variables
-    private val sign = "+"
     private var showSignCounter = 1
     private var matrixCounter = 1
     private val handler = Handler(Looper.getMainLooper())
 
     // Matrix
     private var firstMatrix: MutableList<Int> = mutableListOf()
+    private var firstMatrixRows: Int = 0
+    private var firstMatrixColumns: Int = 0
     private var secondMatrix: MutableList<Int> = mutableListOf()
 
     // Counter function to show equation sign after pressing enter
     private val showSign = object : Runnable {
         override fun run() {
             // Get content
+            val sign: String = intent.getStringExtra("sign")!!
             val showSign: TextView = findViewById<TextView>(R.id.showSign)
             val matrix: Matrix = findViewById<Matrix>(R.id.Matrix)
             val keyboard: MatrixKeyboard = findViewById<MatrixKeyboard>(R.id.Keyboard)
@@ -38,12 +40,7 @@ class MatrixCalculatorActivity : ComponentActivity() {
 
             // Change sign
             showSign.text = sign
-
-            // Disable visibility of content
             showSign.visibility = View.VISIBLE
-            matrix.visibility = View.INVISIBLE
-            keyboard.visibility = View.INVISIBLE
-            bottomBar.visibility = View.INVISIBLE
 
             // Update counter
             if (showSignCounter > 0) {
@@ -75,6 +72,9 @@ class MatrixCalculatorActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.matrixcalculator_activity)
+
+        // Sign
+        val sign: String = intent.getStringExtra("sign")!!
 
         // Matrix
         val matrix: Matrix = findViewById<Matrix>(R.id.Matrix)
@@ -108,17 +108,36 @@ class MatrixCalculatorActivity : ComponentActivity() {
             keyboard.clickEnterButton()
 
             if (matrixCounter == 1) {
-                firstMatrix = matrix.getMatrixValues()
-
+                // Disable visibility of content
+                matrix.visibility = View.INVISIBLE
+                keyboard.visibility = View.INVISIBLE
+                bottomBar.visibility = View.INVISIBLE
                 handler.post(showSign)
+
+                firstMatrix = matrix.getMatrixValues()
+                firstMatrixRows = matrix.getMatrixRows()
+                firstMatrixColumns = matrix.getMatrixColumns()
                 matrix.clearMatrix()
 
                 // Remove redundant buttons and change size of keyboard
-                keyboard.removeMatrixButtons()
+                if (sign == "×") {
+                    keyboard.matrixMultiplicationMode()
 
-                // Change calculator size
-                val params = keyboard.layoutParams as ConstraintLayout.LayoutParams
-                params.matchConstraintPercentHeight = 0.3f
+                    while (matrix.getMatrixColumns() > 1) {
+                        matrix.removeColumn()
+                    }
+                    val newWidth: Float = (matrix.getMatrixColumns() * 0.25f)
+                    val params = matrix.layoutParams as ConstraintLayout.LayoutParams
+                    params.matchConstraintPercentWidth = newWidth
+                    matrix.layoutParams = params
+                }
+                else {
+                    keyboard.removeMatrixButtons()
+
+                    // Change calculator size
+                    val params = keyboard.layoutParams as ConstraintLayout.LayoutParams
+                    params.matchConstraintPercentHeight = 0.3f
+                }
 
                 matrixCounter++
             }
@@ -126,17 +145,57 @@ class MatrixCalculatorActivity : ComponentActivity() {
                 secondMatrix = matrix.getMatrixValues()
 
                 // Make calculations
-                val resultMatrix: IntArray = IntArray(secondMatrix.size)
+                val resultMatrixRows = firstMatrixRows
+                val resultMatrixColumns = matrix.getMatrixColumns()
+                val resultMatrixSize = resultMatrixRows * resultMatrixColumns
+                val resultMatrix: IntArray = IntArray(resultMatrixSize)
 
-                for(i in firstMatrix.indices) {
-                    resultMatrix[i] = firstMatrix[i] + secondMatrix[i]
+                if (sign == "+") {
+                    for(i in firstMatrix.indices) {
+                        resultMatrix[i] = firstMatrix[i] + secondMatrix[i]
+                    }
+                }
+                if (sign == "-") {
+                    for(i in firstMatrix.indices) {
+                        resultMatrix[i] = firstMatrix[i] - secondMatrix[i]
+                    }
+                }
+                // Handle multiplication
+                else {
+                    val limit = firstMatrixRows * firstMatrixColumns
+                    var resultMatrixIndex = 0
+                    var row = 0
+                    while (resultMatrixIndex < resultMatrix.size) {
+                        var leapLimit = 0
+
+                        while (leapLimit < matrix.getMatrixColumns()) {
+                            var leap = leapLimit
+                            var equation = 0
+                            var col = 0
+
+                            print("LEAP!!")
+                            while (col < firstMatrixColumns) {
+                                println(secondMatrix[leap])
+                                val index = (row * firstMatrixColumns) + col
+                                equation += firstMatrix[index] * secondMatrix[leap]
+                                leap += matrix.getMatrixColumns()
+                                col++
+                            }
+
+                            resultMatrix[resultMatrixIndex] = equation
+                            resultMatrixIndex++
+                            leapLimit++
+                        }
+
+                        row++
+                    }
                 }
 
                 // Go to end page
                 val intent = Intent(this, MatrixResultActivity()::class.java)
                 intent.putExtra("resultMatrix", resultMatrix)
-                intent.putExtra("matrixRows", matrix.getMatrixRows())
-                intent.putExtra("matrixColumns", matrix.getMatrixColumns())
+                intent.putExtra("resultMatrixRows", resultMatrixRows)
+                intent.putExtra("resultMatrixColumns", resultMatrixColumns)
 
                 startActivity(intent)
             }

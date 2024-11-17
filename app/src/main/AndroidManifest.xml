@@ -123,6 +123,13 @@
             android:screenOrientation="portrait">
         </activity>
         <activity
+            android:name=".MatrixCalculatorMenuActivity"
+            android:exported="true"
+            android:label="Math Master"
+            android:theme="@style/Theme.MathMaster"
+            android:screenOrientation="portrait">
+        </activity>
+        <activity
             android:name=".MatrixResultActivity"
             android:exported="true"
             android:label="Math Master"
