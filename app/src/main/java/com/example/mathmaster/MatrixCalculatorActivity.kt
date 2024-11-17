@@ -13,6 +13,9 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import com.example.mathmaster.customviews.BackButtonWithBar
 import com.example.mathmaster.customviews.Matrix
 import com.example.mathmaster.customviews.MatrixKeyboard
+import kotlinx.coroutines.delay
+import java.util.Timer
+import java.util.TimerTask
 
 class MatrixCalculatorActivity : ComponentActivity() {
 
@@ -175,122 +178,126 @@ class MatrixCalculatorActivity : ComponentActivity() {
         // Enter Button
         keyboard.getEnterButton().setOnClickListener {
             keyboard.clickEnterButton()
+            var wait: Long = 200
 
-            if (matrixCounter == 1) {
-                // Disable visibility of content
-                matrix.visibility = View.INVISIBLE
-                keyboard.visibility = View.INVISIBLE
-                bottomBar.visibility = View.INVISIBLE
-                handler.post(showSign)
-
-                firstMatrix = matrix.getMatrixValues()
-                firstMatrixRows = matrix.getMatrixRows()
-                firstMatrixColumns = matrix.getMatrixColumns()
-                matrix.clearMatrix()
-
-                // Remove redundant buttons and change size of keyboard
-                if (sign == "×") {
-                    keyboard.matrixMultiplicationMode()
-
-                    while (matrix.getMatrixColumns() > 1) {
-                        matrix.removeColumn()
-                    }
-
-                    var limit = matrix.getMatrixRows()
-                    while (limit > firstMatrixColumns) {
-                        matrix.removeRow()
-                        limit--
-                    }
-
-                    var run = false
-                    while (limit < firstMatrixColumns) {
-                        matrix.addRow()
-                        limit++
-                        run = true
-                    }
-                    if (run) {
-                        matrix.getClickedMatrixCell()
-                    }
-
-                    val newWidth: Float = (matrix.getMatrixColumns() * 0.25f)
-                    val newHeight: Float = (matrix.getMatrixRows() * 0.25f)
-                    val params = matrix.layoutParams as ConstraintLayout.LayoutParams
-                    params.matchConstraintPercentWidth = newWidth
-                    params.matchConstraintPercentHeight = newHeight
-                    matrix.layoutParams = params
-                }
-                else {
-                    keyboard.removeMatrixButtons()
-
-                    // Change calculator size
-                    val params = keyboard.layoutParams as ConstraintLayout.LayoutParams
-                    params.matchConstraintPercentHeight = 0.3f
-                }
-
-                matrixCounter++
+            if (matrixCounter >= 2) {
+                wait = 0
             }
-            else {
-                secondMatrix = matrix.getMatrixValues()
 
-                // Make calculations
-                resultMatrixRows = firstMatrixRows
-                resultMatrixColumns = matrix.getMatrixColumns()
-                val resultMatrixSize = resultMatrixRows * resultMatrixColumns
-                resultMatrix = IntArray(resultMatrixSize)
+            handler.postDelayed({
+                if (matrixCounter == 1) {
+                    // Disable visibility of content
+                    matrix.visibility = View.INVISIBLE
+                    keyboard.visibility = View.INVISIBLE
+                    bottomBar.visibility = View.INVISIBLE
+                    handler.post(showSign)
 
-                if (sign == "+") {
-                    for(i in firstMatrix.indices) {
-                        resultMatrix[i] = firstMatrix[i] + secondMatrix[i]
-                    }
-                }
-                else if (sign == "-") {
-                    for(i in firstMatrix.indices) {
-                        resultMatrix[i] = firstMatrix[i] - secondMatrix[i]
-                    }
-                }
-                // Handle information about matrix
-                else if (sign == "i") {
+                    firstMatrix = matrix.getMatrixValues()
+                    firstMatrixRows = matrix.getMatrixRows()
+                    firstMatrixColumns = matrix.getMatrixColumns()
+                    matrix.clearMatrix()
 
-                }
-                // Handle multiplication
-                else {
-                    var resultMatrixIndex = 0
-                    var row = 0
-                    while (resultMatrixIndex < resultMatrix.size) {
-                        var leapLimit = 0
+                    // Remove redundant buttons and change size of keyboard
+                    if (sign == "×") {
+                        keyboard.matrixMultiplicationMode()
 
-                        while (leapLimit < matrix.getMatrixColumns()) {
-                            var leap = leapLimit
-                            var equation = 0
-                            var col = 0
-
-                            while (col < firstMatrixColumns) {
-                                println(secondMatrix[leap])
-                                val index = (row * firstMatrixColumns) + col
-                                equation += firstMatrix[index] * secondMatrix[leap]
-                                leap += matrix.getMatrixColumns()
-                                col++
-                            }
-
-                            resultMatrix[resultMatrixIndex] = equation
-                            resultMatrixIndex++
-                            leapLimit++
+                        while (matrix.getMatrixColumns() > 1) {
+                            matrix.removeColumn()
                         }
 
-                        row++
+                        var limit = matrix.getMatrixRows()
+                        while (limit > firstMatrixColumns) {
+                            matrix.removeRow()
+                            limit--
+                        }
+
+                        var run = false
+                        while (limit < firstMatrixColumns) {
+                            matrix.addRow()
+                            limit++
+                            run = true
+                        }
+                        if (run) {
+                            matrix.getClickedMatrixCell()
+                        }
+
+                        val newWidth: Float = (matrix.getMatrixColumns() * 0.25f)
+                        val newHeight: Float = (matrix.getMatrixRows() * 0.25f)
+                        val params = matrix.layoutParams as ConstraintLayout.LayoutParams
+                        params.matchConstraintPercentWidth = newWidth
+                        params.matchConstraintPercentHeight = newHeight
+                        matrix.layoutParams = params
+                    } else {
+                        keyboard.removeMatrixButtons()
+
+                        // Change calculator size
+                        val params = keyboard.layoutParams as ConstraintLayout.LayoutParams
+                        params.matchConstraintPercentHeight = 0.3f
                     }
+
+                    wait = 0
+                    matrixCounter++
+                    keyboard.unClickEnterButton()
+                } else {
+                    secondMatrix = matrix.getMatrixValues()
+
+                    // Make calculations
+                    resultMatrixRows = firstMatrixRows
+                    resultMatrixColumns = matrix.getMatrixColumns()
+                    val resultMatrixSize = resultMatrixRows * resultMatrixColumns
+                    resultMatrix = IntArray(resultMatrixSize)
+
+                    if (sign == "+") {
+                        for (i in firstMatrix.indices) {
+                            resultMatrix[i] = firstMatrix[i] + secondMatrix[i]
+                        }
+                    } else if (sign == "-") {
+                        for (i in firstMatrix.indices) {
+                            resultMatrix[i] = firstMatrix[i] - secondMatrix[i]
+                        }
+                    }
+                    // Handle information about matrix
+                    else if (sign == "i") {
+
+                    }
+                    // Handle multiplication
+                    else {
+                        var resultMatrixIndex = 0
+                        var row = 0
+                        while (resultMatrixIndex < resultMatrix.size) {
+                            var leapLimit = 0
+
+                            while (leapLimit < matrix.getMatrixColumns()) {
+                                var leap = leapLimit
+                                var equation = 0
+                                var col = 0
+
+                                while (col < firstMatrixColumns) {
+                                    println(secondMatrix[leap])
+                                    val index = (row * firstMatrixColumns) + col
+                                    equation += firstMatrix[index] * secondMatrix[leap]
+                                    leap += matrix.getMatrixColumns()
+                                    col++
+                                }
+
+                                resultMatrix[resultMatrixIndex] = equation
+                                resultMatrixIndex++
+                                leapLimit++
+                            }
+
+                            row++
+                        }
+                    }
+
+                    // Go to end page
+                    val intent = Intent(this, MatrixResultActivity()::class.java)
+                    intent.putExtra("resultMatrix", resultMatrix)
+                    intent.putExtra("resultMatrixRows", resultMatrixRows)
+                    intent.putExtra("resultMatrixColumns", resultMatrixColumns)
+
+                    startActivity(intent)
                 }
-
-                // Go to end page
-                val intent = Intent(this, MatrixResultActivity()::class.java)
-                intent.putExtra("resultMatrix", resultMatrix)
-                intent.putExtra("resultMatrixRows", resultMatrixRows)
-                intent.putExtra("resultMatrixColumns", resultMatrixColumns)
-
-                startActivity(intent)
-            }
-
-            keyboard.unClickEnterButton()
+            }, wait)
         }
     }
 
