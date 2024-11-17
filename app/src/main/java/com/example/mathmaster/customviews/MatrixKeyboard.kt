@@ -95,7 +95,7 @@ class MatrixKeyboard @JvmOverloads constructor(
         )
     }
 
-    fun refreshClickListeners(matrix: Matrix) {
+    private fun refreshClickListeners(matrix: Matrix) {
         matrix.getClickedMatrixCell()
     }
 

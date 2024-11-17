@@ -8,6 +8,7 @@ import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import androidx.activity.ComponentActivity
+import androidx.compose.runtime.key
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.example.mathmaster.customviews.BackButtonWithBar
 import com.example.mathmaster.customviews.Matrix
@@ -94,7 +95,7 @@ class MatrixCalculatorActivity : ComponentActivity() {
         val bottomBar: BackButtonWithBar = findViewById<BackButtonWithBar>(R.id.BottomBar)
         bottomBar.changeBackToExit()
 
-        // Calculate matrix that was before calculated
+        // Check is it first matrix that u calculate or user continue with matrix before
         if (sign == "i") {
             matrixCounter = 2
         }
@@ -103,6 +104,7 @@ class MatrixCalculatorActivity : ComponentActivity() {
             handler.post(showSign)
         }
 
+        // Calculate matrix that was before calculated
         if (matrixCounter >= 2) {
             for (i in resultMatrix) {
                 firstMatrix.add(i)
@@ -123,9 +125,15 @@ class MatrixCalculatorActivity : ComponentActivity() {
                     matrix.removeRow()
                     limit--
                 }
+
+                var run = false
                 while (limit < firstMatrixColumns) {
                     matrix.addRow()
                     limit++
+                    run = true
+                }
+                if (run) {
+                    matrix.getClickedMatrixCell()
                 }
 
                 val newWidth: Float = (matrix.getMatrixColumns() * 0.25f)
@@ -135,6 +143,9 @@ class MatrixCalculatorActivity : ComponentActivity() {
                 params.matchConstraintPercentHeight = newHeight
                 matrix.layoutParams = params
             }
+            else if (sign == "i") {
+
+            }
             else {
                 keyboard.removeMatrixButtons()
 
@@ -142,7 +153,6 @@ class MatrixCalculatorActivity : ComponentActivity() {
                 val params = keyboard.layoutParams as ConstraintLayout.LayoutParams
                 params.matchConstraintPercentHeight = 0.3f
             }
-
         }
 
         // Style of clicked button
@@ -191,9 +201,15 @@ class MatrixCalculatorActivity : ComponentActivity() {
                         matrix.removeRow()
                         limit--
                     }
+
+                    var run = false
                     while (limit < firstMatrixColumns) {
                         matrix.addRow()
                         limit++
+                        run = true
+                    }
+                    if (run) {
+                        matrix.getClickedMatrixCell()
                     }
 
                     val newWidth: Float = (matrix.getMatrixColumns() * 0.25f)
