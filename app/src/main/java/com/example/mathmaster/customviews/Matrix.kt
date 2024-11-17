@@ -233,14 +233,15 @@ class Matrix @JvmOverloads constructor(
         updateGrid()
     }
 
-    fun setResultMatrix(matrix: Matrix, resultMatrix: IntArray, rows: Int, columns: Int) {
+    fun setResultMatrix(matrix: Matrix, resultMatrix: IntArray, rows: Int, columns: Int, clickable: Boolean) {
         // Fill matrix
         cellsArray.clear()
         for(i in resultMatrix) {
             val cell = createCell()
             cell.cell.setText(i.toString())
-            cell.cell.isFocusable = false
-            cell.cell.isClickable = false
+            if(!clickable) {
+                cell.cell.isClickable = false
+            }
             cellsArray.add(cell)
         }
 

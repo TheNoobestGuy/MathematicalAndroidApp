@@ -1,7 +1,6 @@
 package com.example.mathmaster.customviews
 
 import android.content.Context
-import android.provider.Settings.Global
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.widget.Button

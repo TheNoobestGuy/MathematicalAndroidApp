@@ -9,12 +9,30 @@ import com.example.mathmaster.customviews.MatrixResultMenu
 
 class MatrixCalculatorMenuActivity : ComponentActivity() {
 
-    private fun clickFunction (button: Button, drawable: Int, view: ComponentActivity, sign: String) {
+    private fun clickFunction(button: Button, drawable: Int, view: ComponentActivity) {
         button.setOnClickListener {
             button.setBackgroundResource(drawable)
 
             val intent = Intent(this, view::class.java)
+            startActivity(intent)
+        }
+    }
+
+    private fun clickFunction (button: Button, drawable: Int, view: ComponentActivity, sign: String) {
+        button.setOnClickListener {
+            button.setBackgroundResource(drawable)
+
+            val resultMatrix: IntArray = IntArray(0)
+            val resultMatrixRows: Int = 0
+            val resultMatrixColumns: Int = 0
+
+            val intent = Intent(this, view::class.java)
+            intent.putExtra("show", false)
             intent.putExtra("sign", sign)
+            intent.putExtra("matrixCounter", 1)
+            intent.putExtra("resultMatrix", resultMatrix)
+            intent.putExtra("resultMatrixRows", resultMatrixRows)
+            intent.putExtra("resultMatrixColumns", resultMatrixColumns)
             startActivity(intent)
         }
     }
@@ -35,8 +53,8 @@ class MatrixCalculatorMenuActivity : ComponentActivity() {
         clickFunction(matrixMenu.getMultipluButton(), clickedButtonStyle, MatrixCalculatorActivity(), "×")
         clickFunction(matrixMenu.getAddButton(), clickedButtonStyle, MatrixCalculatorActivity(), "+")
         clickFunction(matrixMenu.getSubtractButton(), clickedButtonStyle, MatrixCalculatorActivity(), "-")
-        clickFunction(matrixMenu.getInfoButton(), clickedButtonStyle, ToolsActivity(), "0")
-        clickFunction(bottomBar.returnBackButton(), clickedButtonStyle, ToolsActivity(), "0")
+        clickFunction(matrixMenu.getInfoButton(), clickedButtonStyle, ToolsActivity(), "i")
+        clickFunction(bottomBar.returnBackButton(), clickedButtonStyle, ToolsActivity())
     }
 
     override fun onBackPressed() {

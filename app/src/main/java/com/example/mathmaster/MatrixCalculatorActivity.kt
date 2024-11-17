@@ -6,7 +6,6 @@ import android.os.Handler
 import android.os.Looper
 import android.view.View
 import android.widget.Button
-import android.widget.EditText
 import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -18,7 +17,6 @@ class MatrixCalculatorActivity : ComponentActivity() {
 
     // Variables
     private var showSignCounter = 1
-    private var matrixCounter = 1
     private val handler = Handler(Looper.getMainLooper())
 
     // Matrix
@@ -41,6 +39,10 @@ class MatrixCalculatorActivity : ComponentActivity() {
             // Change sign
             showSign.text = sign
             showSign.visibility = View.VISIBLE
+
+            matrix.visibility = View.INVISIBLE
+            keyboard.visibility = View.INVISIBLE
+            bottomBar.visibility = View.INVISIBLE
 
             // Update counter
             if (showSignCounter > 0) {
@@ -75,10 +77,15 @@ class MatrixCalculatorActivity : ComponentActivity() {
 
         // Sign
         val sign: String = intent.getStringExtra("sign")!!
-        println("SIGN!!!")
-        println(sign)
+        val show: Boolean = intent.getBooleanExtra("show", false)
+
         // Matrix
         val matrix: Matrix = findViewById<Matrix>(R.id.Matrix)
+
+        var matrixCounter = intent.getIntExtra("matrixCounter", 1)
+        var resultMatrix: IntArray = intent.getIntArrayExtra("resultMatrix")!!
+        var resultMatrixRows: Int = intent.getIntExtra("resultMatrixRows", 0)
+        var resultMatrixColumns: Int = intent.getIntExtra("resultMatrixColumns", 0)
 
         // Interactive menu
         val keyboard: MatrixKeyboard = findViewById<MatrixKeyboard>(R.id.Keyboard)
@@ -86,6 +93,53 @@ class MatrixCalculatorActivity : ComponentActivity() {
         // Menu buttons
         val bottomBar: BackButtonWithBar = findViewById<BackButtonWithBar>(R.id.BottomBar)
         bottomBar.changeBackToExit()
+
+        // Calculate matrix that was before calculated
+        if (sign == "i") {
+            matrixCounter = 2
+        }
+
+        if (show) {
+            handler.post(showSign)
+        }
+
+        if (matrixCounter >= 2) {
+            for (i in resultMatrix) {
+                firstMatrix.add(i)
+            }
+            firstMatrixRows = resultMatrixRows
+            firstMatrixColumns = resultMatrixColumns
+
+            // Remove redundant buttons and change size of keyboard
+            if (sign == "×") {
+                keyboard.matrixMultiplicationMode()
+
+                while (matrix.getMatrixColumns() > 1) {
+                    matrix.removeColumn()
+                }
+
+                var i = firstMatrixRows
+                while (i > firstMatrixColumns) {
+                    matrix.removeRow()
+                    i--
+                }
+
+                val newWidth: Float = (matrix.getMatrixColumns() * 0.25f)
+                val newHeight: Float = (matrix.getMatrixRows() * 0.25f)
+                val params = matrix.layoutParams as ConstraintLayout.LayoutParams
+                params.matchConstraintPercentWidth = newWidth
+                params.matchConstraintPercentHeight = newHeight
+                matrix.layoutParams = params
+            }
+            else {
+                keyboard.removeMatrixButtons()
+
+                // Change calculator size
+                val params = keyboard.layoutParams as ConstraintLayout.LayoutParams
+                params.matchConstraintPercentHeight = 0.3f
+            }
+
+        }
 
         // Style of clicked button
         val clickedButtonStyle = R.drawable.menubutton_background_clicked
@@ -128,10 +182,14 @@ class MatrixCalculatorActivity : ComponentActivity() {
                         matrix.removeColumn()
                     }
 
-                    var i = firstMatrixRows
-                    while (i > firstMatrixColumns) {
+                    var limit = matrix.getMatrixRows()
+                    while (limit > firstMatrixColumns) {
                         matrix.removeRow()
-                        i--
+                        limit--
+                    }
+                    while (limit < firstMatrixColumns) {
+                        matrix.addRow()
+                        limit++
                     }
 
                     val newWidth: Float = (matrix.getMatrixColumns() * 0.25f)
@@ -155,10 +213,10 @@ class MatrixCalculatorActivity : ComponentActivity() {
                 secondMatrix = matrix.getMatrixValues()
 
                 // Make calculations
-                val resultMatrixRows = firstMatrixRows
-                val resultMatrixColumns = matrix.getMatrixColumns()
+                resultMatrixRows = firstMatrixRows
+                resultMatrixColumns = matrix.getMatrixColumns()
                 val resultMatrixSize = resultMatrixRows * resultMatrixColumns
-                val resultMatrix: IntArray = IntArray(resultMatrixSize)
+                resultMatrix = IntArray(resultMatrixSize)
 
                 if (sign == "+") {
                     for(i in firstMatrix.indices) {
@@ -170,9 +228,12 @@ class MatrixCalculatorActivity : ComponentActivity() {
                         resultMatrix[i] = firstMatrix[i] - secondMatrix[i]
                     }
                 }
+                // Handle information about matrix
+                else if (sign == "i") {
+
+                }
                 // Handle multiplication
                 else {
-                    val limit = firstMatrixRows * firstMatrixColumns
                     var resultMatrixIndex = 0
                     var row = 0
                     while (resultMatrixIndex < resultMatrix.size) {
@@ -183,7 +244,6 @@ class MatrixCalculatorActivity : ComponentActivity() {
                             var equation = 0
                             var col = 0
 
-                            print("LEAP!!")
                             while (col < firstMatrixColumns) {
                                 println(secondMatrix[leap])
                                 val index = (row * firstMatrixColumns) + col

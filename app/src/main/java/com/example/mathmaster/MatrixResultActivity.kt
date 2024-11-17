@@ -10,11 +10,11 @@ import android.widget.TextView
 import androidx.activity.ComponentActivity
 import com.example.mathmaster.customviews.BackButtonWithBar
 import com.example.mathmaster.customviews.Matrix
-import com.example.mathmaster.customviews.MatrixKeyboard
 import com.example.mathmaster.customviews.MatrixResultMenu
 
 class MatrixResultActivity : ComponentActivity() {
 
+    private var sign = "="
     private var showSignCounter = 1
     private val handler = Handler(Looper.getMainLooper())
 
@@ -23,6 +23,24 @@ class MatrixResultActivity : ComponentActivity() {
             button.setBackgroundResource(drawable)
 
             val intent = Intent(this, view::class.java)
+            startActivity(intent)
+        }
+    }
+
+    private fun clickFunction (button: Button, drawable: Int, view: ComponentActivity,
+                               sign: String, resultMatrix: IntArray,
+                               resultMatrixRows: Int, resultMatrixColumns: Int) {
+        button.setOnClickListener {
+            button.setBackgroundResource(drawable)
+
+            val intent = Intent(this, view::class.java)
+            intent.putExtra("show", true)
+            intent.putExtra("sign", sign)
+            intent.putExtra("matrixCounter", 2)
+            intent.putExtra("resultMatrix", resultMatrix)
+            intent.putExtra("resultMatrixRows", resultMatrixRows)
+            intent.putExtra("resultMatrixColumns", resultMatrixColumns)
+
             startActivity(intent)
         }
     }
@@ -38,7 +56,9 @@ class MatrixResultActivity : ComponentActivity() {
             bottomBar.changeBackToExit()
 
             // Disable visibility of content
+            showSign.text = sign
             showSign.visibility = View.VISIBLE
+
             matrix.visibility = View.INVISIBLE
             matrixMenu.visibility = View.INVISIBLE
             bottomBar.visibility = View.INVISIBLE
@@ -73,7 +93,7 @@ class MatrixResultActivity : ComponentActivity() {
         val resultMatrix: IntArray = intent.getIntArrayExtra("resultMatrix")!!
         val resultMatrixRows: Int = intent.getIntExtra("resultMatrixRows", 0)
         val resultMatrixColumns: Int = intent.getIntExtra("resultMatrixColumns", 0)
-        matrix.setResultMatrix(matrix, resultMatrix, resultMatrixRows, resultMatrixColumns)
+        matrix.setResultMatrix(matrix, resultMatrix, resultMatrixRows, resultMatrixColumns, false)
 
         // Menu buttons
         val matrixMenu: MatrixResultMenu = findViewById<MatrixResultMenu>(R.id.MenuBlock)
@@ -84,6 +104,14 @@ class MatrixResultActivity : ComponentActivity() {
         val clickedButtonStyle = R.drawable.menubutton_background_clicked
 
         // On click functions
+        clickFunction(matrixMenu.getMultipluButton(), clickedButtonStyle, MatrixCalculatorActivity(),
+            "×", resultMatrix, resultMatrixRows, resultMatrixColumns)
+        clickFunction(matrixMenu.getAddButton(), clickedButtonStyle, MatrixCalculatorActivity(),
+            "+", resultMatrix, resultMatrixRows, resultMatrixColumns)
+        clickFunction(matrixMenu.getSubtractButton(), clickedButtonStyle, MatrixCalculatorActivity(),
+            "-", resultMatrix, resultMatrixRows, resultMatrixColumns)
+        clickFunction(matrixMenu.getInfoButton(), clickedButtonStyle, MatrixCalculatorActivity(),
+            "i", resultMatrix, resultMatrixRows, resultMatrixColumns)
         clickFunction(bottomBar.returnBackButton(), clickedButtonStyle, MatrixCalculatorMenuActivity())
     }
 }
