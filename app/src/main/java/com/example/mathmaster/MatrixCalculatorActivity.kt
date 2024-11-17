@@ -75,7 +75,8 @@ class MatrixCalculatorActivity : ComponentActivity() {
 
         // Sign
         val sign: String = intent.getStringExtra("sign")!!
-
+        println("SIGN!!!")
+        println(sign)
         // Matrix
         val matrix: Matrix = findViewById<Matrix>(R.id.Matrix)
 
@@ -164,7 +165,7 @@ class MatrixCalculatorActivity : ComponentActivity() {
                         resultMatrix[i] = firstMatrix[i] + secondMatrix[i]
                     }
                 }
-                if (sign == "-") {
+                else if (sign == "-") {
                     for(i in firstMatrix.indices) {
                         resultMatrix[i] = firstMatrix[i] - secondMatrix[i]
                     }
