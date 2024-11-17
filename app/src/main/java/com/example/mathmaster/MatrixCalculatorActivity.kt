@@ -126,9 +126,18 @@ class MatrixCalculatorActivity : ComponentActivity() {
                     while (matrix.getMatrixColumns() > 1) {
                         matrix.removeColumn()
                     }
+
+                    var i = firstMatrixRows
+                    while (i > firstMatrixColumns) {
+                        matrix.removeRow()
+                        i--
+                    }
+
                     val newWidth: Float = (matrix.getMatrixColumns() * 0.25f)
+                    val newHeight: Float = (matrix.getMatrixRows() * 0.25f)
                     val params = matrix.layoutParams as ConstraintLayout.LayoutParams
                     params.matchConstraintPercentWidth = newWidth
+                    params.matchConstraintPercentHeight = newHeight
                     matrix.layoutParams = params
                 }
                 else {
