@@ -8,14 +8,10 @@ import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import androidx.activity.ComponentActivity
-import androidx.compose.runtime.key
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.example.mathmaster.customviews.BackButtonWithBar
 import com.example.mathmaster.customviews.Matrix
 import com.example.mathmaster.customviews.MatrixKeyboard
-import kotlinx.coroutines.delay
-import java.util.Timer
-import java.util.TimerTask
 
 class MatrixCalculatorActivity : ComponentActivity() {
 
@@ -139,6 +135,7 @@ class MatrixCalculatorActivity : ComponentActivity() {
                     matrix.getClickedMatrixCell()
                 }
 
+                // Change matrix size
                 val newWidth: Float = (matrix.getMatrixColumns() * 0.25f)
                 val newHeight: Float = (matrix.getMatrixRows() * 0.25f)
                 val params = matrix.layoutParams as ConstraintLayout.LayoutParams
@@ -152,9 +149,37 @@ class MatrixCalculatorActivity : ComponentActivity() {
             else {
                 keyboard.removeMatrixButtons()
 
+                var limit = matrix.getMatrixRows()
+                var run = false
+                while (limit < firstMatrixRows) {
+                    matrix.addRow()
+                    limit++
+                    run = true
+                }
+
+                limit = matrix.getMatrixColumns()
+                while (limit < firstMatrixColumns) {
+                    matrix.addColumn()
+                    limit++
+                    run = true
+                }
+
+                if (run) {
+                    matrix.getClickedMatrixCell()
+                }
+
+                // Change matrix size
+                val newWidth: Float = (matrix.getMatrixColumns() * 0.25f)
+                val newHeight: Float = (matrix.getMatrixRows() * 0.25f)
+                var params = matrix.layoutParams as ConstraintLayout.LayoutParams
+                params.matchConstraintPercentWidth = newWidth
+                params.matchConstraintPercentHeight = newHeight
+                matrix.layoutParams = params
+
                 // Change calculator size
-                val params = keyboard.layoutParams as ConstraintLayout.LayoutParams
+                params = keyboard.layoutParams as ConstraintLayout.LayoutParams
                 params.matchConstraintPercentHeight = 0.3f
+                keyboard.layoutParams = params
             }
         }
 
