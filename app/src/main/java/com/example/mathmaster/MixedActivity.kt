@@ -6,11 +6,9 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
 import androidx.activity.ComponentActivity
-import androidx.constraintlayout.widget.ConstraintLayout
 import android.os.Handler
 import android.os.Looper
 import android.view.View
-import com.example.mathmaster.customviews.BackButtonWithBar
 import kotlin.random.Random
 import java.util.ArrayDeque
 
@@ -28,13 +26,11 @@ class MixedActivity : ComponentActivity() {
             val questionCounter: TextView = findViewById<TextView>(R.id.QuestionCounter)
             val equation: TextView = findViewById<TextView>(R.id.Equation)
             val keyboard: Keyboard = findViewById<Keyboard>(R.id.Keyboard)
-            val bottomBar: BackButtonWithBar = findViewById<BackButtonWithBar>(R.id.BottomBar)
 
             // Disable visibility of content
             questionCounter.visibility = View.INVISIBLE
             equation.visibility = View.INVISIBLE
             keyboard.visibility = View.INVISIBLE
-            bottomBar.visibility = View.INVISIBLE
 
             // Update counter
             if (waitCounterValue > 0) {
@@ -48,7 +44,6 @@ class MixedActivity : ComponentActivity() {
                 questionCounter.visibility = View.VISIBLE
                 equation.visibility = View.VISIBLE
                 keyboard.visibility = View.VISIBLE
-                bottomBar.visibility = View.VISIBLE
 
                 handler.removeCallbacks(this)
             }
@@ -153,21 +148,9 @@ class MixedActivity : ComponentActivity() {
         val questionCounter: TextView = findViewById<TextView>(R.id.QuestionCounter)
         val equation: TextView = findViewById<TextView>(R.id.Equation)
         val keyboard: Keyboard = findViewById<Keyboard>(R.id.Keyboard)
-        val bottomBar: BackButtonWithBar = findViewById<BackButtonWithBar>(R.id.BottomBar)
-        bottomBar.changeBackToExit()
 
         // Count before start of game
         handler.post(countBeforeStart)
-
-        // Get height of a screen
-        val displayMetrics = resources.displayMetrics
-        val screenHeight = displayMetrics.heightPixels
-        val equationTopMargin: Int = (screenHeight * 0.15).toInt()
-
-        // Adjust screen height equation
-        val layoutParamsEquation = equation.layoutParams as ConstraintLayout.LayoutParams
-        layoutParamsEquation.topMargin = equationTopMargin
-        equation.layoutParams = layoutParamsEquation
 
         // Database
         var questionCounterValue = 0
@@ -398,12 +381,6 @@ class MixedActivity : ComponentActivity() {
         var bufforEquation: String = "$firstNum $firstSign $secondNum $secondSign $thirdNum"
         equation.text = bufforEquation
 
-        // Style of clicked button
-        val clickedButtonStyle = R.drawable.menubutton_background_clicked
-
-        // On click functions
-        clickFunction(bottomBar.returnBackButton(), clickedButtonStyle, PracticeActivity())
-
         // Keyboard
         keyboard.numberButtonClick()
         keyboard.deleteButtonClick()
@@ -506,6 +483,7 @@ class MixedActivity : ComponentActivity() {
     }
 
     override fun onBackPressed() {
-        // Do nothing, which disables the back button
+        val intent = Intent(this, PracticeActivity()::class.java)
+        startActivity(intent)
     }
 }

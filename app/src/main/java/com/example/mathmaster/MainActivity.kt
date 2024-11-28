@@ -56,8 +56,4 @@ class MainActivity : ComponentActivity() {
         clickFunction(toolsButton, clickedButtonStyle, ToolsActivity())
         clickFunction(statisticsButton, clickedButtonStyle, StatisticsActivity())
     }
-
-    override fun onBackPressed() {
-        // Do nothing, which disables the back button
-    }
 }

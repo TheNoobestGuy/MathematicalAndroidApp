@@ -5,17 +5,92 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <Button
-        android:id="@+id/Back"
-        style="@style/MenuButtonStyle"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:text="@string/Back"
+    <ScrollView
+        android:id="@+id/Chat"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="5dp"
+        app:layout_constraintBottom_toTopOf="@+id/MessageBox"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_percent="0.75"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/TitleBox"
+        app:layout_constraintVertical_bias="1.0">
+
+    </ScrollView>
+
+    <RelativeLayout
+        android:id="@+id/TitleBox"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_percent="0.1"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+    </RelativeLayout>
+
+    <GridLayout
+        android:id="@+id/MessageBox"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:rowCount="1"
+        android:columnCount="7"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.934"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintWidth_percent="0.4" />
+        app:layout_constraintHeight_percent="0.15"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <TextView
+            android:layout_row="0"
+            android:layout_column="0"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_rowWeight="1"
+            android:layout_columnWeight="1"
+            android:layout_columnSpan="1"/>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:background="@drawable/chatmessagebox_background"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_row="0"
+            android:layout_rowWeight="1"
+            android:layout_column="1"
+            android:layout_columnSpan="5"
+            android:layout_columnWeight="5"
+            android:layout_margin="8dp"
+            android:layout_marginTop="32dp"
+            android:layout_marginBottom="32dp"
+            android:columnCount="1"
+            android:rowCount="1">
+
+            <EditText
+                android:id="@+id/MessageBlock"
+                android:textColor="@color/White"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:background="@null"
+                android:inputType="text"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintWidth_percent="0.75"
+                app:layout_constraintHeight_percent="0.7"/>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <TextView
+            android:layout_row="0"
+            android:layout_column="6"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_rowWeight="1"
+            android:layout_columnWeight="1"
+            android:layout_columnSpan="1"/>
+
+    </GridLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

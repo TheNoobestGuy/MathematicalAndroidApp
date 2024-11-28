@@ -8,7 +8,6 @@ import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import androidx.activity.ComponentActivity
-import com.example.mathmaster.customviews.BackButtonWithBar
 import com.example.mathmaster.customviews.Matrix
 import com.example.mathmaster.customviews.MatrixResultMenu
 
@@ -52,8 +51,6 @@ class MatrixResultActivity : ComponentActivity() {
             val showSign: TextView = findViewById<TextView>(R.id.showSign)
             val matrix: Matrix = findViewById<Matrix>(R.id.Matrix)
             val matrixMenu: MatrixResultMenu = findViewById<MatrixResultMenu>(R.id.MenuBlock)
-            val bottomBar: BackButtonWithBar = findViewById<BackButtonWithBar>(R.id.BottomBar)
-            bottomBar.changeBackToExit()
 
             // Disable visibility of content
             showSign.text = sign
@@ -61,7 +58,6 @@ class MatrixResultActivity : ComponentActivity() {
 
             matrix.visibility = View.INVISIBLE
             matrixMenu.visibility = View.INVISIBLE
-            bottomBar.visibility = View.INVISIBLE
 
             // Update counter
             if (showSignCounter > 0) {
@@ -71,7 +67,6 @@ class MatrixResultActivity : ComponentActivity() {
 
                 matrix.visibility = View.VISIBLE
                 matrixMenu.visibility = View.VISIBLE
-                bottomBar.visibility = View.VISIBLE
 
                 showSignCounter = 2
                 handler.removeCallbacks(this)
@@ -97,9 +92,6 @@ class MatrixResultActivity : ComponentActivity() {
 
         // Menu buttons
         val matrixMenu: MatrixResultMenu = findViewById<MatrixResultMenu>(R.id.MenuBlock)
-        val bottomBar: BackButtonWithBar = findViewById<BackButtonWithBar>(R.id.BottomBar)
-        bottomBar.changeBackToExit()
-
         // Style of clicked button
         val clickedButtonStyle = R.drawable.menubutton_background_clicked
 
@@ -112,6 +104,10 @@ class MatrixResultActivity : ComponentActivity() {
             "-", resultMatrix, resultMatrixRows, resultMatrixColumns)
         clickFunction(matrixMenu.getInfoButton(), clickedButtonStyle, MatrixCalculatorActivity(),
             "i", resultMatrix, resultMatrixRows, resultMatrixColumns)
-        clickFunction(bottomBar.returnBackButton(), clickedButtonStyle, MatrixCalculatorMenuActivity())
+    }
+
+    override fun onBackPressed() {
+        val intent = Intent(this, MatrixCalculatorMenuActivity()::class.java)
+        startActivity(intent)
     }
 }

@@ -10,7 +10,6 @@ import android.os.Handler
 import android.os.Looper
 import android.view.View
 import androidx.constraintlayout.widget.ConstraintLayout
-import com.example.mathmaster.customviews.BackButtonWithBar
 import kotlin.random.Random
 
 class AddSubtractActivity : ComponentActivity() {
@@ -27,13 +26,11 @@ class AddSubtractActivity : ComponentActivity() {
             val questionCounter: TextView = findViewById<TextView>(R.id.QuestionCounter)
             val equation: TextView = findViewById<TextView>(R.id.Equation)
             val keyboard: Keyboard = findViewById<Keyboard>(R.id.Keyboard)
-            val bottomBar: BackButtonWithBar = findViewById<BackButtonWithBar>(R.id.BottomBar)
 
             // Disable visibility of content
             questionCounter.visibility = View.INVISIBLE
             equation.visibility = View.INVISIBLE
             keyboard.visibility = View.INVISIBLE
-            bottomBar.visibility = View.INVISIBLE
 
             // Update counter
             if (waitCounterValue > 0) {
@@ -47,7 +44,6 @@ class AddSubtractActivity : ComponentActivity() {
                 questionCounter.visibility = View.VISIBLE
                 equation.visibility = View.VISIBLE
                 keyboard.visibility = View.VISIBLE
-                bottomBar.visibility = View.VISIBLE
 
                 handler.removeCallbacks(this)
             }
@@ -74,18 +70,6 @@ class AddSubtractActivity : ComponentActivity() {
         val questionCounter: TextView = findViewById<TextView>(R.id.QuestionCounter)
         val equation: TextView = findViewById<TextView>(R.id.Equation)
         val keyboard: Keyboard = findViewById<Keyboard>(R.id.Keyboard)
-        val bottomBar: BackButtonWithBar = findViewById<BackButtonWithBar>(R.id.BottomBar)
-        bottomBar.changeBackToExit()
-
-        // Get height of a screen
-        val displayMetrics = resources.displayMetrics
-        val screenHeight = displayMetrics.heightPixels
-        val equationTopMargin: Int = (screenHeight * 0.17).toInt()
-
-        // Adjust screen height to equation
-        val layoutParamsLogo = equation.layoutParams as ConstraintLayout.LayoutParams
-        layoutParamsLogo.topMargin = equationTopMargin
-        equation.layoutParams = layoutParamsLogo
 
         // Count before start of game
         handler.post(countBeforeStart)
@@ -134,12 +118,6 @@ class AddSubtractActivity : ComponentActivity() {
             bufforEquation = "$firstNum - $secondNum"
         }
         equation.text = bufforEquation
-
-        // Style of clicked button
-        val clickedButtonStyle = R.drawable.menubutton_background_clicked
-
-        // On click functions
-        clickFunction(bottomBar.returnBackButton(), clickedButtonStyle, PracticeActivity())
 
         // Keyboard
         keyboard.numberButtonClick()
@@ -233,6 +211,7 @@ class AddSubtractActivity : ComponentActivity() {
     }
 
     override fun onBackPressed() {
-        // Do nothing, which disables the back button
+        val intent = Intent(this, PracticeActivity()::class.java)
+        startActivity(intent)
     }
 }
