@@ -30,22 +30,6 @@ class MainActivity : ComponentActivity() {
         val toolsButton: Button = findViewById<Button>(R.id.Tools)
         val statisticsButton: Button = findViewById<Button>(R.id.Statistics)
 
-        // Get height of a screen
-        val displayMetrics = resources.displayMetrics
-        val screenHeight = displayMetrics.heightPixels
-
-        val logoTopMargin: Int = (screenHeight * 0.12).toInt()
-        val menuTopMargin: Int = (screenHeight * 0.3).toInt()
-
-        // Adjust screen height to logo and first button from menu
-        val layoutParamsLogo = logo.layoutParams as ConstraintLayout.LayoutParams
-        layoutParamsLogo.topMargin = logoTopMargin
-        logo.layoutParams = layoutParamsLogo
-
-        val layoutParamsMenu = learnButton.layoutParams as ConstraintLayout.LayoutParams
-        layoutParamsMenu.topMargin = menuTopMargin
-        learnButton.layoutParams = layoutParamsMenu
-
         // Style of clicked button
         val clickedButtonStyle = R.drawable.menubutton_background_clicked
 

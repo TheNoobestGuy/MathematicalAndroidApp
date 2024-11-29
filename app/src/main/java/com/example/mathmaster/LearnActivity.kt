@@ -25,7 +25,7 @@ class LearnActivity : ComponentActivity() {
     }
 
     override fun onBackPressed() {
-        val intent = Intent(this, MainActivity()::class.java)
+        val intent = Intent(this, MainMenuActivity()::class.java)
         startActivity(intent)
     }
 }

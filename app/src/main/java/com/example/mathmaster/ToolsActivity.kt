@@ -22,12 +22,14 @@ class ToolsActivity : ComponentActivity() {
 
         // Menu buttons
         val matrixCalcButton: Button = findViewById<Button>(R.id.MatrixCalculator)
+        val advancedCalcButton: Button = findViewById<Button>(R.id.AdvancedCalculator)
 
         // Style of clicked button
         val clickedButtonStyle = R.drawable.menubutton_background_clicked
 
         // On click functions
         clickFunction(matrixCalcButton, clickedButtonStyle, MatrixCalculatorMenuActivity())
+        clickFunction(advancedCalcButton, clickedButtonStyle, AdvancedCalculatorActivity())
     }
 
     override fun onBackPressed() {
