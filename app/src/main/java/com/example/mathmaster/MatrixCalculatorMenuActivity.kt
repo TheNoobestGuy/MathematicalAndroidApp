@@ -54,7 +54,7 @@ class MatrixCalculatorMenuActivity : ComponentActivity() {
     }
 
     override fun onBackPressed() {
-        val intent = Intent(this, MainMenuActivity()::class.java)
+        val intent = Intent(this, ToolsActivity()::class.java)
         startActivity(intent)
     }
 }

@@ -118,7 +118,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
     private fun convertNumber(number:Double, power: Int, divide: Boolean): Double {
         var result = number
 
-        for (i in 0 until power) {
+        for (i in 1 until power) {
             if (divide) {
                 result /= 10
             }
@@ -172,18 +172,11 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     transformedEquation.add(doubleBuffor)
                 }
 
-                if (element == 'x' || element == '/') {
-                    if (openedBrackets) {
+                if (element == 'X' || element == '/') {
+                    if (!openedBrackets) {
                         transformedEquation.add('(')
                     }
                     openedBrackets = true
-                }
-                else if (element == '+' || element == '-') {
-                    if (openedBrackets) {
-                        transformedEquation.add(')')
-                    }
-
-                    openedBrackets = false
                 }
                 else if (element == '^') {
                     transformedEquation.add('(')
@@ -198,6 +191,14 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     else {
                         doubleBuffor = outputNumber
                     }
+                }
+
+                if (element == '+' || element == '-') {
+                    if (openedBrackets) {
+                        transformedEquation.add(')')
+                    }
+
+                    openedBrackets = false
                 }
 
                 transformedEquation.add(element)
@@ -242,6 +243,16 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 enterButton.setBackgroundResource(clickedButtonStyle)
 
                 // Calculation
+                val equation = transformEquation(textView.text.toString())
+
+                var buffor: String = ""
+
+                for (i in equation) {
+                    println(i.toString())
+                    buffor += i.toString()
+                }
+
+                textView.text = buffor
 
                 GlobalScope.launch(Dispatchers.Main) {
                     delay(200)
