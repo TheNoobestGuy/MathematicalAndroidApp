@@ -31,17 +31,6 @@ class PracticeActivity : ComponentActivity() {
         val divideButton: Button = findViewById<Button>(R.id.Divide)
         val addSubtractButton: Button = findViewById<Button>(R.id.AddSubtract)
         val mixedButton: Button = findViewById<Button>(R.id.Mixed)
-        val backButton: Button = findViewById<Button>(R.id.Back)
-
-        // Get height of a screen
-        val displayMetrics = resources.displayMetrics
-        val screenHeight = displayMetrics.heightPixels
-
-        val menuBlockTopMargin: Int = (screenHeight * 0.12).toInt()
-
-        val layoutParamsStatistics = menuBlockView.layoutParams as ConstraintLayout.LayoutParams
-        layoutParamsStatistics.topMargin = menuBlockTopMargin
-        menuBlockView.layoutParams = layoutParamsStatistics
 
         // Style of clicked button
         val clickedButtonStyle = R.drawable.menubutton_background_clicked
@@ -51,10 +40,10 @@ class PracticeActivity : ComponentActivity() {
         clickFunction(divideButton, clickedButtonStyle, DivideActivity())
         clickFunction(addSubtractButton, clickedButtonStyle, AddSubtractActivity())
         clickFunction(mixedButton, clickedButtonStyle, MixedActivity())
-        clickFunction(backButton, clickedButtonStyle, MainActivity())
     }
 
     override fun onBackPressed() {
-        // Do nothing, which disables the back button
+        val intent = Intent(this, MainMenuActivity()::class.java)
+        startActivity(intent)
     }
 }

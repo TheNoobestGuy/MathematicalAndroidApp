@@ -20,17 +20,12 @@ class LearnActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.learn_activity)
 
-        // Menu buttons
-        val backButton: Button = findViewById<Button>(R.id.Back)
-
         // Style of clicked button
         val clickedButtonStyle = R.drawable.menubutton_background_clicked
-
-        // On click functions
-        clickFunction(backButton, clickedButtonStyle, MainActivity())
     }
 
     override fun onBackPressed() {
-        // Do nothing, which disables the back button
+        val intent = Intent(this, MainMenuActivity()::class.java)
+        startActivity(intent)
     }
 }

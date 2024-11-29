@@ -4,7 +4,6 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import androidx.activity.ComponentActivity
-import com.example.mathmaster.customviews.BackButtonWithBar
 import com.example.mathmaster.customviews.MatrixResultMenu
 
 class MatrixCalculatorMenuActivity : ComponentActivity() {
@@ -43,8 +42,6 @@ class MatrixCalculatorMenuActivity : ComponentActivity() {
 
         // Menu buttons
         val matrixMenu: MatrixResultMenu = findViewById<MatrixResultMenu>(R.id.MenuBlock)
-        val bottomBar: BackButtonWithBar = findViewById<BackButtonWithBar>(R.id.BottomBar)
-        bottomBar.changeBackToExit()
 
         // Style of clicked button
         val clickedButtonStyle = R.drawable.menubutton_background_clicked
@@ -54,10 +51,10 @@ class MatrixCalculatorMenuActivity : ComponentActivity() {
         clickFunction(matrixMenu.getAddButton(), clickedButtonStyle, MatrixCalculatorActivity(), "+")
         clickFunction(matrixMenu.getSubtractButton(), clickedButtonStyle, MatrixCalculatorActivity(), "-")
         clickFunction(matrixMenu.getInfoButton(), clickedButtonStyle, ToolsActivity(), "i")
-        clickFunction(bottomBar.returnBackButton(), clickedButtonStyle, ToolsActivity())
     }
 
     override fun onBackPressed() {
-        // Do nothing, which disables the back button
+        val intent = Intent(this, MainMenuActivity()::class.java)
+        startActivity(intent)
     }
 }

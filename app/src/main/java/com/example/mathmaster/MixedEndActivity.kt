@@ -202,9 +202,6 @@ class MixedEndActivity : ComponentActivity() {
             scrollBoxLinearLayout.addView(newConstraintLayout)
         }
 
-        // Menu buttons
-        val exitButton: Button = findViewById<Button>(R.id.Exit)
-
         // Calculate statistics
         var correctAnswersCounter = 0
         var incorrectAnswersCounter = 0
@@ -221,15 +218,10 @@ class MixedEndActivity : ComponentActivity() {
         totalQuestions.text = numberOfQuestions.toString()
         correctAnswersValue.text = correctAnswersCounter.toString()
         incorrectAnswersValue.text = incorrectAnswersCounter.toString()
-
-        // Style of clicked button
-        val clickedButtonStyle = R.drawable.menubutton_background_clicked
-
-        // On click functions
-        clickFunction(exitButton, clickedButtonStyle, PracticeActivity())
     }
 
     override fun onBackPressed() {
-        // Do nothing, which disables the back button
+        val intent = Intent(this, PracticeActivity()::class.java)
+        startActivity(intent)
     }
 }

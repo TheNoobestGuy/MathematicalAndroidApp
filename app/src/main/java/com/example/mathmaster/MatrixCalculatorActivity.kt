@@ -8,14 +8,9 @@ import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import androidx.activity.ComponentActivity
-import androidx.compose.runtime.key
 import androidx.constraintlayout.widget.ConstraintLayout
-import com.example.mathmaster.customviews.BackButtonWithBar
 import com.example.mathmaster.customviews.Matrix
 import com.example.mathmaster.customviews.MatrixKeyboard
-import kotlinx.coroutines.delay
-import java.util.Timer
-import java.util.TimerTask
 
 class MatrixCalculatorActivity : ComponentActivity() {
 
@@ -37,8 +32,6 @@ class MatrixCalculatorActivity : ComponentActivity() {
             val showSign: TextView = findViewById<TextView>(R.id.showSign)
             val matrix: Matrix = findViewById<Matrix>(R.id.Matrix)
             val keyboard: MatrixKeyboard = findViewById<MatrixKeyboard>(R.id.Keyboard)
-            val bottomBar: BackButtonWithBar = findViewById<BackButtonWithBar>(R.id.BottomBar)
-            bottomBar.changeBackToExit()
 
             // Change sign
             showSign.text = sign
@@ -46,7 +39,6 @@ class MatrixCalculatorActivity : ComponentActivity() {
 
             matrix.visibility = View.INVISIBLE
             keyboard.visibility = View.INVISIBLE
-            bottomBar.visibility = View.INVISIBLE
 
             // Update counter
             if (showSignCounter > 0) {
@@ -56,7 +48,6 @@ class MatrixCalculatorActivity : ComponentActivity() {
 
                 matrix.visibility = View.VISIBLE
                 keyboard.visibility = View.VISIBLE
-                bottomBar.visibility = View.VISIBLE
 
                 showSignCounter = 2
                 handler.removeCallbacks(this)
@@ -94,10 +85,6 @@ class MatrixCalculatorActivity : ComponentActivity() {
         // Interactive menu
         val keyboard: MatrixKeyboard = findViewById<MatrixKeyboard>(R.id.Keyboard)
 
-        // Menu buttons
-        val bottomBar: BackButtonWithBar = findViewById<BackButtonWithBar>(R.id.BottomBar)
-        bottomBar.changeBackToExit()
-
         // Check is it first matrix that u calculate or user continue with matrix before
         if (sign == "i") {
             matrixCounter = 2
@@ -117,7 +104,12 @@ class MatrixCalculatorActivity : ComponentActivity() {
 
             // Remove redundant buttons and change size of keyboard
             if (sign == "×") {
-                keyboard.matrixMultiplicationMode()
+                if (firstMatrixRows == 1 && firstMatrixColumns == 1) {
+
+                }
+                else {
+                    keyboard.matrixMultiplicationMode()
+                }
 
                 while (matrix.getMatrixColumns() > 1) {
                     matrix.removeColumn()
@@ -139,6 +131,7 @@ class MatrixCalculatorActivity : ComponentActivity() {
                     matrix.getClickedMatrixCell()
                 }
 
+                // Change matrix size
                 val newWidth: Float = (matrix.getMatrixColumns() * 0.25f)
                 val newHeight: Float = (matrix.getMatrixRows() * 0.25f)
                 val params = matrix.layoutParams as ConstraintLayout.LayoutParams
@@ -152,17 +145,42 @@ class MatrixCalculatorActivity : ComponentActivity() {
             else {
                 keyboard.removeMatrixButtons()
 
+                var limit = matrix.getMatrixRows()
+                var run = false
+                while (limit < firstMatrixRows) {
+                    matrix.addRow()
+                    limit++
+                    run = true
+                }
+
+                limit = matrix.getMatrixColumns()
+                while (limit < firstMatrixColumns) {
+                    matrix.addColumn()
+                    limit++
+                    run = true
+                }
+
+                if (run) {
+                    matrix.getClickedMatrixCell()
+                }
+
+                // Change matrix size
+                val newWidth: Float = (matrix.getMatrixColumns() * 0.25f)
+                val newHeight: Float = (matrix.getMatrixRows() * 0.25f)
+                var params = matrix.layoutParams as ConstraintLayout.LayoutParams
+                params.matchConstraintPercentWidth = newWidth
+                params.matchConstraintPercentHeight = newHeight
+                matrix.layoutParams = params
+
                 // Change calculator size
-                val params = keyboard.layoutParams as ConstraintLayout.LayoutParams
+                params = keyboard.layoutParams as ConstraintLayout.LayoutParams
                 params.matchConstraintPercentHeight = 0.3f
+                keyboard.layoutParams = params
             }
         }
 
         // Style of clicked button
         val clickedButtonStyle = R.drawable.menubutton_background_clicked
-
-        // On click functions
-        clickFunction(bottomBar.returnBackButton(), clickedButtonStyle, ToolsActivity())
 
         // Matrix event listener
         matrix.getClickedMatrixCell()
@@ -189,7 +207,6 @@ class MatrixCalculatorActivity : ComponentActivity() {
                     // Disable visibility of content
                     matrix.visibility = View.INVISIBLE
                     keyboard.visibility = View.INVISIBLE
-                    bottomBar.visibility = View.INVISIBLE
                     handler.post(showSign)
 
                     firstMatrix = matrix.getMatrixValues()
@@ -302,6 +319,7 @@ class MatrixCalculatorActivity : ComponentActivity() {
     }
 
     override fun onBackPressed() {
-        // Do nothing, which disables the back button
+        val intent = Intent(this, ToolsActivity()::class.java)
+        startActivity(intent)
     }
 }

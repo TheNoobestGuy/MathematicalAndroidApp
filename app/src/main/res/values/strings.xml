@@ -43,6 +43,26 @@
 
     // Tools
     <string name="MatrixCalculator" translatable="false">Matrix calculator</string>
+    <string name="AdvancedCalculator" translatable="false">Advanced calculator</string>
+
+    // Advance calculator
+    <string name="SecondCalc" translatable="false">2nd</string>
+    <string name="DegreeCalc" translatable="false">deg</string>
+    <string name="Sin" translatable="false">sin</string>
+    <string name="Cos" translatable="false">cos</string>
+    <string name="Tan" translatable="false">tan</string>
+
+    <string name="PowerTo" translatable="false">^</string>
+    <string name="Logaritm" translatable="false">lg</string>
+    <string name="NaturalLogaritm" translatable="false">ln</string>
+
+    <string name="Root" translatable="false">√x</string>
+    <string name="Factorial" translatable="false">x!</string>
+    <string name="Fraction" translatable="false">⅟</string>
+    <string name="PInumber" translatable="false">π</string>
+
+    <string name="Clear" translatable="false">C</string>
+
 
     // Matrix calculator
     <string name="RowPlus" translatable="false">Row+</string>

@@ -1,0 +1,429 @@
+<?xml version="1.0" encoding="utf-8"?>
+<GridLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/AdvanceCalculatorKeyboard"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:columnCount="5"
+    android:rowCount="7">
+
+    <Button
+        android:id="@+id/Change"
+        style="@style/MenuButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_row="0"
+        android:layout_column="0"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:layout_margin="4dp"
+        android:text="2nd" />
+
+    <Button
+        android:id="@+id/Degree"
+        style="@style/MenuButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_row="0"
+        android:layout_column="1"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:layout_margin="4dp"
+        android:text="@string/DegreeCalc" />
+
+    <Button
+        android:id="@+id/Sin"
+        style="@style/MenuButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_row="0"
+        android:layout_column="2"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:layout_margin="4dp"
+        android:text="@string/Sin" />
+
+    <Button
+        android:id="@+id/Cos"
+        style="@style/MenuButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_row="0"
+        android:layout_column="3"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:layout_margin="4dp"
+        android:text="@string/Cos" />
+
+    <Button
+        android:id="@+id/Tan"
+        style="@style/MenuButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_row="0"
+        android:layout_column="4"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:layout_margin="4dp"
+        android:text="@string/Tan" />
+
+    <Button
+        android:id="@+id/PowerTo"
+        style="@style/MenuButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_row="1"
+        android:layout_column="0"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:layout_margin="4dp"
+        android:text="@string/PowerTo" />
+
+    <Button
+        android:id="@+id/Logaritm"
+        style="@style/MenuButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_row="1"
+        android:layout_column="1"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:layout_margin="4dp"
+        android:text="@string/Logaritm" />
+
+    <Button
+        android:id="@+id/NLogaritm"
+        style="@style/MenuButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_row="1"
+        android:layout_column="2"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:layout_margin="4dp"
+        android:text="@string/NaturalLogaritm" />
+
+    <Button
+        android:id="@+id/FirstBracket"
+        style="@style/MenuButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_row="1"
+        android:layout_column="3"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:layout_margin="4dp"
+        android:text="(" />
+
+    <Button
+        android:id="@+id/SecondBracket"
+        style="@style/MenuButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_row="1"
+        android:layout_column="4"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:layout_margin="4dp"
+        android:text=")" />
+
+    <Button
+        android:id="@+id/Root"
+        style="@style/MenuButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_row="2"
+        android:layout_column="0"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:layout_margin="4dp"
+        android:text="@string/Root" />
+
+    <Button
+        android:id="@+id/Clear"
+        style="@style/MenuButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_row="2"
+        android:layout_column="1"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:layout_margin="4dp"
+        android:text="@string/Clear" />
+
+    <Button
+        android:id="@+id/Delete"
+        style="@style/MenuButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_row="2"
+        android:layout_column="2"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:layout_margin="4dp"
+        android:text="@string/Delete" />
+
+    <Button
+        android:id="@+id/Procent"
+        style="@style/MenuButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_row="2"
+        android:layout_column="3"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:layout_margin="4dp"
+        android:text="%" />
+
+    <Button
+        android:id="@+id/Divide"
+        style="@style/MenuButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_row="2"
+        android:layout_column="4"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:layout_margin="4dp"
+        android:text="/" />
+
+    <Button
+        android:id="@+id/Factorial"
+        style="@style/MenuButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_row="3"
+        android:layout_column="0"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:layout_margin="4dp"
+        android:text="@string/Factorial" />
+
+    <Button
+        android:id="@+id/One"
+        style="@style/MenuButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_row="3"
+        android:layout_column="1"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:layout_margin="4dp"
+        android:text="1" />
+
+    <Button
+        android:id="@+id/Two"
+        style="@style/MenuButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_row="3"
+        android:layout_column="2"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:layout_margin="4dp"
+        android:text="2" />
+
+    <Button
+        android:id="@+id/Three"
+        style="@style/MenuButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_row="3"
+        android:layout_column="3"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:layout_margin="4dp"
+        android:text="3" />
+
+    <Button
+        android:id="@+id/Multiply"
+        style="@style/MenuButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_row="3"
+        android:layout_column="4"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:layout_margin="4dp"
+        android:text="X" />
+
+    <Button
+        android:id="@+id/Fraction"
+        style="@style/MenuButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_row="4"
+        android:layout_column="0"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:layout_margin="4dp"
+        android:text="@string/Fraction" />
+
+    <Button
+        android:id="@+id/Four"
+        style="@style/MenuButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_row="4"
+        android:layout_column="1"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:layout_margin="4dp"
+        android:text="4" />
+
+    <Button
+        android:id="@+id/Five"
+        style="@style/MenuButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_row="4"
+        android:layout_column="2"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:layout_margin="4dp"
+        android:text="5" />
+
+    <Button
+        android:id="@+id/Six"
+        style="@style/MenuButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_row="4"
+        android:layout_column="3"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:layout_margin="4dp"
+        android:text="6" />
+
+    <Button
+        android:id="@+id/Minus"
+        style="@style/MenuButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_row="4"
+        android:layout_column="4"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:layout_margin="4dp"
+        android:text="-" />
+
+    <Button
+        android:id="@+id/PInumber"
+        style="@style/MenuButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_row="5"
+        android:layout_column="0"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:layout_margin="4dp"
+        android:text="@string/PInumber" />
+
+    <Button
+        android:id="@+id/Seven"
+        style="@style/MenuButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_row="5"
+        android:layout_column="1"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:layout_margin="4dp"
+        android:text="7" />
+
+    <Button
+        android:id="@+id/Eight"
+        style="@style/MenuButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_row="5"
+        android:layout_column="2"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:layout_margin="4dp"
+        android:text="8" />
+
+    <Button
+        android:id="@+id/Nine"
+        style="@style/MenuButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_row="5"
+        android:layout_column="3"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:layout_margin="4dp"
+        android:text="9" />
+
+    <Button
+        android:id="@+id/Plus"
+        style="@style/MenuButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_row="5"
+        android:layout_column="4"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:layout_margin="4dp"
+        android:text="+" />
+
+    <Button
+        android:id="@+id/Blank"
+        style="@style/MenuButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_row="6"
+        android:layout_column="0"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:layout_margin="4dp"
+        android:text="" />
+
+    <Button
+        android:id="@+id/Euler"
+        style="@style/MenuButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_row="6"
+        android:layout_column="1"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:layout_margin="4dp"
+        android:text="e" />
+
+    <Button
+        android:id="@+id/Zero"
+        style="@style/MenuButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_row="6"
+        android:layout_column="2"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:layout_margin="4dp"
+        android:text="0" />
+
+    <Button
+        android:id="@+id/Comma"
+        style="@style/MenuButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_row="6"
+        android:layout_column="3"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:layout_margin="4dp"
+        android:text="," />
+
+    <Button
+        android:id="@+id/Equal"
+        style="@style/MenuButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_row="6"
+        android:layout_column="4"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:layout_margin="4dp"
+        android:text="=" />
+</GridLayout>
