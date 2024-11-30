@@ -9,6 +9,8 @@ import android.widget.TextView
 import com.example.mathmaster.R
 import kotlinx.coroutines.*
 
+data class PairEquation<Double, Int> (var first: Double, var second: Int)
+
 class AdvancedKeyboard @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
@@ -143,12 +145,15 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
     private fun transformEquation(equation: String): MutableList<Any> {
         val transformedEquation: MutableList<Any> = mutableListOf()
+        transformedEquation.add('+')
 
         var intConverter: Int = 0
         var lastChar: Char = '?'
         var doubleBuffor: Double = 0.0
         var openedBrackets = false
+        val bracketsStack = ArrayDeque<Int>()
         val numberBuffor: MutableList<Double> = mutableListOf()
+
         equation.forEach { element ->
             if (element.isDigit()) {
                 numberBuffor.add((element.code - 48).toDouble())
@@ -201,6 +206,13 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     openedBrackets = false
                 }
 
+                if (element == '(') {
+                    bracketsStack.addLast(1)
+                }
+                else if (element == ')') {
+                    bracketsStack.removeLast()
+                }
+
                 transformedEquation.add(element)
 
                 intConverter = 0
@@ -213,25 +225,63 @@ class AdvancedKeyboard @JvmOverloads constructor(
             transformedEquation.add(outputNumber)
         }
 
+        if (openedBrackets) {
+            transformedEquation.add(')')
+        }
+
+        while(bracketsStack.isNotEmpty()) {
+            transformedEquation.add(')')
+            bracketsStack.removeLast()
+        }
         return transformedEquation
     }
 
-    private fun calculateRecurrention(equation: MutableList<Any>, index: Int): Int {
-        return 0
-    }
+    private fun calculate(equation: MutableList<Any>, index: Int, size: Int): PairEquation<Double, Int> {
+        var equationSign: Char = 'E'
+        var result: PairEquation<Double, Int> = PairEquation(0.0, index)
+        var iterator: Int = index + 1
 
-    private fun calculate(equation: MutableList<Any>): Double {
-        var result: Double = 0.0
+        for (element in equation) {
+            if (iterator <= result.second) {
+                iterator++
+                continue
+            }
 
-        equation.forEach { element ->
+            result.second++
             when (element) {
                 is Char -> {
-
+                    if (element == '(') {
+                        val slice = iterator - (size - equation.size)
+                        val subArray = equation.drop(slice).toMutableList()
+                        val equationBuffor = calculate(subArray, iterator, size)
+                        when (equationSign) {
+                            '+' -> result.first += equationBuffor.first
+                            '-' -> result.first -= equationBuffor.first
+                            'X' -> result.first *= equationBuffor.first
+                            '/' -> result.first /= equationBuffor.first
+                            'E' -> result.first = equationBuffor.first
+                        }
+                        result.second = equationBuffor.second
+                    }
+                    else if (element == ')') {
+                        return result
+                    }
+                    else {
+                        equationSign = element
+                    }
                 }
                 is Double -> {
-
+                    when (equationSign) {
+                        '+' -> result.first += element
+                        '-' -> result.first -= element
+                        'X' -> result.first *= element
+                        '/' -> result.first /= element
+                        'E' -> result.first = element
+                    }
                 }
             }
+
+            iterator++
         }
 
         return result
@@ -241,16 +291,20 @@ class AdvancedKeyboard @JvmOverloads constructor(
         enterButton.setOnClickListener {
             if (textView.text.isNotEmpty()) {
                 enterButton.setBackgroundResource(clickedButtonStyle)
+                bracketsCounter = 0
 
                 // Calculation
                 val equation = transformEquation(textView.text.toString())
+                val result = calculate(equation, 0, equation.size)
 
                 var buffor: String = ""
 
                 for (i in equation) {
-                    println(i.toString())
                     buffor += i.toString()
                 }
+
+                buffor += '='
+                buffor += result.first.toString()
 
                 textView.text = buffor
 
