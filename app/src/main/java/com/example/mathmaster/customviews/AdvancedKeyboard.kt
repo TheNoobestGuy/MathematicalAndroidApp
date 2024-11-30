@@ -17,12 +17,17 @@ class AdvancedKeyboard @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : LinearLayout(context, attrs, defStyleAttr) {
 
+    private var showedResult: Boolean = false
+    private var result: Any = 0
+
+    // Buttons styles
     private val clickedButtonStyle: Int
     private val unClickedButtonStyle: Int
 
     // Main buttons
     private val enterButton: Button
     private val deleteButton: Button
+    private val clearButton: Button
 
     // Num buttons
     private val buttons: Array<Button>
@@ -63,6 +68,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
         // Main buttons
         enterButton = findViewById<Button>(R.id.Equal)
         deleteButton = findViewById<Button>(R.id.Delete)
+        clearButton = findViewById<Button>(R.id.Clear)
 
         // Numbers
         zeroButton = findViewById<Button>(R.id.Zero)
@@ -287,31 +293,36 @@ class AdvancedKeyboard @JvmOverloads constructor(
         return result
     }
 
+    private fun checkIsItDouble(number: Double): Boolean {
+        return number % 1 != 0.0
+    }
+
     fun equalityButtonClick(textView: TextView) {
         enterButton.setOnClickListener {
-            if (textView.text.isNotEmpty()) {
-                enterButton.setBackgroundResource(clickedButtonStyle)
+            enterButton.setBackgroundResource(clickedButtonStyle)
+
+            if (textView.text.isNotEmpty() && !showedResult) {
+                showedResult = true
                 bracketsCounter = 0
 
                 // Calculation
                 val equation = transformEquation(textView.text.toString())
-                val result = calculate(equation, 0, equation.size)
+                val resultOfCalculations = calculate(equation, 0, equation.size)
 
-                var buffor: String = ""
-
-                for (i in equation) {
-                    buffor += i.toString()
+                textView.append("=")
+                if (checkIsItDouble(resultOfCalculations.first)) {
+                    result = resultOfCalculations.first
+                    textView.append(result.toString())
                 }
-
-                buffor += '='
-                buffor += result.first.toString()
-
-                textView.text = buffor
-
-                GlobalScope.launch(Dispatchers.Main) {
-                    delay(200)
-                    enterButton.setBackgroundResource(unClickedButtonStyle)
+                else {
+                    result = resultOfCalculations.first.toInt()
+                    textView.append(result.toString())
                 }
+            }
+
+            GlobalScope.launch(Dispatchers.Main) {
+                delay(200)
+                enterButton.setBackgroundResource(unClickedButtonStyle)
             }
         }
     }
@@ -320,6 +331,12 @@ class AdvancedKeyboard @JvmOverloads constructor(
         for (i in buttons.indices) {
             buttons[i].setOnClickListener {
                 buttons[i].setBackgroundResource(clickedButtonStyle)
+
+                // Delete result if showed
+                if (showedResult) {
+                    textView.text = ""
+                    showedResult = false
+                }
 
                 if (textView.text.isNotEmpty()) {
                     if (textView.text.last() != ')') {
@@ -343,7 +360,15 @@ class AdvancedKeyboard @JvmOverloads constructor(
             basicCalcButtons[i].setOnClickListener {
                 basicCalcButtons[i].setBackgroundResource(clickedButtonStyle)
 
-                if (textView.text.isNotEmpty()) {
+                // Edit result if showed
+                if (showedResult) {
+                    textView.text = result.toString()
+                    showedResult = false
+                    result = 0
+                }
+
+
+                if (textView.text.isNotEmpty() && !showedResult) {
                     if (textView.text.last().isDigit() || textView.text.last() == ')') {
                         textView.append(basicCalcButtons[i].text)
                     }
@@ -353,6 +378,22 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     delay(200)
                     basicCalcButtons[i].setBackgroundResource(unClickedButtonStyle)
                 }
+            }
+        }
+    }
+
+    fun clearButtonClick(textView: TextView) {
+        clearButton.setOnClickListener {
+            clearButton.setBackgroundResource(clickedButtonStyle)
+
+            result = 0
+            showedResult = false
+            bracketsCounter = 0
+            textView.text = ""
+
+            GlobalScope.launch(Dispatchers.Main) {
+                delay(200)
+                clearButton.setBackgroundResource(unClickedButtonStyle)
             }
         }
     }
@@ -386,7 +427,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
             closeBracketButton.setBackgroundResource(clickedButtonStyle)
 
             if (textView.text.isNotEmpty()) {
-                if (textView.text.last().isDigit()) {
+                if (textView.text.last().isDigit() || textView.text.last() == ')') {
                     if (bracketsCounter > 0) {
                         textView.append(closeBracketButton.text)
                         bracketsCounter--

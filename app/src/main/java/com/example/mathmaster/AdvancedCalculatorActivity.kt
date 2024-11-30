@@ -26,6 +26,7 @@ class AdvancedCalculatorActivity : ComponentActivity() {
 
         keyboard.equalityButtonClick(equation)
         keyboard.deleteButtonClick(equation)
+        keyboard.clearButtonClick(equation)
     }
 
     override fun onBackPressed() {
