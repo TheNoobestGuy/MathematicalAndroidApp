@@ -6,7 +6,7 @@ import android.view.LayoutInflater
 import android.widget.LinearLayout
 import android.widget.Button
 import android.widget.TextView
-import androidx.core.text.isDigitsOnly
+import kotlin.math.*
 import com.example.mathmaster.R
 import kotlinx.coroutines.*
 
@@ -189,12 +189,22 @@ class AdvancedKeyboard @JvmOverloads constructor(
     private fun transformEquation(equation: String): MutableList<Any> {
         val transformedEquation: MutableList<Any> = mutableListOf()
 
+        // Equation validation
         var intConverter: Int = 0
         var lastChar: Char = '?'
         var numberBase: Double = 0.0
         var openedBrackets = false
         val bracketsStack = ArrayDeque<Int>()
         val numberBuffor: MutableList<Double> = mutableListOf()
+
+        // Functions
+        var sin: Boolean = false
+        var cos: Boolean = false
+        var tg: Boolean = false
+
+        var logaritm: Boolean = false
+        var lg: Boolean = false
+        var ln: Boolean = false
 
         equation.forEach { element ->
             if (element.isDigit()) {
@@ -224,12 +234,49 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     transformedEquation.add('(')
                     transformedEquation.add(decimalNumber)
                 }
+
+                // Functions
+                if (sin || cos || tg || lg || ln) {
+                    val outputNumber: Double = calculateNumber(numberBuffor, intConverter, false)
+                    if (numberBuffor.size > 1) {
+                        transformedEquation.removeLast()
+                    }
+
+                    var number: Double = 0.0
+                    if (sin) {
+                        number = sin(outputNumber)
+                    }
+                    else if (cos) {
+                        number = cos(outputNumber)
+                    }
+                    else if (tg) {
+                        number = tan(outputNumber)
+                    }
+                    else if (lg) {
+                        number = log(outputNumber, 10.0)
+                    }
+                    else if (ln) {
+                        number = ln(outputNumber)
+                    }
+
+                    openedBrackets = true
+                    transformedEquation.add('(')
+                    transformedEquation.add(number)
+                }
             }
             else {
                 if (lastChar == '^' ||  lastChar == ',') {
                     numberBuffor.clear()
                 }
 
+                // Functions
+                if (sin || cos || tg || lg || ln) {
+                    if (element != '(') {
+                        numberBuffor.clear()
+                    }
+                }
+
+                // Preparing brackets
                 if (element == '×' || element == '/') {
                     if (!openedBrackets) {
                         transformedEquation.add('(')
@@ -256,29 +303,81 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     openedBrackets = false
                 }
 
+                var closeBracketAfterFunction: Boolean = false
                 if (element == '(') {
-                    bracketsStack.addLast(1)
+                    if (!sin && !cos && !tg && !lg && !ln) {
+                        bracketsStack.addLast(1)
+                    }
                 }
                 else if (element == ')') {
-                    bracketsStack.removeLast()
-                }
-
-                if (element != '^' && element != ',') {
-                    transformedEquation.add(element)
+                    if (sin || cos || tg || lg || ln) {
+                        sin = false
+                        cos = false
+                        tg = false
+                        lg = false
+                        ln = false
+                        logaritm = false
+                        closeBracketAfterFunction = true
+                    }
+                    else {
+                        bracketsStack.removeLast()
+                    }
                 }
 
                 intConverter = 0
+
+                // Functions
+                if (!sin && !cos && !tg && !lg && !ln) {
+                    if (logaritm) {
+                        when (element) {
+                            'g' -> lg = true
+                            'n' -> ln = true
+                        }
+                    }
+
+                    when (element) {
+                        's' -> sin = true
+                        'c' -> cos = true
+                        't' -> tg = true
+                        'l' -> logaritm = true
+                    }
+
+                    if (sin || cos || tg || logaritm) {
+                        if (numberBuffor.isNotEmpty()) {
+                            val outputNumber: Double = transformedEquation.removeLast() as Double
+                            transformedEquation.add('(')
+                            transformedEquation.add(outputNumber)
+                            transformedEquation.add('×')
+                        }
+                    }
+                }
+
+                // Append operators and brackets
+                if (element != '^' && element != ',') {
+                    if (!sin && !cos && !tg && !logaritm && !closeBracketAfterFunction) {
+                        transformedEquation.add(element)
+                    }
+                }
+                println("TRANSFORMED")
+                for (e in transformedEquation) {
+                    println(e)
+                }
+
                 lastChar = element
                 numberBuffor.clear()
             }
         }
         if (numberBuffor.isNotEmpty() && (lastChar !=  '^' && lastChar != ',')) {
-            val outputNumber: Double = calculateNumber(numberBuffor, intConverter, false)
-            transformedEquation.add(outputNumber)
+            if (!sin && !cos && !tg && !logaritm) {
+                val outputNumber: Double = calculateNumber(numberBuffor, intConverter, false)
+                transformedEquation.add(outputNumber)
+            }
         }
 
         if (openedBrackets) {
-            transformedEquation.add(')')
+            if (!sin && !cos && !tg && !logaritm) {
+                transformedEquation.add(')')
+            }
         }
 
         while(bracketsStack.isNotEmpty()) {
@@ -299,8 +398,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 iterator++
                 continue
             }
-            println("NUMBERS")
-            println(element)
+
             result.second++
             when (element) {
                 is Char -> {
@@ -577,6 +675,10 @@ class AdvancedKeyboard @JvmOverloads constructor(
                             currentText = currentText.dropLast(2)
                             currentText += ")"
                         }
+                        else
+                        {
+                            currentText = currentText.dropLast(1)
+                        }
                     }
                     else {
                         currentText = currentText.dropLast(1)
@@ -594,6 +696,10 @@ class AdvancedKeyboard @JvmOverloads constructor(
                                 '-' -> break
                                 '/' -> break
                                 '×' -> break
+                            }
+
+                            if (currentText.last().isDigit()) {
+                                break
                             }
 
                             currentText = currentText.substring(0, currentText.length - 1)
