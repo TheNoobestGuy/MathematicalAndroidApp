@@ -301,7 +301,23 @@ class AdvancedKeyboard @JvmOverloads constructor(
         return number % 1 != 0.0
     }
 
-    fun equalityButtonClick(textView: TextView) {
+    private fun resultOfCalculate(textView: TextView, resultTextView: TextView) {
+        // Calculation
+        val equation = transformEquation(textView.text.toString())
+        val resultOfCalculations = calculate(equation, 0, equation.size)
+
+        resultTextView.append("= ")
+        if (checkIsItDouble(resultOfCalculations.first)) {
+            result = resultOfCalculations.first
+            resultTextView.text = result.toString()
+        }
+        else {
+            result = resultOfCalculations.first.toInt()
+            resultTextView.text = result.toString()
+        }
+    }
+
+    fun equalityButtonClick(textView: TextView, resultTextView: TextView) {
         enterButton.setOnClickListener {
             enterButton.setBackgroundResource(clickedButtonStyle)
 
@@ -312,18 +328,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 commaUsed = false
 
                 // Calculation
-                val equation = transformEquation(textView.text.toString())
-                val resultOfCalculations = calculate(equation, 0, equation.size)
-
-                textView.append("=")
-                if (checkIsItDouble(resultOfCalculations.first)) {
-                    result = resultOfCalculations.first
-                    textView.append(result.toString())
-                }
-                else {
-                    result = resultOfCalculations.first.toInt()
-                    textView.append(result.toString())
-                }
+                resultOfCalculate(textView, resultTextView)
             }
 
             GlobalScope.launch(Dispatchers.Main) {
@@ -333,7 +338,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
         }
     }
 
-    fun numberButtonClick(textView: TextView) {
+    fun numberButtonClick(textView: TextView, resultTextView: TextView) {
         for (i in buttons.indices) {
             buttons[i].setOnClickListener {
                 buttons[i].setBackgroundResource(clickedButtonStyle)
@@ -343,14 +348,20 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     textView.text = ""
                     showedResult = false
                 }
-
+                var addedNumber = false
                 if (textView.text.isNotEmpty()) {
                     if (textView.text.last() != ')') {
                         textView.append(i.toString())
+                        addedNumber = true
                     }
                 }
                 else {
                     textView.append(i.toString())
+                    addedNumber = true
+                }
+
+                if (addedNumber) {
+                    resultOfCalculate(textView, resultTextView)
                 }
 
                 GlobalScope.launch(Dispatchers.Main) {
@@ -432,7 +443,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
         }
     }
 
-    fun clearButtonClick(textView: TextView) {
+    fun clearButtonClick(textView: TextView, resultTextView: TextView) {
         clearButton.setOnClickListener {
             clearButton.setBackgroundResource(clickedButtonStyle)
 
@@ -442,6 +453,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
             powerUsed = false
             commaUsed = false
             textView.text = ""
+            resultTextView.text = ""
 
             GlobalScope.launch(Dispatchers.Main) {
                 delay(200)
@@ -494,7 +506,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
         }
     }
 
-    fun deleteButtonClick(textView: TextView) {
+    fun deleteButtonClick(textView: TextView, resultTextView: TextView) {
         deleteButton.setOnClickListener {
             if (textView.text.isNotEmpty()) {
                 deleteButton.setBackgroundResource(clickedButtonStyle)
@@ -508,6 +520,11 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
                 val currentText = textView.text.toString().dropLast(1)
                 textView.text = currentText
+                resultOfCalculate(textView, resultTextView)
+
+                if (textView.text.isEmpty()) {
+                    resultTextView.text = ""
+                }
 
                 GlobalScope.launch(Dispatchers.Main) {
                     delay(200)

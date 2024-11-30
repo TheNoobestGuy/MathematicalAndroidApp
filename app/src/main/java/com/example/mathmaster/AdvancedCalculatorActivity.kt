@@ -14,21 +14,22 @@ class AdvancedCalculatorActivity : ComponentActivity() {
 
         // Get equation
         val equation: TextView = findViewById<TextView>(R.id.EquationBar)
+        val result: TextView = findViewById<TextView>(R.id.ResultBar)
 
         // Get GUI
         val keyboard: AdvancedKeyboard = findViewById<AdvancedKeyboard>(R.id.Keyboard)
 
         // Keyboard
-        keyboard.numberButtonClick(equation)
+        keyboard.numberButtonClick(equation, result)
         keyboard.basicCalcButtonClick(equation)
         keyboard.openBracketButtonClick(equation)
         keyboard.closeBracketButtonClick(equation)
         keyboard.powerButtonClick(equation)
         keyboard.commaButtonClick(equation)
 
-        keyboard.equalityButtonClick(equation)
-        keyboard.deleteButtonClick(equation)
-        keyboard.clearButtonClick(equation)
+        keyboard.equalityButtonClick(equation, result)
+        keyboard.deleteButtonClick(equation,result)
+        keyboard.clearButtonClick(equation, result)
     }
 
     override fun onBackPressed() {
