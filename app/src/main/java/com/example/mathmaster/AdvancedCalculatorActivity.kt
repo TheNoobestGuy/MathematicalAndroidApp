@@ -22,12 +22,13 @@ class AdvancedCalculatorActivity : ComponentActivity() {
         // Keyboard
         keyboard.numberButtonClick(equation, result)
         keyboard.basicCalcButtonClick(equation)
+        keyboard.functionButtonClick(equation)
         keyboard.openBracketButtonClick(equation)
         keyboard.closeBracketButtonClick(equation)
         keyboard.powerButtonClick(equation)
         keyboard.commaButtonClick(equation)
 
-        keyboard.equalityButtonClick(equation, result)
+        keyboard.enterButtonClick()
         keyboard.deleteButtonClick(equation,result)
         keyboard.clearButtonClick(equation, result)
     }

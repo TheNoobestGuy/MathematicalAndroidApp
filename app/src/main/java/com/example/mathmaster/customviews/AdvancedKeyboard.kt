@@ -18,9 +18,6 @@ class AdvancedKeyboard @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : LinearLayout(context, attrs, defStyleAttr) {
 
-    private var showedResult: Boolean = false
-    private var result: Any = 0
-
     // Buttons styles
     private val clickedButtonStyle: Int
     private val unClickedButtonStyle: Int
@@ -60,6 +57,15 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
     private var powerUsed: Boolean = false
     private var commaUsed: Boolean = false
+
+    // Functions of calculator
+    private var specialFunctionInUse = false
+    private val functionsButtons: Array<Button>
+    private val logaritmButton: Button
+    private val naturalLogaritmButton: Button
+    private val sinButton: Button
+    private val cosButton: Button
+    private val tgButton: Button
 
     // Brackets
     private var bracketsCounter: Int = 0
@@ -122,6 +128,21 @@ class AdvancedKeyboard @JvmOverloads constructor(
         // Special operations buttons
         powerButton = findViewById<Button>(R.id.PowerTo)
         commaButton = findViewById<Button>(R.id.Comma)
+
+        // Function operators
+        logaritmButton = findViewById<Button>(R.id.Logaritm)
+        naturalLogaritmButton = findViewById<Button>(R.id.NLogaritm)
+        sinButton = findViewById<Button>(R.id.Sin)
+        cosButton = findViewById<Button>(R.id.Cos)
+        tgButton = findViewById<Button>(R.id.Tan)
+
+        functionsButtons = arrayOf(
+            logaritmButton,
+            naturalLogaritmButton,
+            sinButton,
+            cosButton,
+            tgButton
+        )
 
         // Brackets
         openBracketButton = findViewById<Button>(R.id.FirstBracket)
@@ -331,27 +352,19 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
         resultTextView.append("= ")
         if (checkIsItDouble(resultOfCalculations.first)) {
-            result = resultOfCalculations.first
-            resultTextView.text = result.toString()
+            resultTextView.text = resultOfCalculations.first.toString()
         }
         else {
-            result = resultOfCalculations.first.toInt()
-            resultTextView.text = result.toString()
+            resultTextView.text = resultOfCalculations.first.toInt().toString()
         }
     }
 
-    fun equalityButtonClick(textView: TextView, resultTextView: TextView) {
+    fun enterButtonClick() {
         enterButton.setOnClickListener {
             enterButton.setBackgroundResource(clickedButtonStyle)
 
-            if (textView.text.isNotEmpty() && !showedResult) {
-                showedResult = true
-                bracketsCounter = 0
-                powerUsed = false
-                commaUsed = false
-
-                // Calculation
-                resultOfCalculate(textView, resultTextView)
+            if (specialFunctionInUse) {
+                specialFunctionInUse = false
             }
 
             GlobalScope.launch(Dispatchers.Main) {
@@ -366,20 +379,24 @@ class AdvancedKeyboard @JvmOverloads constructor(
             buttons[i].setOnClickListener {
                 buttons[i].setBackgroundResource(clickedButtonStyle)
 
-                // Delete result if showed
-                if (showedResult) {
-                    textView.text = ""
-                    showedResult = false
-                }
                 var addedNumber = false
-                if (textView.text.isNotEmpty()) {
-                    if (textView.text.last() != ')') {
+
+                if (!specialFunctionInUse) {
+                    if (textView.text.isNotEmpty()) {
+                        if (textView.text.last() != ')') {
+                            textView.append(i.toString())
+                            addedNumber = true
+                        }
+                    } else {
                         textView.append(i.toString())
                         addedNumber = true
                     }
                 }
                 else {
+                    val currentText = textView.text.toString().dropLast(1)
+                    textView.text = currentText
                     textView.append(i.toString())
+                    textView.append(")")
                     addedNumber = true
                 }
 
@@ -400,22 +417,16 @@ class AdvancedKeyboard @JvmOverloads constructor(
             basicCalcButtons[i].setOnClickListener {
                 basicCalcButtons[i].setBackgroundResource(clickedButtonStyle)
 
-                // Edit result if showed
-                if (showedResult) {
-                    powerUsed = false
-                    commaUsed = false
-                    textView.text = result.toString()
-                    showedResult = false
-                    result = 0
-                }
-
-
-                if (textView.text.isNotEmpty() && !showedResult) {
+                if (textView.text.isNotEmpty() && !specialFunctionInUse) {
                     if (textView.text.last().isDigit() || textView.text.last() == ')') {
                         powerUsed = false
                         commaUsed = false
                         textView.append(basicCalcButtons[i].text)
                     }
+                }
+                else if (specialFunctionInUse) {
+                    specialFunctionInUse = false
+                    textView.append(basicCalcButtons[i].text)
                 }
 
                 GlobalScope.launch(Dispatchers.Main) {
@@ -430,7 +441,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
         powerButton.setOnClickListener {
             powerButton.setBackgroundResource(clickedButtonStyle)
 
-            if (!powerUsed) {
+            if (!powerUsed && !specialFunctionInUse) {
                 if (textView.text.isNotEmpty()) {
                     if(textView.text.last().isDigit()) {
                         textView.append(powerButton.text.toString())
@@ -450,7 +461,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
         commaButton.setOnClickListener {
             commaButton.setBackgroundResource(clickedButtonStyle)
 
-            if (!commaUsed) {
+            if (!commaUsed && !specialFunctionInUse) {
                 if (textView.text.isNotEmpty()) {
                     if(textView.text.last().isDigit()) {
                         textView.append(commaButton.text.toString())
@@ -470,8 +481,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
         clearButton.setOnClickListener {
             clearButton.setBackgroundResource(clickedButtonStyle)
 
-            result = 0
-            showedResult = false
+            specialFunctionInUse = false
             bracketsCounter = 0
             powerUsed = false
             commaUsed = false
@@ -489,11 +499,13 @@ class AdvancedKeyboard @JvmOverloads constructor(
         openBracketButton.setOnClickListener {
             openBracketButton.setBackgroundResource(clickedButtonStyle)
 
-            if (textView.text.isNotEmpty()) {
+            if (textView.text.isNotEmpty() && !specialFunctionInUse) {
                 if (!textView.text.last().isDigit()) {
-                    if(textView.text.last() != ')') {
-                        textView.append(openBracketButton.text)
-                        bracketsCounter++
+                    if (textView.text.last() != '^' && textView.text.last() != ',') {
+                        if(textView.text.last() != ')') {
+                            textView.append(openBracketButton.text)
+                            bracketsCounter++
+                        }
                     }
                 }
             }
@@ -513,7 +525,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
         closeBracketButton.setOnClickListener {
             closeBracketButton.setBackgroundResource(clickedButtonStyle)
 
-            if (textView.text.isNotEmpty()) {
+            if (textView.text.isNotEmpty() && !specialFunctionInUse) {
                 if (textView.text.last().isDigit() || textView.text.last() == ')') {
                     if (bracketsCounter > 0) {
                         textView.append(closeBracketButton.text)
@@ -534,17 +546,69 @@ class AdvancedKeyboard @JvmOverloads constructor(
             if (textView.text.isNotEmpty()) {
                 deleteButton.setBackgroundResource(clickedButtonStyle)
 
-                if (textView.text.last() == '^') {
-                    powerUsed = false
+                if(!specialFunctionInUse) {
+                    if (textView.text.last() == '^') {
+                        powerUsed = false
+                    }
+                    else if (textView.text.last() == ',') {
+                        commaUsed = false
+                    }
+
+                    var currentText = textView.text.toString()
+
+                    // Check for functions
+                    if (currentText.last() == ')') {
+                        val range = currentText.length-1 downTo 0
+                        var letter: Boolean = false
+                        for (i in range) {
+                            if (currentText[i].isLetter()) {
+                                letter = true
+                            }
+
+                            when (currentText[i]) {
+                                '+' -> break
+                                '-' -> break
+                                '/' -> break
+                                '×' -> break
+                            }
+                        }
+                        if (letter) {
+                            specialFunctionInUse = true
+                            currentText = currentText.dropLast(2)
+                            currentText += ")"
+                        }
+                    }
+                    else {
+                        currentText = currentText.dropLast(1)
+                    }
+
+                    textView.text = currentText
                 }
-                else if (textView.text.last() == ',') {
-                    commaUsed = false
+                else {
+                    var currentText = textView.text.toString().dropLast(2)
+
+                    if (!currentText.last().isDigit() && currentText.last() != '(') {
+                        while (currentText.isNotEmpty()) {
+                            when (currentText.last()) {
+                                '+' -> break
+                                '-' -> break
+                                '/' -> break
+                                '×' -> break
+                            }
+
+                            currentText = currentText.substring(0, currentText.length - 1)
+                        }
+
+                        specialFunctionInUse = false
+                        textView.text = currentText
+                    }
+                    else {
+                        textView.text = currentText
+                        textView.append(")")
+                    }
                 }
 
-                val currentText = textView.text.toString().dropLast(1)
-                textView.text = currentText
                 resultOfCalculate(textView, resultTextView)
-
                 if (textView.text.isEmpty()) {
                     resultTextView.text = ""
                 }
@@ -556,4 +620,29 @@ class AdvancedKeyboard @JvmOverloads constructor(
             }
         }
     }
+
+    fun functionButtonClick(textView: TextView) {
+        functionsButtons.forEach { button ->
+            button.setOnClickListener {
+                button.setBackgroundResource(clickedButtonStyle)
+
+                if (textView.text.isEmpty()) {
+                    specialFunctionInUse = true
+                    val buffor = button.text.toString() + "()"
+                    textView.append(buffor)
+                }
+                else if (textView.text.last() != ')' && textView.text.last() != '(') {
+                    specialFunctionInUse = true
+                    val buffor = button.text.toString() + "()"
+                    textView.append(buffor)
+                }
+
+                GlobalScope.launch(Dispatchers.Main) {
+                    delay(200)
+                    button.setBackgroundResource(unClickedButtonStyle)
+                }
+            }
+        }
+    }
+
 }
