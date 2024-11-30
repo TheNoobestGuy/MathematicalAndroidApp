@@ -245,7 +245,7 @@
         android:layout_columnWeight="1"
         android:layout_rowWeight="1"
         android:layout_margin="4dp"
-        android:text="X" />
+        android:text="×" />
 
     <Button
         android:id="@+id/Fraction"

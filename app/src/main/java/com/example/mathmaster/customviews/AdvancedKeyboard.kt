@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.widget.LinearLayout
 import android.widget.Button
 import android.widget.TextView
+import androidx.core.text.isDigitsOnly
 import com.example.mathmaster.R
 import kotlinx.coroutines.*
 
@@ -127,7 +128,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
         closeBracketButton = findViewById<Button>(R.id.SecondBracket)
     }
 
-    private fun convertNumber(number:Double, power: Int, divide: Boolean): Double {
+    private fun convertNumber(number: Double, power: Int, divide: Boolean): Double {
         var result = number
 
         for (i in 1 until power) {
@@ -145,9 +146,20 @@ class AdvancedKeyboard @JvmOverloads constructor(
     private fun calculateNumber(list: MutableList<Double>, length: Int, divide: Boolean): Double {
         var buffor = length
         var outputNumber: Double = 0.0
-        list.forEach { num ->
-            outputNumber += convertNumber(num, buffor, divide)
-            buffor--
+
+        if (divide) {
+            val range = length - 1  downTo 0
+            buffor++
+            for (i in range) {
+                outputNumber += convertNumber(list[i], buffor, true)
+                buffor--
+            }
+        }
+        else {
+            list.forEach { num ->
+                outputNumber += convertNumber(num, buffor, false)
+                buffor--
+            }
         }
 
         return outputNumber
@@ -155,11 +167,10 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
     private fun transformEquation(equation: String): MutableList<Any> {
         val transformedEquation: MutableList<Any> = mutableListOf()
-        transformedEquation.add('+')
 
         var intConverter: Int = 0
         var lastChar: Char = '?'
-        var doubleBuffor: Double = 0.0
+        var numberBase: Double = 0.0
         var openedBrackets = false
         val bracketsStack = ArrayDeque<Int>()
         val numberBuffor: MutableList<Double> = mutableListOf()
@@ -168,43 +179,51 @@ class AdvancedKeyboard @JvmOverloads constructor(
             if (element.isDigit()) {
                 numberBuffor.add((element.code - 48).toDouble())
                 intConverter++
-            }
-            else {
+
                 if (lastChar == '^') {
                     val outputNumber: Double = calculateNumber(numberBuffor, intConverter, false)
+                    transformedEquation.removeLast()
 
+                    var buffor: Double = numberBase
                     for (i in 1 until outputNumber.toInt()) {
-                        transformedEquation.add('x')
-                        transformedEquation.add(numberBuffor.last())
+                        buffor *= numberBase
                     }
 
-                    transformedEquation.add(')')
+                    openedBrackets = true
+                    transformedEquation.add('(')
+                    transformedEquation.add(buffor)
                 }
-
-                if (lastChar == ',') {
+                else if (lastChar == ',') {
                     val outputNumber: Double = calculateNumber(numberBuffor, intConverter, true)
-                    doubleBuffor += outputNumber
-                    transformedEquation.add(doubleBuffor)
+                    transformedEquation.removeLast()
+
+                    val decimalNumber: Double = numberBase + outputNumber
+
+                    openedBrackets = true
+                    transformedEquation.add('(')
+                    transformedEquation.add(decimalNumber)
+                }
+            }
+            else {
+                if (lastChar == '^' ||  lastChar == ',') {
+                    numberBuffor.clear()
                 }
 
-                if (element == 'X' || element == '/') {
+                if (element == '×' || element == '/') {
                     if (!openedBrackets) {
                         transformedEquation.add('(')
                     }
                     openedBrackets = true
                 }
-                else if (element == '^') {
-                    transformedEquation.add('(')
-                }
 
                 if (numberBuffor.isNotEmpty()) {
-                    val outputNumber: Double = calculateNumber(numberBuffor, intConverter, false)
-
-                    if (element != ',') {
+                    if (lastChar != '^' && lastChar != ',') {
+                        val outputNumber: Double = calculateNumber(numberBuffor, intConverter, false)
                         transformedEquation.add(outputNumber)
-                    }
-                    else {
-                        doubleBuffor = outputNumber
+
+                        if (element == '^' || element == ',') {
+                            numberBase = outputNumber
+                        }
                     }
                 }
 
@@ -223,14 +242,16 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     bracketsStack.removeLast()
                 }
 
-                transformedEquation.add(element)
+                if (element != '^' && element != ',') {
+                    transformedEquation.add(element)
+                }
 
                 intConverter = 0
                 lastChar = element
                 numberBuffor.clear()
             }
         }
-        if (numberBuffor.isNotEmpty()) {
+        if (numberBuffor.isNotEmpty() && (lastChar !=  '^' && lastChar != ',')) {
             val outputNumber: Double = calculateNumber(numberBuffor, intConverter, false)
             transformedEquation.add(outputNumber)
         }
@@ -243,6 +264,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
             transformedEquation.add(')')
             bracketsStack.removeLast()
         }
+
         return transformedEquation
     }
 
@@ -256,7 +278,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 iterator++
                 continue
             }
-
+            println("NUMBERS")
+            println(element)
             result.second++
             when (element) {
                 is Char -> {
@@ -267,7 +290,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         when (equationSign) {
                             '+' -> result.first += equationBuffor.first
                             '-' -> result.first -= equationBuffor.first
-                            'X' -> result.first *= equationBuffor.first
+                            '×' -> result.first *= equationBuffor.first
                             '/' -> result.first /= equationBuffor.first
                             'E' -> result.first = equationBuffor.first
                         }
@@ -284,7 +307,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     when (equationSign) {
                         '+' -> result.first += element
                         '-' -> result.first -= element
-                        'X' -> result.first *= element
+                        '×' -> result.first *= element
                         '/' -> result.first /= element
                         'E' -> result.first = element
                     }
