@@ -604,8 +604,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
         openBracketButton.setOnClickListener {
             openBracketButton.setBackgroundResource(clickedButtonStyle)
 
-            if (textView.text.isNotEmpty() && !specialFunctionInUse) {
-                if (!textView.text.last().isDigit()) {
+            if (textView.text.isNotEmpty()) {
+                if (!textView.text.last().isDigit() && !specialFunctionInUse) {
                     if (textView.text.last() != '^' && textView.text.last() != ',') {
                         if(textView.text.last() != ')') {
                             textView.append(openBracketButton.text)
@@ -648,9 +648,9 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
     fun deleteButtonClick(textView: TextView, resultTextView: TextView) {
         deleteButton.setOnClickListener {
-            if (textView.text.isNotEmpty()) {
-                deleteButton.setBackgroundResource(clickedButtonStyle)
+            deleteButton.setBackgroundResource(clickedButtonStyle)
 
+            if (textView.text.isNotEmpty()) {
                 if(!specialFunctionInUse) {
                     if (textView.text.last() == '^') {
                         powerUsed = false
@@ -678,22 +678,23 @@ class AdvancedKeyboard @JvmOverloads constructor(
                             }
                         }
                         if (letter) {
-                            specialFunctionInUse = true
-                            currentText = currentText.dropLast(2)
-                            currentText += ")"
+                            currentText = currentText.dropLast(1)
+                            if (currentText.last().isDigit()) {
+                                currentText = currentText.dropLast(1)
+                                currentText += ")"
+                                specialFunctionInUse = true
+                            }
+                            else {
+                                bracketsCounter++
+                            }
                         }
                         else
                         {
-                            if (currentText.last() == ')') {
-                                bracketsCounter++
-                            }
+                            bracketsCounter++
                             currentText = currentText.dropLast(1)
                         }
                     }
                     else {
-                        if (currentText.last() == ')') {
-                            bracketsCounter++
-                        }
                         currentText = currentText.dropLast(1)
                     }
 
@@ -731,11 +732,11 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 if (textView.text.isEmpty()) {
                     resultTextView.text = ""
                 }
+            }
 
-                GlobalScope.launch(Dispatchers.Main) {
-                    delay(200)
-                    deleteButton.setBackgroundResource(unClickedButtonStyle)
-                }
+            GlobalScope.launch(Dispatchers.Main) {
+                delay(200)
+                deleteButton.setBackgroundResource(unClickedButtonStyle)
             }
         }
     }
