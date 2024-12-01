@@ -343,11 +343,16 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     }
 
                     if (sin || cos || tg || logaritm) {
+                        if (lastChar == '^' || lastChar == ',') {
+                            transformedEquation.add('×')
+                        }
+
                         if (numberBuffor.isNotEmpty()) {
                             val outputNumber: Double = transformedEquation.removeLast() as Double
                             transformedEquation.add('(')
                             transformedEquation.add(outputNumber)
                             transformedEquation.add('×')
+                            openedBrackets = true
                         }
                     }
                 }
@@ -358,12 +363,18 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         transformedEquation.add(element)
                     }
                 }
-                println("TRANSFORMED")
-                for (e in transformedEquation) {
-                    println(e)
+
+                // Save last char for later calculations
+                if (element == '+' || element == '-' || element == '/' || element == '×') {
+                    lastChar = element
+                }
+                else if (element == '^' || element == ',') {
+                    lastChar = element
+                }
+                else if (element == '(' || element == ')') {
+                    lastChar = element
                 }
 
-                lastChar = element
                 numberBuffor.clear()
             }
         }
@@ -375,9 +386,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
         }
 
         if (openedBrackets) {
-            if (!sin && !cos && !tg && !logaritm) {
-                transformedEquation.add(')')
-            }
+            transformedEquation.add(')')
         }
 
         while(bracketsStack.isNotEmpty()) {
@@ -738,9 +747,11 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     textView.append(buffor)
                 }
                 else if (textView.text.last() != ')' && textView.text.last() != '(') {
-                    specialFunctionInUse = true
-                    val buffor = button.text.toString() + "()"
-                    textView.append(buffor)
+                    if (textView.text.last() != '^' && textView.text.last() != ',') {
+                        specialFunctionInUse = true
+                        val buffor = button.text.toString() + "()"
+                        textView.append(buffor)
+                    }
                 }
 
                 GlobalScope.launch(Dispatchers.Main) {
