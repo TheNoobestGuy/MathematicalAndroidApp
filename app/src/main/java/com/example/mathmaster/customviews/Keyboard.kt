@@ -1,6 +1,8 @@
 package com.example.mathmaster.customviews
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.widget.LinearLayout
@@ -81,10 +83,9 @@ class Keyboard @JvmOverloads constructor(
                 if (textField.text.length < 4)
                     textField.append(i.toString())
 
-                GlobalScope.launch(Dispatchers.Main) {
-                    delay(200)
+                Handler(Looper.getMainLooper()).postDelayed({
                     buttons[i].setBackgroundResource(unClickedButtonStyle)
-                }
+                }, 200)
             }
         }
     }
@@ -102,10 +103,9 @@ class Keyboard @JvmOverloads constructor(
                     textField.text = currentText.substring(0, currentText.length - 1)
                 }
 
-                GlobalScope.launch(Dispatchers.Main) {
-                    delay(200)
+                Handler(Looper.getMainLooper()).postDelayed({
                     deleteButton.setBackgroundResource(unClickedButtonStyle)
-                }
+                }, 200)
             }
         }
     }
@@ -115,10 +115,9 @@ class Keyboard @JvmOverloads constructor(
     }
 
     fun unClickEnterButton() {
-        GlobalScope.launch(Dispatchers.Main) {
-            delay(200)
+        Handler(Looper.getMainLooper()).postDelayed({
             enterButton.setBackgroundResource(unClickedButtonStyle)
-        }
+        }, 200)
     }
 
     fun getEnterButton(): Button {

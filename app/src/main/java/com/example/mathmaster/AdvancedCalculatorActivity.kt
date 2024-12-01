@@ -27,8 +27,11 @@ class AdvancedCalculatorActivity : ComponentActivity() {
         keyboard.closeBracketButtonClick(equation)
         keyboard.powerButtonClick(equation)
         keyboard.commaButtonClick(equation)
+        keyboard.rootButtonClick(equation)
+        keyboard.factorialButtonClick(equation, result)
+        keyboard.numberPIButtonClick(equation, result)
 
-        keyboard.enterButtonClick()
+        keyboard.enterButtonClick(equation)
         keyboard.deleteButtonClick(equation,result)
         keyboard.clearButtonClick(equation, result)
     }

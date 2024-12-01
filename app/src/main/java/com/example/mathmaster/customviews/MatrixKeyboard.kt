@@ -1,13 +1,14 @@
 package com.example.mathmaster.customviews
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.widget.LinearLayout
 import android.widget.Button
 import android.widget.EditText
 import android.widget.GridLayout
-import androidx.constraintlayout.helper.widget.Grid
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.example.mathmaster.R
 import kotlinx.coroutines.*
@@ -113,10 +114,10 @@ class MatrixKeyboard @JvmOverloads constructor(
             matrix.layoutParams = params
 
             refreshClickListeners(matrix)
-            GlobalScope.launch(Dispatchers.Main) {
-                delay(200)
+
+            Handler(Looper.getMainLooper()).postDelayed({
                 rowPlusButton.setBackgroundResource(unClickedButtonStyle)
-            }
+            }, 200)
         }
     }
 
@@ -133,10 +134,9 @@ class MatrixKeyboard @JvmOverloads constructor(
             params.matchConstraintPercentHeight = newHeight
             matrix.layoutParams = params
 
-            GlobalScope.launch(Dispatchers.Main) {
-                delay(200)
+            Handler(Looper.getMainLooper()).postDelayed({
                 rowMinusButton.setBackgroundResource(unClickedButtonStyle)
-            }
+            }, 200)
         }
     }
 
@@ -154,10 +154,9 @@ class MatrixKeyboard @JvmOverloads constructor(
             matrix.layoutParams = params
 
             refreshClickListeners(matrix)
-            GlobalScope.launch(Dispatchers.Main) {
-                delay(200)
+            Handler(Looper.getMainLooper()).postDelayed({
                 colPlusButton.setBackgroundResource(unClickedButtonStyle)
-            }
+            }, 200)
         }
     }
 
@@ -174,10 +173,9 @@ class MatrixKeyboard @JvmOverloads constructor(
             params.matchConstraintPercentWidth = newWidth
             matrix.layoutParams = params
 
-            GlobalScope.launch(Dispatchers.Main) {
-                delay(200)
+            Handler(Looper.getMainLooper()).postDelayed({
                 colMinusButton.setBackgroundResource(unClickedButtonStyle)
-            }
+            }, 200)
         }
     }
 
@@ -258,10 +256,9 @@ class MatrixKeyboard @JvmOverloads constructor(
                     clickedCell.append(i.toString())
                 }
 
-                GlobalScope.launch(Dispatchers.Main) {
-                    delay(200)
+                Handler(Looper.getMainLooper()).postDelayed({
                     calculatorButtons[i].setBackgroundResource(unClickedButtonStyle)
-                }
+                }, 200)
             }
         }
     }
@@ -285,10 +282,9 @@ class MatrixKeyboard @JvmOverloads constructor(
                 }
             }
 
-            GlobalScope.launch(Dispatchers.Main) {
-                delay(200)
+            Handler(Looper.getMainLooper()).postDelayed({
                 deleteButton.setBackgroundResource(unClickedButtonStyle)
-            }
+            }, 200)
         }
     }
 
@@ -297,10 +293,9 @@ class MatrixKeyboard @JvmOverloads constructor(
     }
 
     fun unClickEnterButton() {
-        GlobalScope.launch(Dispatchers.Main) {
-            delay(200)
+        Handler(Looper.getMainLooper()).postDelayed({
             enterButton.setBackgroundResource(unClickedButtonStyle)
-        }
+        }, 200)
     }
 
     fun getEnterButton(): Button {

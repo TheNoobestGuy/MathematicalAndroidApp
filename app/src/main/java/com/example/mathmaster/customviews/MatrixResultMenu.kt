@@ -38,7 +38,7 @@ class MatrixResultMenu @JvmOverloads constructor(
         unClickedButtonStyle = R.drawable.menubutton_background
     }
 
-    fun getMultipluButton(): Button {
+    fun getMultiplyButton(): Button {
         return multiplyButton
     }
 
@@ -52,49 +52,5 @@ class MatrixResultMenu @JvmOverloads constructor(
 
     fun getInfoButton(): Button {
         return infoButton
-    }
-
-    fun clickMultiplyButton() {
-        multiplyButton.setBackgroundResource(clickedButtonStyle)
-    }
-
-    fun clickAddButton() {
-        addButton.setBackgroundResource(clickedButtonStyle)
-    }
-
-    fun clickSubtractButton() {
-        subtractButton.setBackgroundResource(clickedButtonStyle)
-    }
-
-    fun clickInfoButton() {
-        infoButton.setBackgroundResource(clickedButtonStyle)
-    }
-
-    fun unClickMultiplyButton() {
-        GlobalScope.launch(Dispatchers.Main) {
-            delay(200)
-            multiplyButton.setBackgroundResource(unClickedButtonStyle)
-        }
-    }
-
-    fun unClickAddButton() {
-        GlobalScope.launch(Dispatchers.Main) {
-            delay(200)
-            addButton.setBackgroundResource(unClickedButtonStyle)
-        }
-    }
-
-    fun unClickSubtractButton() {
-        GlobalScope.launch(Dispatchers.Main) {
-            delay(200)
-            subtractButton.setBackgroundResource(unClickedButtonStyle)
-        }
-    }
-
-    fun unClickInfoButton() {
-        GlobalScope.launch(Dispatchers.Main) {
-            delay(200)
-            infoButton.setBackgroundResource(unClickedButtonStyle)
-        }
     }
 }

@@ -96,7 +96,7 @@ class MatrixResultActivity : ComponentActivity() {
         val clickedButtonStyle = R.drawable.menubutton_background_clicked
 
         // On click functions
-        clickFunction(matrixMenu.getMultipluButton(), clickedButtonStyle, MatrixCalculatorActivity(),
+        clickFunction(matrixMenu.getMultiplyButton(), clickedButtonStyle, MatrixCalculatorActivity(),
             "×", resultMatrix, resultMatrixRows, resultMatrixColumns)
         clickFunction(matrixMenu.getAddButton(), clickedButtonStyle, MatrixCalculatorActivity(),
             "+", resultMatrix, resultMatrixRows, resultMatrixColumns)
