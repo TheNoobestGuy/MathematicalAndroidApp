@@ -193,7 +193,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
         var intConverter: Int = 0
         var lastChar: Char = '?'
         var numberBase: Double = 0.0
-        var openedBrackets = false
+        var openedBrackets = ArrayDeque<Int>()
         val bracketsStack = ArrayDeque<Int>()
         val numberBuffor: MutableList<Double> = mutableListOf()
 
@@ -220,7 +220,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         buffor *= numberBase
                     }
 
-                    openedBrackets = true
+                    openedBrackets.add(1)
                     transformedEquation.add('(')
                     transformedEquation.add(buffor)
                 }
@@ -230,7 +230,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
                     val decimalNumber: Double = numberBase + outputNumber
 
-                    openedBrackets = true
+                    openedBrackets.add(1)
                     transformedEquation.add('(')
                     transformedEquation.add(decimalNumber)
                 }
@@ -259,7 +259,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         number = ln(outputNumber)
                     }
 
-                    openedBrackets = true
+                    openedBrackets.add(1)
                     transformedEquation.add('(')
                     transformedEquation.add(number)
                 }
@@ -278,10 +278,10 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
                 // Preparing brackets
                 if (element == '×' || element == '/') {
-                    if (!openedBrackets) {
+                    if (openedBrackets.isEmpty()) {
                         transformedEquation.add('(')
+                        openedBrackets.add(1)
                     }
-                    openedBrackets = true
                 }
 
                 if (numberBuffor.isNotEmpty()) {
@@ -296,11 +296,10 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 }
 
                 if (element == '+' || element == '-') {
-                    if (openedBrackets) {
+                    while (openedBrackets.isNotEmpty()) {
                         transformedEquation.add(')')
+                        openedBrackets.removeLast()
                     }
-
-                    openedBrackets = false
                 }
 
                 var closeBracketAfterFunction: Boolean = false
@@ -349,10 +348,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
                         if (numberBuffor.isNotEmpty()) {
                             val outputNumber: Double = transformedEquation.removeLast() as Double
-                            transformedEquation.add('(')
                             transformedEquation.add(outputNumber)
                             transformedEquation.add('×')
-                            openedBrackets = true
                         }
                     }
                 }
@@ -385,8 +382,9 @@ class AdvancedKeyboard @JvmOverloads constructor(
             }
         }
 
-        if (openedBrackets) {
+        while (openedBrackets.isNotEmpty()) {
             transformedEquation.add(')')
+            openedBrackets.removeLast()
         }
 
         while(bracketsStack.isNotEmpty()) {
@@ -524,16 +522,16 @@ class AdvancedKeyboard @JvmOverloads constructor(
             basicCalcButtons[i].setOnClickListener {
                 basicCalcButtons[i].setBackgroundResource(clickedButtonStyle)
 
-                if (textView.text.isNotEmpty() && !specialFunctionInUse) {
+                if (textView.text.isNotEmpty()) {
                     if (textView.text.last().isDigit() || textView.text.last() == ')') {
                         powerUsed = false
                         commaUsed = false
                         textView.append(basicCalcButtons[i].text)
+
+                        if (specialFunctionInUse) {
+                            specialFunctionInUse = false
+                        }
                     }
-                }
-                else if (specialFunctionInUse) {
-                    specialFunctionInUse = false
-                    textView.append(basicCalcButtons[i].text)
                 }
 
                 GlobalScope.launch(Dispatchers.Main) {
@@ -686,10 +684,16 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         }
                         else
                         {
+                            if (currentText.last() == ')') {
+                                bracketsCounter++
+                            }
                             currentText = currentText.dropLast(1)
                         }
                     }
                     else {
+                        if (currentText.last() == ')') {
+                            bracketsCounter++
+                        }
                         currentText = currentText.dropLast(1)
                     }
 
