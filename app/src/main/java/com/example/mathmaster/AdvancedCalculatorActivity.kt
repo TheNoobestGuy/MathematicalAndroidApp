@@ -31,7 +31,7 @@ class AdvancedCalculatorActivity : ComponentActivity() {
         keyboard.factorialButtonClick(equation, result)
         keyboard.numberPIButtonClick(equation, result)
 
-        keyboard.enterButtonClick(equation)
+        keyboard.enterButtonClick()
         keyboard.deleteButtonClick(equation,result)
         keyboard.clearButtonClick(equation, result)
     }
