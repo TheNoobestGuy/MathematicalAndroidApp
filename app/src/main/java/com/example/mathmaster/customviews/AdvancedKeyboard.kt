@@ -231,12 +231,16 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 // Handle power to
                 if (element == '^') {
                     if (insideFunction > 0) {
-                        transformedEquation.add('(')
-                        bracketsInsideFunction.addLast(1)
+                        if (lastChar != ')') {
+                            transformedEquation.add('(')
+                            bracketsInsideFunction.addLast(1)
+                        }
                     }
                     else {
-                        transformedEquation.add('(')
-                        openedBrackets.addLast(1)
+                        if (lastChar != ')') {
+                            transformedEquation.add('(')
+                            openedBrackets.addLast(1)
+                        }
                     }
                 }
 
@@ -409,6 +413,80 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         iterator = equationBuffor.second
                     } else if (equation[iterator] == ')') {
                         return result
+                    } else if ((equation[iterator] as Char).isLetter()) {
+                        val equationBuffor = calculate(equation, iterator + 2)
+                        when (equationSign) {
+                            '+' -> {
+                                when (equation[iterator]) {
+                                    's' -> result.first += sin(equationBuffor.first)
+                                    'c' -> result.first += cos(equationBuffor.first)
+                                    't' -> result.first += tan(equationBuffor.first)
+                                    'g' -> result.first += log(equationBuffor.first, 10.0)
+                                    'n' -> result.first += ln(equationBuffor.first)
+                                }
+                            }
+
+                            '-' -> {
+                                when (equation[iterator]) {
+                                    's' -> result.first -= sin(equationBuffor.first)
+                                    'c' -> result.first -= cos(equationBuffor.first)
+                                    't' -> result.first -= tan(equationBuffor.first)
+                                    'g' -> result.first -= log(equationBuffor.first, 10.0)
+                                    'n' -> result.first -= ln(equationBuffor.first)
+                                }
+                            }
+
+                            '×' -> {
+                                when (equation[iterator]) {
+                                    's' -> result.first *= sin(equationBuffor.first)
+                                    'c' -> result.first *= cos(equationBuffor.first)
+                                    't' -> result.first *= tan(equationBuffor.first)
+                                    'g' -> result.first *= log(equationBuffor.first, 10.0)
+                                    'n' -> result.first *= ln(equationBuffor.first)
+                                }
+                            }
+
+                            '/' -> {
+                                when (equation[iterator]) {
+                                    's' -> result.first /= sin(equationBuffor.first)
+                                    'c' -> result.first /= cos(equationBuffor.first)
+                                    't' -> result.first /= tan(equationBuffor.first)
+                                    'g' -> result.first /= log(equationBuffor.first, 10.0)
+                                    'n' -> result.first /= ln(equationBuffor.first)
+                                }
+                            }
+
+                            '^' -> {
+                                when (equation[iterator]) {
+                                    's' -> result.first =
+                                        (result.first).pow(sin(equationBuffor.first))
+
+                                    'c' -> result.first =
+                                        (result.first).pow(cos(equationBuffor.first))
+
+                                    't' -> result.first =
+                                        (result.first).pow(tan(equationBuffor.first))
+
+                                    'g' -> result.first =
+                                        (result.first).pow(log(equationBuffor.first, 10.0))
+
+                                    'n' -> result.first =
+                                        (result.first).pow(ln(equationBuffor.first))
+                                }
+                            }
+
+                            else -> {
+                                when (equation[iterator]) {
+                                    's' -> result.first = sin(equationBuffor.first)
+                                    'c' -> result.first = cos(equationBuffor.first)
+                                    't' -> result.first = tan(equationBuffor.first)
+                                    'g' -> result.first = log(equationBuffor.first, 10.0)
+                                    'n' -> result.first = ln(equationBuffor.first)
+                                }
+                            }
+                        }
+
+                        iterator = equationBuffor.second
                     } else {
                         when (equation[iterator]) {
                             '+' -> equationSign = equation[iterator] as Char
@@ -416,76 +494,6 @@ class AdvancedKeyboard @JvmOverloads constructor(
                             '×' -> equationSign = equation[iterator] as Char
                             '/' -> equationSign = equation[iterator] as Char
                             '^' -> equationSign = equation[iterator] as Char
-                        }
-                    }
-
-                    if (iterator < equation.size) {
-                        val buffor = equation[iterator] as Char
-                        if (buffor.isLetter()) {
-                            val equationBuffor = calculate(equation, iterator + 2)
-                            when (equationSign) {
-                                '+' -> {
-                                    when (equation[iterator]) {
-                                        's' -> result.first += sin(equationBuffor.first)
-                                        'c' -> result.first += cos(equationBuffor.first)
-                                        't' -> result.first += tan(equationBuffor.first)
-                                        'g' -> result.first += log(equationBuffor.first, 10.0)
-                                        'n' -> result.first += ln(equationBuffor.first)
-                                    }
-                                }
-
-                                '-' -> {
-                                    when (equation[iterator]) {
-                                        's' -> result.first -= sin(equationBuffor.first)
-                                        'c' -> result.first -= cos(equationBuffor.first)
-                                        't' -> result.first -= tan(equationBuffor.first)
-                                        'g' -> result.first -= log(equationBuffor.first, 10.0)
-                                        'n' -> result.first -= ln(equationBuffor.first)
-                                    }
-                                }
-
-                                '×' -> {
-                                    when (equation[iterator]) {
-                                        's' -> result.first *= sin(equationBuffor.first)
-                                        'c' -> result.first *= cos(equationBuffor.first)
-                                        't' -> result.first *= tan(equationBuffor.first)
-                                        'g' -> result.first *= log(equationBuffor.first, 10.0)
-                                        'n' -> result.first *= ln(equationBuffor.first)
-                                    }
-                                }
-
-                                '/' -> {
-                                    when (equation[iterator]) {
-                                        's' -> result.first /= sin(equationBuffor.first)
-                                        'c' -> result.first /= cos(equationBuffor.first)
-                                        't' -> result.first /= tan(equationBuffor.first)
-                                        'g' -> result.first /= log(equationBuffor.first, 10.0)
-                                        'n' -> result.first /= ln(equationBuffor.first)
-                                    }
-                                }
-
-                                '^' -> {
-                                    when (equation[iterator]) {
-                                        's' -> result.first = (result.first).pow(sin(equationBuffor.first))
-                                        'c' -> result.first = (result.first).pow(cos(equationBuffor.first))
-                                        't' -> result.first = (result.first).pow(tan(equationBuffor.first))
-                                        'g' -> result.first = (result.first).pow(log(equationBuffor.first, 10.0))
-                                        'n' -> result.first = (result.first).pow(ln(equationBuffor.first))
-                                    }
-                                }
-
-                                else -> {
-                                    when (equation[iterator]) {
-                                        's' -> result.first = sin(equationBuffor.first)
-                                        'c' -> result.first = cos(equationBuffor.first)
-                                        't' -> result.first = tan(equationBuffor.first)
-                                        'g' -> result.first = log(equationBuffor.first, 10.0)
-                                        'n' -> result.first = ln(equationBuffor.first)
-                                    }
-                                }
-                            }
-
-                            iterator = equationBuffor.second
                         }
                     }
                 }
