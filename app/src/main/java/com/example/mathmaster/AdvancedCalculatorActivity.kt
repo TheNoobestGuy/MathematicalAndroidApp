@@ -30,6 +30,7 @@ class AdvancedCalculatorActivity : ComponentActivity() {
         keyboard.rootButtonClick(equation)
         keyboard.factorialButtonClick(equation, result)
         keyboard.numberPIButtonClick(equation, result)
+        keyboard.numberEulerButtonClick(equation, result)
 
         keyboard.enterButtonClick()
         keyboard.deleteButtonClick(equation,result)

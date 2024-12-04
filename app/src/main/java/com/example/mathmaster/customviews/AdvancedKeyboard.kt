@@ -55,6 +55,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
     private val procentButton: Button
     private val factorialButton: Button
     private val numberPIButton: Button
+    private val numberEulerButton: Button
     private val rootButton: Button
 
     private var commaUsed: Boolean = false
@@ -129,6 +130,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
         procentButton = findViewById<Button>(R.id.Procent)
         factorialButton = findViewById<Button>(R.id.Factorial)
         numberPIButton = findViewById<Button>(R.id.PInumber)
+        numberEulerButton = findViewById<Button>(R.id.Euler)
         rootButton = findViewById<Button>(R.id.Fraction)
 
         // Function operators
@@ -198,11 +200,12 @@ class AdvancedKeyboard @JvmOverloads constructor(
         // Equation validation
         val openedBrackets = ArrayDeque<Int>()
         val openedBracketsInput = ArrayDeque<Int>()
-        val bracketsInsideFunction = ArrayDeque<Int>()
-        val bracketsInsideFunctionInput = ArrayDeque<Int>()
+        val bracketsInsideFunction: MutableList<MutableList<Int>> = mutableListOf()
+        val bracketsInsideFunctionInput: MutableList<MutableList<Int>> = mutableListOf()
 
         // Functions
-        var insideFunction: Int = 0
+        var iterator: Int = 0
+        var functionIndex: Int = -1
         var whatFunction: Char = '0'
 
         equation.forEach { element ->
@@ -230,30 +233,25 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
                 // Handle power to
                 if (element == '^') {
-                    if (insideFunction > 0) {
-                        if (lastChar != ')') {
+                    if (functionIndex >= 0) {
+                        if (lastChar != ')' && !transformedEquation.last().toString()[0].isDigit()) {
                             transformedEquation.add('(')
-                            bracketsInsideFunction.addLast(1)
+                            bracketsInsideFunction[functionIndex].add(1)
                         }
                     }
                     else {
-                        if (lastChar != ')') {
+                        if (lastChar != ')' && !transformedEquation.last().toString()[0].isDigit()) {
                             transformedEquation.add('(')
                             openedBrackets.addLast(1)
                         }
                     }
                 }
 
-                // Pi number
-                if (element == 'π') {
-                    transformedEquation.add(PI)
-                }
-
                 // Preparing brackets for multiplication and division
                 if (element == '×' || element == '/') {
-                    if (insideFunction > 0 && lastChar != ')') {
+                    if (functionIndex >= 0 && lastChar != ')') {
                         transformedEquation.add('(')
-                        bracketsInsideFunction.addLast(1)
+                        bracketsInsideFunction[functionIndex].add(1)
                     } else {
                         if (openedBrackets.isEmpty() && lastChar != ')') {
                             transformedEquation.add('(')
@@ -276,10 +274,10 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
                 // Handle subtracting and adding
                 if (element == '+' || element == '-') {
-                    if (insideFunction > 0) {
-                        while (bracketsInsideFunction.isNotEmpty()) {
+                    if (functionIndex >= 0) {
+                        while (bracketsInsideFunction[functionIndex].isNotEmpty()) {
                             transformedEquation.add(')')
-                            bracketsInsideFunction.removeLast()
+                            bracketsInsideFunction[functionIndex].removeLast()
                         }
                     } else {
                         while (openedBrackets.isNotEmpty()) {
@@ -304,15 +302,32 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     }
                 }
 
-                // Append function symbol
+                // Append function symbol and handle brackets
                 if (whatFunction != '0' && element == '(') {
+                    // Append multiplication if before number is other function or constants
+                    if (lastChar == 'π' || lastChar == 'e') {
+                        transformedEquation.add('×')
+                        lastChar = '0'
+                    }
+                    else if (transformedEquation.isNotEmpty() && numberBuffor.isEmpty()) {
+                        if (transformedEquation.last() != '×' && transformedEquation.last() != '/'
+                            && transformedEquation.last() != '+' && transformedEquation.last() != '-'
+                            && transformedEquation.last() != '(') {
+                            transformedEquation.add('×')
+                        }
+                    }
+
+                    // Prepare brackets lists
+                    bracketsInsideFunction.add(mutableListOf())
+                    bracketsInsideFunctionInput.add(mutableListOf())
+
                     // Append number that is before function as multiplication
                     if (numberBuffor.isNotEmpty()) {
                         val outputNumber: Double = transformedEquation.removeLast() as Double
                         transformedEquation.add('(')
                         transformedEquation.add(outputNumber)
                         transformedEquation.add('×')
-                        openedBrackets.addLast(1)
+                        bracketsInsideFunction[functionIndex].add(1)
                     }
 
                     // Act as it is multiplication when some number is before function
@@ -322,33 +337,77 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
                     transformedEquation.add(whatFunction)
                     whatFunction = '0'
-                    insideFunction++
+                    functionIndex++
                 }
-
-                // Handle brackets
-                if (element == '(') {
-                    if (insideFunction > 0) {
-                        bracketsInsideFunctionInput.addLast(1)
+                else if (element == '(') {
+                    if (functionIndex >= 0) {
+                        bracketsInsideFunctionInput[functionIndex].add(1)
                     } else {
                         openedBracketsInput.addLast(1)
                     }
                 } else if (element == ')') {
-                    if (insideFunction > 0) {
-                        insideFunction--
-
-                        if (bracketsInsideFunctionInput.isNotEmpty()) {
-                            bracketsInsideFunctionInput.removeLast()
-
-                            if (insideFunction == 0) {
-                                while (bracketsInsideFunctionInput.isNotEmpty()) {
-                                    transformedEquation.add(")")
-                                    bracketsInsideFunctionInput.removeLast()
-                                }
+                    if (functionIndex >= 0) {
+                        if (iterator == specialFunctions[functionIndex].end) {
+                            while(bracketsInsideFunctionInput[functionIndex].isNotEmpty()) {
+                                transformedEquation.add(')')
+                                bracketsInsideFunctionInput[functionIndex].removeLast()
+                            }
+                            while(bracketsInsideFunction[functionIndex].isNotEmpty()) {
+                                transformedEquation.add(')')
+                                bracketsInsideFunction[functionIndex].removeLast()
+                            }
+                            functionIndex--
+                        }
+                        else {
+                            if (bracketsInsideFunctionInput[functionIndex].isNotEmpty()) {
+                                bracketsInsideFunctionInput[functionIndex].removeLast()
                             }
                         }
                     } else {
                         if (openedBracketsInput.isNotEmpty()) {
                             openedBracketsInput.removeLast()
+                        }
+                    }
+                }
+
+                // Pi and Euler number
+                if (element == 'π' || element == 'e') {
+                    val num = if (element == 'π') PI else Math.E
+
+                    if (transformedEquation.isEmpty()) {
+                        transformedEquation.add(num)
+                    }
+                    else if ((lastChar == '+' || lastChar == '-' || lastChar == '/' || lastChar == '×'
+                        || lastChar == '^') && !transformedEquation.last().toString()[0].isDigit()) {
+                        if (numberBuffor.isEmpty()) {
+                            transformedEquation.add('(')
+                            transformedEquation.add(num)
+                            if (functionIndex >= 0) {
+                                bracketsInsideFunction[functionIndex].add(1)
+                            }
+                            else {
+                                openedBrackets.addLast(1)
+                            }
+                        }
+                        else {
+                            transformedEquation.add('×')
+                            transformedEquation.add(num)
+                        }
+                    }
+                    else {
+                        if (numberBuffor.isEmpty() && !transformedEquation.last().toString()[0].isDigit()) {
+                            transformedEquation.add('(')
+                            transformedEquation.add(num)
+                            if (functionIndex >= 0) {
+                                bracketsInsideFunction[functionIndex].add(1)
+                            }
+                            else {
+                                openedBrackets.addLast(1)
+                            }
+                        }
+                        else {
+                            transformedEquation.add('×')
+                            transformedEquation.add(num)
                         }
                     }
                 }
@@ -360,7 +419,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 } else if (element == '(' || element == ')' || element == '^') {
                     transformedEquation.add(element)
                     lastChar = element
-                } else if (element == ',') {
+                } else if (element == ',' || element == 'π' || element == 'e') {
                     lastChar = element
                 }
 
@@ -369,6 +428,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     numberBuffor.clear()
                 }
             }
+            iterator++
         }
         // Add everything that lasts in buffors
         if (numberBuffor.isNotEmpty() && lastChar != ',') {
@@ -391,12 +451,14 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
     private fun calculate(equation: MutableList<Any>, index: Int): PairEquation<Double, Int> {
         var equationSign: Char = 'E'
-        var result: PairEquation<Double, Int> = PairEquation(0.0, index)
+        val result: PairEquation<Double, Int> = PairEquation(0.0, index)
         var iterator: Int = index
+        val threshold = 1E-10
 
         println(equation)
 
         while (iterator < equation.size) {
+            println(equation[iterator])
             when (equation[iterator]) {
                 is Char -> {
                     if (equation[iterator] == '(') {
@@ -412,6 +474,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
                         iterator = equationBuffor.second
                     } else if (equation[iterator] == ')') {
+                        result.first = if (abs(result.first) < threshold) 0.0 else result.first
                         return result
                     } else if ((equation[iterator] as Char).isLetter()) {
                         val equationBuffor = calculate(equation, iterator + 2)
@@ -474,7 +537,6 @@ class AdvancedKeyboard @JvmOverloads constructor(
                                         (result.first).pow(ln(equationBuffor.first))
                                 }
                             }
-
                             else -> {
                                 when (equation[iterator]) {
                                     's' -> result.first = sin(equationBuffor.first)
@@ -485,7 +547,6 @@ class AdvancedKeyboard @JvmOverloads constructor(
                                 }
                             }
                         }
-
                         iterator = equationBuffor.second
                     } else {
                         when (equation[iterator]) {
@@ -499,6 +560,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 }
 
                 is Double -> {
+
                     when (equationSign) {
                         '+' -> result.first += equation[iterator] as Double
                         '-' -> result.first -= equation[iterator] as Double
@@ -514,6 +576,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
             result.second = iterator
         }
 
+        result.first = if (abs(result.first) < threshold) 0.0 else result.first
         return result
     }
 
@@ -575,7 +638,9 @@ class AdvancedKeyboard @JvmOverloads constructor(
                             limit--
                         }
 
-                        if (textView.text.dropLast(bracketCounter).last() != ')') {
+                        if (textView.text.dropLast(bracketCounter).last() != ')'
+                            && textView.text.dropLast(bracketCounter).last() != 'π'
+                            && textView.text.dropLast(bracketCounter).last() != 'e') {
                             textView.text = textView.text.dropLast(bracketCounter)
                             val text = i.toString()
                             textView.append(text)
@@ -603,7 +668,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
                             addedNumber = true
                         }
                     } else {
-                        if (textView.text.last() != ')') {
+                        if (textView.text.last() != ')' && textView.text.last() != 'π'
+                                && textView.text.last() != 'e') {
                             textView.append(i.toString())
                             addedNumber = true
                         }
@@ -675,7 +741,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         }
                         commaUsed = false
 
-                    } else if (textView.text.last().isDigit() || textView.text.last() == ')') {
+                    } else if (textView.text.last().isDigit() || textView.text.last() == ')'
+                        || textView.text.last() == 'π' || textView.text.last() == 'e') {
                         commaUsed = false
 
                         textView.append(basicCalcButtons[i].text)
@@ -712,7 +779,9 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         limit--
                     }
                     if (textView.text.dropLast(bracketCounter).last().isDigit() ||
-                        textView.text.dropLast(bracketCounter).last() == ')') {
+                        textView.text.dropLast(bracketCounter).last() == ')' ||
+                        textView.text.dropLast(bracketCounter).last() == 'π' ||
+                        textView.text.dropLast(bracketCounter).last() == 'e') {
                         textView.text = textView.text.dropLast(bracketCounter)
                         val text = powerButton.text
                         textView.append(text)
@@ -737,7 +806,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         }
                     }
                 } else {
-                    if (textView.text.last().isDigit() || textView.text.last() == ')') {
+                    if (textView.text.last().isDigit() || textView.text.last() == ')'
+                        || textView.text.last() == 'π' || textView.text.last() == 'e') {
                         textView.append(powerButton.text.toString())
                     }
                 }
@@ -856,26 +926,147 @@ class AdvancedKeyboard @JvmOverloads constructor(
             numberPIButton.setBackgroundResource(clickedButtonStyle)
 
             var addedNumber = false
-            /*
-            if (specialFunctionStarts.isEmpty()) {
-                if (textView.text.isNotEmpty()) {
-                    if (textView.text.last() != ')') {
-                        textView.append("π")
+
+            if (textView.text.isNotEmpty()) {
+                if (specialFunctionDeep > 0) {
+                    // Check how many bracket are needed to be delete
+                    var function: Triple<Int> = specialFunctions.last()
+                    val range = specialFunctions.size - 1 downTo 0
+                    for (i in range) {
+                        if (specialFunctions[i].deep == specialFunctionDeep) {
+                            function = specialFunctions[i]
+                            break
+                        }
+                    }
+
+                    // Check how manu bracket are needed to be delete
+                    var limit = textView.text.length - 1
+                    var bracketCounter = 0
+                    while (function.end <= limit && textView.text[limit] == ')') {
+                        bracketCounter++
+                        limit--
+                    }
+
+                    if (textView.text.dropLast(bracketCounter).last() != ')'
+                            && textView.text.dropLast(bracketCounter).last() != ',') {
+                        textView.text = textView.text.dropLast(bracketCounter)
+                        val text = numberPIButton.text.toString()
+                        textView.append(text)
+
+                        var counter = 0
+                        while (counter < bracketCounter) {
+                            textView.append(")")
+                            counter++
+                        }
+
+                        // Update functions that are in use
+                        val rangeFunctions = specialFunctions.size-1 downTo 0
+                        var buffor = specialFunctionDeep
+                        for (i in rangeFunctions) {
+                            if (specialFunctions[i].deep <= specialFunctionDeep) {
+                                if (buffor <= 0) {
+                                    break
+                                }
+                                if (buffor == specialFunctions[i].deep) {
+                                    specialFunctions[i].end += text.length
+                                    buffor--
+                                }
+                            }
+                        }
                         addedNumber = true
                     }
                 } else {
-                    textView.append("π")
-                    addedNumber = true
+                    if (textView.text.last() != ')') {
+                        textView.append(numberPIButton.text.toString())
+                        addedNumber = true
+                    }
                 }
+            } else {
+                textView.append(numberPIButton.text.toString())
+                addedNumber = true
             }
 
-             */
             if (addedNumber) {
                 resultOfCalculate(textView, resultTextView)
             }
 
             Handler(Looper.getMainLooper()).postDelayed({
                 numberPIButton.setBackgroundResource(unClickedButtonStyle)
+            }, 200)
+        }
+    }
+
+    fun numberEulerButtonClick(textView: TextView, resultTextView: TextView) {
+        numberEulerButton.setOnClickListener {
+            numberEulerButton.setBackgroundResource(clickedButtonStyle)
+
+            var addedNumber = false
+
+            if (textView.text.isNotEmpty()) {
+                if (specialFunctionDeep > 0) {
+                    // Check how many bracket are needed to be delete
+                    var function: Triple<Int> = specialFunctions.last()
+                    val range = specialFunctions.size - 1 downTo 0
+                    for (i in range) {
+                        if (specialFunctions[i].deep == specialFunctionDeep) {
+                            function = specialFunctions[i]
+                            break
+                        }
+                    }
+
+                    // Check how manu bracket are needed to be delete
+                    var limit = textView.text.length - 1
+                    var bracketCounter = 0
+                    while (function.end <= limit && textView.text[limit] == ')') {
+                        bracketCounter++
+                        limit--
+                    }
+
+                    if (textView.text.dropLast(bracketCounter).last() != ')'
+                        && textView.text.dropLast(bracketCounter).last() != ',') {
+                        textView.text = textView.text.dropLast(bracketCounter)
+                        val text = numberEulerButton.text.toString()
+                        textView.append(text)
+
+                        var counter = 0
+                        while (counter < bracketCounter) {
+                            textView.append(")")
+                            counter++
+                        }
+
+                        // Update functions that are in use
+                        val rangeFunctions = specialFunctions.size-1 downTo 0
+                        var buffor = specialFunctionDeep
+                        for (i in rangeFunctions) {
+                            if (specialFunctions[i].deep <= specialFunctionDeep) {
+                                if (buffor <= 0) {
+                                    break
+                                }
+                                if (buffor == specialFunctions[i].deep) {
+                                    specialFunctions[i].end += text.length
+                                    buffor--
+                                }
+                            }
+                        }
+                        addedNumber = true
+                    }
+                } else {
+                    if (textView.text.last() != ')') {
+                        textView.append(numberEulerButton.text.toString())
+                        addedNumber = true
+                    }
+                }
+            } else {
+                textView.append(numberEulerButton.text.toString())
+                addedNumber = true
+            }
+
+            if (addedNumber) {
+                resultOfCalculate(textView, resultTextView)
+            }
+
+            Handler(Looper.getMainLooper()).postDelayed({
+                numberEulerButton.setBackgroundResource(unClickedButtonStyle)
             }, 200)
         }
     }
@@ -1114,7 +1305,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
                             // Count space that function takes
                             var counter = 1
                             var length = textView.text.length-2
-                            while (length >= 0 && textView.text[length].isLetter()) {
+                            while (length >= 0 && textView.text[length].isLetter()
+                                && textView.text[length] != 'π' && textView.text[length] != 'e') {
                                 length--
                                 counter++
                             }
@@ -1249,9 +1441,6 @@ class AdvancedKeyboard @JvmOverloads constructor(
                             val function: Triple<Int> = Triple<Int>(0, 0, 0)
                             val text = button.text.toString() + "()"
 
-                            if (textView.text.last() == ')') {
-                                textView.append("×")
-                            }
                             textView.append(text)
 
                             // Set function
