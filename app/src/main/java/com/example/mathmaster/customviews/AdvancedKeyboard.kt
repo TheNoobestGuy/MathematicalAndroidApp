@@ -857,10 +857,10 @@ class AdvancedKeyboard @JvmOverloads constructor(
                             limit--
                         }
 
-                        if (textView.text.dropLast(bracketCounter).last() != ')'
-                            && textView.text.dropLast(bracketCounter).last() != 'π'
-                            && textView.text.dropLast(bracketCounter).last() != 'e') {
-                            textView.text = textView.text.dropLast(bracketCounter)
+                        val bufforText = textView.text.dropLast(bracketCounter)
+                        if (bufforText.last() != ')' && bufforText.last() != 'π'
+                            && bufforText.last() != 'e') {
+                            textView.text = bufforText
                             val text = i.toString()
                             textView.append(text)
 
@@ -934,12 +934,12 @@ class AdvancedKeyboard @JvmOverloads constructor(
                             limit--
                         }
 
-                        if (textView.text.dropLast(bracketCounter).last().isDigit()
-                            || textView.text.dropLast(bracketCounter).last() == '!'
-                            || textView.text.dropLast(bracketCounter).last() == ')'
-                            || textView.text.dropLast(bracketCounter).last() == 'π'
-                            || textView.text.dropLast(bracketCounter).last() == 'e') {
-                            textView.text = textView.text.dropLast(bracketCounter)
+                        val bufforText = textView.text.dropLast(bracketCounter)
+
+                        if (bufforText.last().isDigit() || bufforText.last() == '!'
+                            || bufforText.last() == ')' || bufforText.last() == 'π'
+                            || bufforText.last() == 'e') {
+                            textView.text = bufforText
                             val text = basicCalcButtons[i].text
                             textView.append(text)
 
@@ -1003,11 +1003,13 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         bracketCounter++
                         limit--
                     }
-                    if (textView.text.dropLast(bracketCounter).last().isDigit() ||
-                        textView.text.dropLast(bracketCounter).last() == ')' ||
-                        textView.text.dropLast(bracketCounter).last() == 'π' ||
-                        textView.text.dropLast(bracketCounter).last() == 'e') {
-                        textView.text = textView.text.dropLast(bracketCounter)
+                    val bufforText = textView.text.dropLast(bracketCounter)
+
+                    if (bufforText.last().isDigit() ||
+                        bufforText.last() == ')' ||
+                        bufforText.last() == 'π' ||
+                        bufforText.last() == 'e') {
+                        textView.text = bufforText
                         val text = powerButton.text
                         textView.append(text)
                         var counter = 0
@@ -1135,21 +1137,18 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         bracketCounter++
                         limit--
                     }
-
+                    val bufforText = textView.text.dropLast(bracketCounter)
                     var pass = false
                     if (function.start == textView.text.dropLast(bracketCounter).length-1) {
                         pass = true
                     }
 
-                    if (textView.text.dropLast(bracketCounter).last().isDigit() ||
-                        textView.text.dropLast(bracketCounter).last() == '+' ||
-                        textView.text.dropLast(bracketCounter).last() == '-' ||
-                        textView.text.dropLast(bracketCounter).last() == '*' ||
-                        textView.text.dropLast(bracketCounter).last() == '/' ||
-                        textView.text.dropLast(bracketCounter).last() == 'e' ||
-                        textView.text.dropLast(bracketCounter).last() == 'π' || pass
+                    if (bufforText.last().isDigit() || bufforText.last() == '+' ||
+                        bufforText.last() == '-' || bufforText.last() == '*' ||
+                        bufforText.last() == '/' || bufforText.last() == 'e' ||
+                        bufforText.last() == 'π' || bufforText.last() == '(' || pass
                         ) {
-                        textView.text = textView.text.dropLast(bracketCounter)
+                        textView.text = bufforText
 
                         textView.append("√")
 
@@ -1177,7 +1176,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     if (textView.text.last().isDigit() || textView.text.last() == '+'
                         || textView.text.last() == '-' || textView.text.last() == '*'
                         || textView.text.last() == '/' || textView.text.last() == 'π'
-                        || textView.text.last() == 'e') {
+                        || textView.text.last() == '(' || textView.text.last() == 'e') {
                         textView.append("√")
                     }
                 }
@@ -1215,12 +1214,14 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         bracketCounter++
                         limit--
                     }
-                    if (textView.text.dropLast(bracketCounter).last().isDigit() ||
-                        textView.text.dropLast(bracketCounter).last() == ')') {
+
+                    val bufforText = textView.text.dropLast(bracketCounter)
+
+                    if (bufforText.last().isDigit() || bufforText.last() == ')') {
                         var run = true
 
                         // Check does some function was encountered or not
-                        if (textView.text.dropLast(bracketCounter).last() == ')') {
+                        if (bufforText.last() == ')') {
                             var openBrackets = 0
                             var closeBrackets = 0
                             var index = textView.text.length - (bracketCounter + 1)
@@ -1243,7 +1244,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         }
 
                         if (run) {
-                            textView.text = textView.text.dropLast(bracketCounter)
+                            textView.text = bufforText
 
                             val text = "!"
                             textView.append(text)
@@ -1349,9 +1350,10 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         limit--
                     }
 
-                    if (textView.text.dropLast(bracketCounter).last() != ')'
-                            && textView.text.dropLast(bracketCounter).last() != ',') {
-                        textView.text = textView.text.dropLast(bracketCounter)
+                    val bufforText = textView.text.dropLast(bracketCounter)
+
+                    if (bufforText.last() != ')' && bufforText.last() != ',') {
+                        textView.text = bufforText
                         val text = numberPIButton.text.toString()
                         textView.append(text)
 
@@ -1424,9 +1426,10 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         limit--
                     }
 
-                    if (textView.text.dropLast(bracketCounter).last() != ')'
-                        && textView.text.dropLast(bracketCounter).last() != ',') {
-                        textView.text = textView.text.dropLast(bracketCounter)
+                    val bufforText = textView.text.dropLast(bracketCounter)
+
+                    if (bufforText.last() != ')' && bufforText.last() != ',') {
+                        textView.text = bufforText
                         val text = numberEulerButton.text.toString()
                         textView.append(text)
 
@@ -1521,10 +1524,11 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         limit--
                     }
 
-                    if (textView.text.dropLast(bracketCounter).last() != ')'
-                        && textView.text.dropLast(bracketCounter).last() != '!'
-                        && !textView.text.dropLast(bracketCounter).last().isDigit()) {
-                        textView.text = textView.text.dropLast(bracketCounter)
+                    val bufforText = textView.text.dropLast(bracketCounter)
+
+                    if (bufforText.last() != ')' && bufforText.last() != '!'
+                        && !bufforText.last().isDigit()) {
+                        textView.text = bufforText
                         textView.append(openBracketButton.text.toString())
                         bracketsCounter++
 
@@ -1592,13 +1596,13 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         limit--
                     }
 
-                    if (textView.text.dropLast(bracketCounter).last().isDigit()
-                        || textView.text.dropLast(bracketCounter).last() == ')'
-                        || textView.text.dropLast(bracketCounter).last() == '!'
-                        || textView.text.dropLast(bracketCounter).last() == 'π'
-                        || textView.text.dropLast(bracketCounter).last() == 'e') {
+                    val bufforText = textView.text.dropLast(bracketCounter)
 
-                        textView.text = textView.text.dropLast(bracketCounter)
+                    if (bufforText.last().isDigit() || bufforText.last() == ')'
+                        || bufforText.last() == '!' || bufforText.last() == 'π'
+                        || bufforText.last() == 'e') {
+
+                        textView.text = bufforText
                         textView.append(closeBracketButton.text.toString())
                         bracketsCounter--
 
