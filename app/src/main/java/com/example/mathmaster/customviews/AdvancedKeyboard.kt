@@ -239,8 +239,10 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     val decimalNumber: Double = numberBase + outputNumber
 
                     if (!commaInUse) {
-                        transformedEquation.add('(')
-                        openedBrackets.addLast(1)
+                        if (!inRoot) {
+                            transformedEquation.add('(')
+                            openedBrackets.addLast(1)
+                        }
                         commaInUse = true
                     }
                     transformedEquation.add(decimalNumber)
@@ -375,10 +377,10 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 // Root
                 if (element == '√') {
                     if (functionIndex >= 0) {
-                        if (inRoot || transformedEquation.last().toString()[0].isDigit()) {
+                        if (inRoot && transformedEquation.last().toString()[0].isDigit()) {
+                            bracketsInsideFunction[functionIndex].removeLast()
                             transformedEquation.add(')')
                             transformedEquation.add('×')
-                            bracketsInsideFunction[functionIndex].removeLast()
                         }
                         else if (transformedEquation.last().toString()[0].isDigit()) {
                             transformedEquation.add('×')
@@ -387,9 +389,9 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         bracketsInsideFunction[functionIndex].add(1)
                     } else {
                         if (inRoot) {
+                            openedBrackets.removeLast()
                             transformedEquation.add(')')
                             transformedEquation.add('×')
-                            openedBrackets.removeLast()
                         }
                         else if (transformedEquation.isNotEmpty()) {
                             if (transformedEquation.last().toString()[0].isDigit()) {
