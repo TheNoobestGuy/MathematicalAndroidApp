@@ -17,7 +17,7 @@
         android:layout_columnWeight="1"
         android:layout_rowWeight="1"
         android:layout_margin="4dp"
-        android:text="2nd" />
+        android:text="1st" />
 
     <Button
         android:id="@+id/Degree"

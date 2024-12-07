@@ -31,11 +31,14 @@ class AdvancedCalculatorActivity : ComponentActivity() {
         keyboard.factorialButtonClick(equation, result)
         keyboard.numberPIButtonClick(equation, result)
         keyboard.numberEulerButtonClick(equation, result)
-        keyboard.procentButtonClick(equation, result)
+        keyboard.percentButtonClick(equation, result)
+        keyboard.fractionButtonClick(equation)
 
         keyboard.enterButtonClick()
         keyboard.deleteButtonClick(equation,result)
         keyboard.clearButtonClick(equation, result)
+        keyboard.degreeButtonClick()
+        keyboard.changeFunctionsButtonClick()
     }
 
     override fun onBackPressed() {

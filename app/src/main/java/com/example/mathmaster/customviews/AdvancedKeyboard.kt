@@ -3,6 +3,7 @@ package com.example.mathmaster.customviews
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import android.text.BoringLayout
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.widget.LinearLayout
@@ -75,6 +76,13 @@ class AdvancedKeyboard @JvmOverloads constructor(
     private var bracketsCounter: Int = 0
     private val openBracketButton: Button
     private val closeBracketButton: Button
+
+    // Options
+    private val degreeButton: Button
+    private val changeFunctionsButton: Button
+    private var secondFunctions: Boolean = false
+
+    private var radians: Boolean = false
 
     init {
         // Inflate the custom XML layout
@@ -153,6 +161,10 @@ class AdvancedKeyboard @JvmOverloads constructor(
         // Brackets
         openBracketButton = findViewById<Button>(R.id.FirstBracket)
         closeBracketButton = findViewById<Button>(R.id.SecondBracket)
+
+        // Options
+        degreeButton = findViewById<Button>(R.id.Degree)
+        changeFunctionsButton = findViewById<Button>(R.id.Change)
     }
 
     private fun convertNumber(number: Double, power: Int, divide: Boolean): Double {
@@ -210,6 +222,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
         // Functions
         var iterator: Int = 0
         var functionIndex: Int = -1
+        var commaInUse: Boolean = true
         var whatFunction: Char = '0'
 
         equation.forEach { element ->
@@ -225,8 +238,11 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
                     val decimalNumber: Double = numberBase + outputNumber
 
-                    openedBrackets.addLast(1)
-                    transformedEquation.add('(')
+                    if (!commaInUse) {
+                        transformedEquation.add('(')
+                        openedBrackets.addLast(1)
+                        commaInUse = true
+                    }
                     transformedEquation.add(decimalNumber)
                 }
             } else {
@@ -386,12 +402,16 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     inRoot = true
                 }
 
-                // Handle subtracting and adding
+                // Handle subtract and add
                 if (element == '+' || element == '-') {
                     if (functionIndex >= 0) {
-                        while (bracketsInsideFunction[functionIndex].isNotEmpty()) {
-                            transformedEquation.add(')')
-                            bracketsInsideFunction[functionIndex].removeLast()
+                        if (transformedEquation.last() != '(') {
+                            if (transformedEquation[transformedEquation.size-2] != '^') {
+                                while (bracketsInsideFunction[functionIndex].isNotEmpty()) {
+                                    transformedEquation.add(')')
+                                    bracketsInsideFunction[functionIndex].removeLast()
+                                }
+                            }
                         }
                     } else {
                         while (openedBrackets.isNotEmpty()) {
@@ -401,18 +421,28 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     }
                 }
 
-                // Functions
-                when (element) {
-                    's' -> if (whatFunction != 'c') whatFunction = element
-                    'c' -> whatFunction = element
-                    't' -> whatFunction = element
-                    'l' -> whatFunction = element
-                }
-
-                if (whatFunction == 'l') {
+                // Recognize functions
+                if (whatFunction != 'a') {
                     when (element) {
-                        'g' -> whatFunction = element
-                        'n' -> whatFunction = element
+                        's' -> if (whatFunction != 'c') whatFunction = element
+                        'c' -> whatFunction = element
+                        't' -> whatFunction = element
+                        'l' -> whatFunction = element
+                        'a' -> whatFunction = element
+                    }
+
+                    if (whatFunction == 'l') {
+                        when (element) {
+                            'g' -> whatFunction = element
+                            'n' -> whatFunction = element
+                        }
+                    }
+                }
+                else {
+                    when (element) {
+                        'i' -> whatFunction = element
+                        'o' -> whatFunction = element
+                        'a' -> whatFunction = element
                     }
                 }
 
@@ -453,6 +483,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     whatFunction = '0'
                     functionIndex++
                 }
+
+                // Brackets handling
                 else if (element == '(') {
                     if (functionIndex >= 0) {
                         bracketsInsideFunctionInput[functionIndex].add(1)
@@ -526,8 +558,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     }
                 }
 
-                // Factorial
-                if (element == '!') {
+                // Factorial and percent
+                if (element == '!' || element == '%') {
                     if (transformedEquation.last() == ')') {
                         // Count brackets that are before factorial
                         var openedBracketsCounter = 0
@@ -552,7 +584,12 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
                         transformedEquation.add(index, '(')
                         transformedEquation.add(')')
-                        transformedEquation.add('!')
+                        if (element == '!') {
+                            transformedEquation.add('!')
+                        }
+                        else {
+                            transformedEquation.add('%')
+                        }
                         transformedEquation.add(')')
                     }
                     else {
@@ -563,7 +600,12 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         transformedEquation.add(index, '(')
                         transformedEquation.add(index, '(')
                         transformedEquation.add(')')
-                        transformedEquation.add('!')
+                        if (element == '!') {
+                            transformedEquation.add('!')
+                        }
+                        else {
+                            transformedEquation.add('%')
+                        }
                         transformedEquation.add(')')
                     }
                 }
@@ -606,14 +648,14 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     transformedEquation.add(element)
                     lastChar = element
                     inRoot = false
-                } else if (element == '!') {
-                    lastChar = element
+                } else if (element == '!' || element == '%') {
                     inRoot = false
                 }
                 else if (element == ',' || element == '√' || element == 'π' || element == 'e') {
                     lastChar = element
                 }
 
+                commaInUse = false
                 addBracketIndex = -1
                 intConverter = 0
                 if (whatFunction == '0') {
@@ -654,10 +696,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
         var iterator: Int = index
         val threshold = 1E-10
 
-        println(equation)
-
         while (iterator < equation.size) {
-            println(equation[iterator])
             when (equation[iterator]) {
                 is Char -> {
                     if (equation[iterator] == '(') {
@@ -701,6 +740,9 @@ class AdvancedKeyboard @JvmOverloads constructor(
                                     't' -> result.first += tan(equationBuffor.first)
                                     'g' -> result.first += log(equationBuffor.first, 10.0)
                                     'n' -> result.first += ln(equationBuffor.first)
+                                    'i' -> result.first += asin(equationBuffor.first)
+                                    'o' -> result.first += acos(equationBuffor.first)
+                                    'a' -> result.first += atan(equationBuffor.first)
                                 }
                             }
 
@@ -711,6 +753,9 @@ class AdvancedKeyboard @JvmOverloads constructor(
                                     't' -> result.first -= tan(equationBuffor.first)
                                     'g' -> result.first -= log(equationBuffor.first, 10.0)
                                     'n' -> result.first -= ln(equationBuffor.first)
+                                    'i' -> result.first -= asin(equationBuffor.first)
+                                    'o' -> result.first -= acos(equationBuffor.first)
+                                    'a' -> result.first -= atan(equationBuffor.first)
                                 }
                             }
 
@@ -721,6 +766,9 @@ class AdvancedKeyboard @JvmOverloads constructor(
                                     't' -> result.first *= tan(equationBuffor.first)
                                     'g' -> result.first *= log(equationBuffor.first, 10.0)
                                     'n' -> result.first *= ln(equationBuffor.first)
+                                    'i' -> result.first *= asin(equationBuffor.first)
+                                    'o' -> result.first *= acos(equationBuffor.first)
+                                    'a' -> result.first *= atan(equationBuffor.first)
                                 }
                             }
 
@@ -731,6 +779,9 @@ class AdvancedKeyboard @JvmOverloads constructor(
                                     't' -> result.first /= tan(equationBuffor.first)
                                     'g' -> result.first /= log(equationBuffor.first, 10.0)
                                     'n' -> result.first /= ln(equationBuffor.first)
+                                    'i' -> result.first /= asin(equationBuffor.first)
+                                    'o' -> result.first /= acos(equationBuffor.first)
+                                    'a' -> result.first /= atan(equationBuffor.first)
                                 }
                             }
 
@@ -750,6 +801,15 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
                                     'n' -> result.first =
                                         (result.first).pow(ln(equationBuffor.first))
+
+                                    'i' -> result.first +=
+                                        (result.first).pow(asin(equationBuffor.first))
+
+                                    'o' -> result.first +=
+                                        (result.first).pow(acos(equationBuffor.first))
+
+                                    'a' -> result.first +=
+                                        (result.first).pow(atan(equationBuffor.first))
                                 }
                             }
                             else -> {
@@ -759,6 +819,9 @@ class AdvancedKeyboard @JvmOverloads constructor(
                                     't' -> result.first = tan(equationBuffor.first)
                                     'g' -> result.first = log(equationBuffor.first, 10.0)
                                     'n' -> result.first = ln(equationBuffor.first)
+                                    'i' -> result.first = asin(equationBuffor.first)
+                                    'o' -> result.first = acos(equationBuffor.first)
+                                    'a' -> result.first = atan(equationBuffor.first)
                                 }
                             }
                         }
@@ -774,6 +837,9 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
                         if (equation[iterator] == '!') {
                             result.first = factorial(result.first)
+                        }
+                        else if (equation[iterator] == '%') {
+                            result.first /= 100
                         }
                     }
                 }
@@ -938,32 +1004,64 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
                         if (bufforText.last().isDigit() || bufforText.last() == '!'
                             || bufforText.last() == ')' || bufforText.last() == 'π'
-                            || bufforText.last() == 'e') {
+                            || bufforText.last() == 'e' || bufforText.last() == '(') {
+
                             textView.text = bufforText
-                            val text = basicCalcButtons[i].text
-                            textView.append(text)
 
-                            var counter = 0
-                            while (counter < bracketCounter) {
-                                textView.append(")")
-                                counter++
-                            }
+                            if (bufforText.last() == '(') {
+                                if (basicCalcButtons[i].text == "-") {
+                                    val text = basicCalcButtons[i].text
+                                    textView.append(text)
 
-                            // Update functions that are in use
-                            val rangeFunctions = specialFunctions.size-1 downTo 0
-                            var buffor = specialFunctionDeep
-                            for (i in rangeFunctions) {
-                                if (specialFunctions[i].deep <= specialFunctionDeep) {
-                                    if (buffor <= 0) {
-                                        break
+                                    var counter = 0
+                                    while (counter < bracketCounter) {
+                                        textView.append(")")
+                                        counter++
                                     }
-                                    if (buffor == specialFunctions[i].deep) {
-                                        specialFunctions[i].end += text.length
-                                        buffor--
+
+                                    // Update functions that are in use
+                                    val rangeFunctions = specialFunctions.size-1 downTo 0
+                                    var buffor = specialFunctionDeep
+                                    for (i in rangeFunctions) {
+                                        if (specialFunctions[i].deep <= specialFunctionDeep) {
+                                            if (buffor <= 0) {
+                                                break
+                                            }
+                                            if (buffor == specialFunctions[i].deep) {
+                                                specialFunctions[i].end += text.length
+                                                buffor--
+                                            }
+                                        }
                                     }
+                                    commaUsed = false
                                 }
                             }
-                            commaUsed = false
+                            else {
+                                val text = basicCalcButtons[i].text
+                                textView.append(text)
+
+                                var counter = 0
+                                while (counter < bracketCounter) {
+                                    textView.append(")")
+                                    counter++
+                                }
+
+                                // Update functions that are in use
+                                val rangeFunctions = specialFunctions.size-1 downTo 0
+                                var buffor = specialFunctionDeep
+                                for (i in rangeFunctions) {
+                                    if (specialFunctions[i].deep <= specialFunctionDeep) {
+                                        if (buffor <= 0) {
+                                            break
+                                        }
+                                        if (buffor == specialFunctions[i].deep) {
+                                            specialFunctions[i].end += text.length
+                                            buffor--
+                                        }
+                                    }
+                                }
+                                commaUsed = false
+                            }
                         }
 
                     } else if (textView.text.last().isDigit() || textView.text.last() == ')'
@@ -972,11 +1070,18 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         textView.append(basicCalcButtons[i].text)
                         commaUsed = false
                     }
+                    else if (textView.text.last() == '(') {
+                        if (basicCalcButtons[i].text == "-") {
+                            textView.append(basicCalcButtons[i].text)
+                        }
+                        commaUsed = false
+                    }
                 }
                 else {
                     if (basicCalcButtons[i].text == "-") {
                         textView.append(basicCalcButtons[i].text)
                     }
+                    commaUsed = false
                 }
 
                 Handler(Looper.getMainLooper()).postDelayed({
@@ -1317,9 +1422,69 @@ class AdvancedKeyboard @JvmOverloads constructor(
         }
     }
 
-    fun fractionButtonClick(textView: TextView, resultTextView: TextView) {
+    fun fractionButtonClick(textView: TextView) {
         fractionButton.setOnClickListener {
             fractionButton.setBackgroundResource(clickedButtonStyle)
+
+            if (textView.text.isNotEmpty()) {
+                if (specialFunctionDeep > 0) {
+                    // Check how many bracket are needed to be delete
+                    var function: Triple<Int> = specialFunctions.last()
+                    val range = specialFunctions.size - 1 downTo 0
+                    for (i in range) {
+                        if (specialFunctions[i].deep == specialFunctionDeep) {
+                            function = specialFunctions[i]
+                            break
+                        }
+                    }
+                    // Check how manu bracket are needed to be delete
+                    var limit = textView.text.length - 1
+                    var bracketCounter = 0
+                    while (function.end <= limit && textView.text[limit] == ')') {
+                        bracketCounter++
+                        limit--
+                    }
+                    val bufforText = textView.text.dropLast(bracketCounter)
+
+                    if (bufforText.last().isDigit() ||
+                        bufforText.last() == ')' ||
+                        bufforText.last() == 'π' ||
+                        bufforText.last() == 'e') {
+
+                        textView.text = bufforText
+                        val text = "^(-"
+                        textView.append(text)
+                        bracketsCounter++
+
+                        var counter = 0
+                        while (counter < bracketCounter) {
+                            textView.append(")")
+                            counter++
+                        }
+
+                        // Update functions that are in use
+                        val rangeFunctions = specialFunctions.size - 1 downTo 0
+                        var buffor = specialFunctionDeep
+                        for (i in rangeFunctions) {
+                            if (specialFunctions[i].deep <= specialFunctionDeep) {
+                                if (buffor <= 0) {
+                                    break
+                                }
+                                if (buffor == specialFunctions[i].deep) {
+                                    specialFunctions[i].end += text.length
+                                    buffor++
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    if (textView.text.last().isDigit() || textView.text.last() == ')'
+                        || textView.text.last() == 'π' || textView.text.last() == 'e') {
+                        textView.append("^(-")
+                        bracketsCounter++
+                    }
+                }
+            }
 
             Handler(Looper.getMainLooper()).postDelayed({
                 fractionButton.setBackgroundResource(unClickedButtonStyle)
@@ -2090,6 +2255,62 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     button.setBackgroundResource(unClickedButtonStyle)
                 }, 100)
             }
+        }
+    }
+
+    fun degreeButtonClick() {
+        degreeButton.setOnClickListener {
+            degreeButton.setBackgroundResource(clickedButtonStyle)
+
+            if (degreeButton.text == "deg") {
+                degreeButton.text = "rad"
+                radians = true
+            }
+            else if (!secondFunctions) {
+                degreeButton.text = "deg"
+                radians = false
+            }
+
+            Handler(Looper.getMainLooper()).postDelayed({
+                degreeButton.setBackgroundResource(unClickedButtonStyle)
+            }, 100)
+        }
+    }
+
+    fun changeFunctionsButtonClick() {
+        changeFunctionsButton.setOnClickListener {
+            changeFunctionsButton.setBackgroundResource(clickedButtonStyle)
+
+            if (changeFunctionsButton.text == "2nd") {
+                changeFunctionsButton.text = "1st"
+                sinButton.text = "sin"
+                cosButton.text = "cos"
+                tgButton.text = "tan"
+
+                sinButton.textSize = 16f
+                cosButton.textSize = 16f
+                tgButton.textSize = 16f
+
+                secondFunctions = false
+            }
+            else {
+                changeFunctionsButton.text = "2nd"
+                sinButton.text = "arcsin"
+                cosButton.text = "arccos"
+                tgButton.text = "arctan"
+
+                sinButton.textSize = 10f
+                cosButton.textSize = 10f
+                tgButton.textSize = 10f
+
+                secondFunctions = true
+                degreeButton.text = "rad"
+                radians = true
+            }
+
+            Handler(Looper.getMainLooper()).postDelayed({
+                changeFunctionsButton.setBackgroundResource(unClickedButtonStyle)
+            }, 100)
         }
     }
 }
