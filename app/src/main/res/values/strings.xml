@@ -48,6 +48,7 @@
     // Advance calculator
     <string name="SecondCalc" translatable="false">2nd</string>
     <string name="DegreeCalc" translatable="false">deg</string>
+    <string name="RadiansCalc" translatable="false">rad</string>
     <string name="Sin" translatable="false">sin</string>
     <string name="Cos" translatable="false">cos</string>
     <string name="Tan" translatable="false">tan</string>
@@ -62,6 +63,7 @@
     <string name="PInumber" translatable="false">π</string>
 
     <string name="Clear" translatable="false">C</string>
+    <string name="Error" translatable="false">ERROR</string>
 
 
     // Matrix calculator

@@ -29,7 +29,7 @@
         android:layout_columnWeight="1"
         android:layout_rowWeight="1"
         android:layout_margin="4dp"
-        android:text="@string/DegreeCalc" />
+        android:text="@string/RadiansCalc" />
 
     <Button
         android:id="@+id/Sin"
