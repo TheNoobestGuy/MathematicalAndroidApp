@@ -85,7 +85,7 @@ class Keyboard @JvmOverloads constructor(
 
                 Handler(Looper.getMainLooper()).postDelayed({
                     buttons[i].setBackgroundResource(unClickedButtonStyle)
-                }, 200)
+                }, 100)
             }
         }
     }
@@ -105,7 +105,7 @@ class Keyboard @JvmOverloads constructor(
 
                 Handler(Looper.getMainLooper()).postDelayed({
                     deleteButton.setBackgroundResource(unClickedButtonStyle)
-                }, 200)
+                }, 100)
             }
         }
     }
@@ -117,7 +117,7 @@ class Keyboard @JvmOverloads constructor(
     fun unClickEnterButton() {
         Handler(Looper.getMainLooper()).postDelayed({
             enterButton.setBackgroundResource(unClickedButtonStyle)
-        }, 200)
+        }, 100)
     }
 
     fun getEnterButton(): Button {

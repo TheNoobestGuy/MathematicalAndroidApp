@@ -117,7 +117,7 @@ class MatrixKeyboard @JvmOverloads constructor(
 
             Handler(Looper.getMainLooper()).postDelayed({
                 rowPlusButton.setBackgroundResource(unClickedButtonStyle)
-            }, 200)
+            }, 100)
         }
     }
 
@@ -136,7 +136,7 @@ class MatrixKeyboard @JvmOverloads constructor(
 
             Handler(Looper.getMainLooper()).postDelayed({
                 rowMinusButton.setBackgroundResource(unClickedButtonStyle)
-            }, 200)
+            }, 100)
         }
     }
 
@@ -156,7 +156,7 @@ class MatrixKeyboard @JvmOverloads constructor(
             refreshClickListeners(matrix)
             Handler(Looper.getMainLooper()).postDelayed({
                 colPlusButton.setBackgroundResource(unClickedButtonStyle)
-            }, 200)
+            }, 100)
         }
     }
 
@@ -175,7 +175,7 @@ class MatrixKeyboard @JvmOverloads constructor(
 
             Handler(Looper.getMainLooper()).postDelayed({
                 colMinusButton.setBackgroundResource(unClickedButtonStyle)
-            }, 200)
+            }, 100)
         }
     }
 
@@ -258,7 +258,7 @@ class MatrixKeyboard @JvmOverloads constructor(
 
                 Handler(Looper.getMainLooper()).postDelayed({
                     calculatorButtons[i].setBackgroundResource(unClickedButtonStyle)
-                }, 200)
+                }, 100)
             }
         }
     }
@@ -284,7 +284,7 @@ class MatrixKeyboard @JvmOverloads constructor(
 
             Handler(Looper.getMainLooper()).postDelayed({
                 deleteButton.setBackgroundResource(unClickedButtonStyle)
-            }, 200)
+            }, 100)
         }
     }
 
@@ -295,7 +295,7 @@ class MatrixKeyboard @JvmOverloads constructor(
     fun unClickEnterButton() {
         Handler(Looper.getMainLooper()).postDelayed({
             enterButton.setBackgroundResource(unClickedButtonStyle)
-        }, 200)
+        }, 100)
     }
 
     fun getEnterButton(): Button {

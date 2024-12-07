@@ -826,7 +826,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
             Handler(Looper.getMainLooper()).postDelayed({
                 enterButton.setBackgroundResource(unClickedButtonStyle)
-            }, 200)
+            }, 100)
         }
     }
 
@@ -904,7 +904,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
                 Handler(Looper.getMainLooper()).postDelayed({
                     buttons[i].setBackgroundResource(unClickedButtonStyle)
-                }, 200)
+                }, 100)
             }
         }
     }
@@ -973,10 +973,15 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         commaUsed = false
                     }
                 }
+                else {
+                    if (basicCalcButtons[i].text == "-") {
+                        textView.append(basicCalcButtons[i].text)
+                    }
+                }
 
                 Handler(Looper.getMainLooper()).postDelayed({
                     basicCalcButtons[i].setBackgroundResource(unClickedButtonStyle)
-                }, 200)
+                }, 100)
             }
         }
     }
@@ -1042,7 +1047,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
             Handler(Looper.getMainLooper()).postDelayed({
                 powerButton.setBackgroundResource(unClickedButtonStyle)
-            }, 200)
+            }, 100)
         }
     }
 
@@ -1111,7 +1116,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
             Handler(Looper.getMainLooper()).postDelayed({
                 commaButton.setBackgroundResource(unClickedButtonStyle)
-            }, 200)
+            }, 100)
         }
     }
 
@@ -1187,7 +1192,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
             Handler(Looper.getMainLooper()).postDelayed({
                 rootButton.setBackgroundResource(unClickedButtonStyle)
-            }, 200)
+            }, 100)
         }
     }
 
@@ -1308,7 +1313,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
             Handler(Looper.getMainLooper()).postDelayed({
                 factorialButton.setBackgroundResource(unClickedButtonStyle)
-            }, 200)
+            }, 100)
         }
     }
 
@@ -1320,7 +1325,19 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
             Handler(Looper.getMainLooper()).postDelayed({
                 fractionButton.setBackgroundResource(unClickedButtonStyle)
-            }, 200)
+            }, 100)
+        }
+    }
+
+    fun procentButtonClick(textView: TextView, resultTextView: TextView) {
+        procentButton.setOnClickListener {
+            procentButton.setBackgroundResource(clickedButtonStyle)
+
+
+
+            Handler(Looper.getMainLooper()).postDelayed({
+                procentButton.setBackgroundResource(unClickedButtonStyle)
+            }, 100)
         }
     }
 
@@ -1396,7 +1413,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
             Handler(Looper.getMainLooper()).postDelayed({
                 numberPIButton.setBackgroundResource(unClickedButtonStyle)
-            }, 200)
+            }, 100)
         }
     }
 
@@ -1472,7 +1489,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
             Handler(Looper.getMainLooper()).postDelayed({
                 numberEulerButton.setBackgroundResource(unClickedButtonStyle)
-            }, 200)
+            }, 100)
         }
     }
 
@@ -1489,7 +1506,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
             Handler(Looper.getMainLooper()).postDelayed({
                 clearButton.setBackgroundResource(unClickedButtonStyle)
-            }, 200)
+            }, 100)
         }
     }
 
@@ -1561,7 +1578,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
             Handler(Looper.getMainLooper()).postDelayed({
                 openBracketButton.setBackgroundResource(unClickedButtonStyle)
-            }, 200)
+            }, 100)
         }
     }
 
@@ -1632,7 +1649,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
             Handler(Looper.getMainLooper()).postDelayed({
                 closeBracketButton.setBackgroundResource(unClickedButtonStyle)
-            }, 200)
+            }, 100)
         }
     }
 
@@ -1824,7 +1841,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
             Handler(Looper.getMainLooper()).postDelayed({
                 deleteButton.setBackgroundResource(unClickedButtonStyle)
-            }, 200)
+            }, 100)
         }
     }
 
@@ -1945,7 +1962,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
                 Handler(Looper.getMainLooper()).postDelayed({
                     button.setBackgroundResource(unClickedButtonStyle)
-                }, 200)
+                }, 100)
             }
         }
     }
