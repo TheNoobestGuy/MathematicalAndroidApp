@@ -216,26 +216,39 @@ class MatrixCalculatorActivity : ComponentActivity() {
 
                     // Remove redundant buttons and change size of keyboard
                     if (sign == "×") {
-                        keyboard.matrixMultiplicationMode()
+                        if (firstMatrixRows == 1 && firstMatrixColumns == 1) {
+                            while (matrix.getMatrixRows() < 2) {
+                                matrix.addRow()
+                            }
 
-                        while (matrix.getMatrixColumns() > 1) {
-                            matrix.removeColumn()
-                        }
+                            while (matrix.getMatrixColumns() < 2) {
+                                matrix.addColumn()
+                            }
 
-                        var limit = matrix.getMatrixRows()
-                        while (limit > firstMatrixColumns) {
-                            matrix.removeRow()
-                            limit--
-                        }
-
-                        var run = false
-                        while (limit < firstMatrixColumns) {
-                            matrix.addRow()
-                            limit++
-                            run = true
-                        }
-                        if (run) {
                             matrix.getClickedMatrixCell()
+                        }
+                        else {
+                            keyboard.matrixMultiplicationMode()
+
+                            while (matrix.getMatrixColumns() > 1) {
+                                matrix.removeColumn()
+                            }
+
+                            var limit = matrix.getMatrixRows()
+                            while (limit > firstMatrixColumns) {
+                                matrix.removeRow()
+                                limit--
+                            }
+
+                            var run = false
+                            while (limit < firstMatrixColumns) {
+                                matrix.addRow()
+                                limit++
+                                run = true
+                            }
+                            if (run) {
+                                matrix.getClickedMatrixCell()
+                            }
                         }
 
                         val newWidth: Float = (matrix.getMatrixColumns() * 0.25f)
@@ -259,10 +272,20 @@ class MatrixCalculatorActivity : ComponentActivity() {
                     secondMatrix = matrix.getMatrixValues()
 
                     // Make calculations
-                    resultMatrixRows = firstMatrixRows
-                    resultMatrixColumns = matrix.getMatrixColumns()
-                    val resultMatrixSize = resultMatrixRows * resultMatrixColumns
-                    resultMatrix = IntArray(resultMatrixSize)
+                    var scalar = false
+                    if (firstMatrixRows == 1 && firstMatrixColumns == 1) {
+                        resultMatrixRows = matrix.getMatrixRows()
+                        resultMatrixColumns = matrix.getMatrixColumns()
+                        val resultMatrixSize = resultMatrixRows * resultMatrixColumns
+                        resultMatrix = IntArray(resultMatrixSize)
+                        scalar = true
+                    }
+                    else {
+                        resultMatrixRows = firstMatrixRows
+                        resultMatrixColumns = matrix.getMatrixColumns()
+                        val resultMatrixSize = resultMatrixRows * resultMatrixColumns
+                        resultMatrix = IntArray(resultMatrixSize)
+                    }
 
                     if (sign == "+") {
                         for (i in firstMatrix.indices) {
@@ -279,30 +302,37 @@ class MatrixCalculatorActivity : ComponentActivity() {
                     }
                     // Handle multiplication
                     else {
-                        var resultMatrixIndex = 0
-                        var row = 0
-                        while (resultMatrixIndex < resultMatrix.size) {
-                            var leapLimit = 0
+                        if (!scalar) {
+                            var resultMatrixIndex = 0
+                            var row = 0
+                            while (resultMatrixIndex < resultMatrix.size) {
+                                var leapLimit = 0
 
-                            while (leapLimit < matrix.getMatrixColumns()) {
-                                var leap = leapLimit
-                                var equation = 0
-                                var col = 0
+                                while (leapLimit < matrix.getMatrixColumns()) {
+                                    var leap = leapLimit
+                                    var equation = 0
+                                    var col = 0
 
-                                while (col < firstMatrixColumns) {
-                                    println(secondMatrix[leap])
-                                    val index = (row * firstMatrixColumns) + col
-                                    equation += firstMatrix[index] * secondMatrix[leap]
-                                    leap += matrix.getMatrixColumns()
-                                    col++
+                                    while (col < firstMatrixColumns) {
+                                        println(secondMatrix[leap])
+                                        val index = (row * firstMatrixColumns) + col
+                                        equation += firstMatrix[index] * secondMatrix[leap]
+                                        leap += matrix.getMatrixColumns()
+                                        col++
+                                    }
+
+                                    resultMatrix[resultMatrixIndex] = equation
+                                    resultMatrixIndex++
+                                    leapLimit++
                                 }
 
-                                resultMatrix[resultMatrixIndex] = equation
-                                resultMatrixIndex++
-                                leapLimit++
+                                row++
                             }
-
-                            row++
+                        }
+                        else {
+                            for ((index, cell) in secondMatrix.withIndex()) {
+                                resultMatrix[index] = cell *  firstMatrix[0]
+                            }
                         }
                     }
 
