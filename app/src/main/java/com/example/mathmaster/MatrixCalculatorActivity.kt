@@ -314,7 +314,6 @@ class MatrixCalculatorActivity : ComponentActivity() {
                                     var col = 0
 
                                     while (col < firstMatrixColumns) {
-                                        println(secondMatrix[leap])
                                         val index = (row * firstMatrixColumns) + col
                                         equation += firstMatrix[index] * secondMatrix[leap]
                                         leap += matrix.getMatrixColumns()
@@ -331,7 +330,7 @@ class MatrixCalculatorActivity : ComponentActivity() {
                         }
                         else {
                             for ((index, cell) in secondMatrix.withIndex()) {
-                                resultMatrix[index] = cell *  firstMatrix[0]
+                                resultMatrix[index] = cell * firstMatrix[0]
                             }
                         }
                     }

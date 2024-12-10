@@ -243,7 +243,6 @@ class MatrixKeyboard @JvmOverloads constructor(
         }
     }
 
-
     fun numberButtonClick(matrix: Matrix) {
         for (i in calculatorButtons.indices) {
             calculatorButtons[i].setOnClickListener {

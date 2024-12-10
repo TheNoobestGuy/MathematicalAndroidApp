@@ -60,14 +60,14 @@ class Matrix @JvmOverloads constructor(
         val cell = EditText(context).apply {
             inputType = InputType.TYPE_CLASS_TEXT
             textAlignment = View.TEXT_ALIGNMENT_CENTER
-            filters = arrayOf(InputFilter.LengthFilter(3))
+            filters = arrayOf(InputFilter.LengthFilter(4))
             background = AppCompatResources.getDrawable(context, R.drawable.matrix_cell_background)
             layoutParams = GridLayout.LayoutParams().apply {
                 width = 0
                 height = 0
             }
         }
-        cell.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
+        cell.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
         cell.setTextColor(ContextCompat.getColor(context, R.color.White))
         cell.isFocusable = false
         cell.isCursorVisible = false
