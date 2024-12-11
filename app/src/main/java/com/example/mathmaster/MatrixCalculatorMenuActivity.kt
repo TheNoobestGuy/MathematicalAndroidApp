@@ -50,7 +50,6 @@ class MatrixCalculatorMenuActivity : ComponentActivity() {
         clickFunction(matrixMenu.getMultiplyButton(), clickedButtonStyle, MatrixCalculatorActivity(), "×")
         clickFunction(matrixMenu.getAddButton(), clickedButtonStyle, MatrixCalculatorActivity(), "+")
         clickFunction(matrixMenu.getSubtractButton(), clickedButtonStyle, MatrixCalculatorActivity(), "-")
-        clickFunction(matrixMenu.getInfoButton(), clickedButtonStyle, ToolsActivity(), "i")
     }
 
     override fun onBackPressed() {

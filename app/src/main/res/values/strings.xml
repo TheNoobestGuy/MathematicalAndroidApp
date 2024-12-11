@@ -71,15 +71,18 @@
     <string name="RowMinus" translatable="false">Row-</string>
     <string name="ColPlus" translatable="false">Col+</string>
     <string name="ColMinus" translatable="false">Col-</string>
+    <string name="MultiplyMatrix" translatable="false">Multiply</string>
     <string name="AddMatrix" translatable="false">Add</string>
     <string name="SubtractMatrix" translatable="false">Subtract</string>
-    <string name="MultiplyMatrix" translatable="false">Multiply</string>
-    <string name="PowerMatrix" translatable="false">Power</string>
     <string name="InverseMatrix" translatable="false">Inverse</string>
-    <string name="InfoMatrix" translatable="false">Info</string>
+    <string name="TransposeMatrix" translatable="false">Transpose</string>
+    <string name="ComplementMatrix" translatable="false">Complement</string>
+    <string name="DeterminantRankMatrix" translatable="false">Det/Rank</string>
+    <string name="RankMatrix" translatable="false">Rank</string>
+    <string name="PowerMatrix" translatable="false">Power</string>
     <string name="PowerTo2" translatable="false">Power to 2</string>
     <string name="PowerTo3" translatable="false">Power to 3</string>
-    <string name="PowerTo4" translatable="false">Power to 4</string>
+    <string name="Undo" translatable="false">Undo</string>
 
     // Statistics
     <string name="StatisticsOverview" translatable="false">Statistics Overview</string>

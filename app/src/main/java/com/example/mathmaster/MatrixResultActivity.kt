@@ -85,25 +85,38 @@ class MatrixResultActivity : ComponentActivity() {
 
         // Matrix
         val matrix: Matrix = findViewById<Matrix>(R.id.Matrix)
-        var resultMatrix: IntArray = intent.getIntArrayExtra("resultMatrix")!!
+        val resultMatrix: IntArray = intent.getIntArrayExtra("resultMatrix")!!
         val resultMatrixRows: Int = intent.getIntExtra("resultMatrixRows", 0)
         val resultMatrixColumns: Int = intent.getIntExtra("resultMatrixColumns", 0)
-        matrix.setResultMatrix(matrix, resultMatrix, resultMatrixRows, resultMatrixColumns, false)
-
-        // After power
-        var resultMatrixBuffor: IntArray = resultMatrix.copyOf()
-        val resultMatrixAfterExp: IntArray = IntArray(resultMatrixRows*resultMatrixColumns)
-
-        // After inverse
-        val resultMatrixAfterInverse: IntArray = IntArray(resultMatrixRows*resultMatrixColumns)
+        matrix.setResultMatrix(resultMatrix, resultMatrixRows, resultMatrixColumns, false)
 
         // Menu buttons
         val matrixMenu: MatrixResultMenu = findViewById<MatrixResultMenu>(R.id.MenuBlock)
+        matrixMenu.setMatrix(matrix,resultMatrix, resultMatrixRows, resultMatrixColumns)
+        if (resultMatrixRows == resultMatrixColumns) {
+            matrixMenu.matrixIsQuadratic()
+        }
+
+        // Transpose
+        matrixMenu.clickTransposeButton()
+
+        // Determinant
+        matrixMenu.clickDeterminantRankButton()
+
+        // Undo
+        matrixMenu.clickUndoButton()
+
+        // Power matrix to handler
+        matrixMenu.clickPowerButton()
+        matrixMenu.clickPowersToButtons()
+        matrixMenu.clickUndoPowerButton()
+        matrixMenu.clickBackButton()
+
+        // Inverse matrix handler
+
+
         // Style of clicked button
         val clickedButtonStyle = R.drawable.menubutton_background_clicked
-        val unClickedButtonStyle = R.drawable.menubutton_background
-
-        matrixMenu.matrixIsQuadratic()
 
         // On click functions
         clickFunction(matrixMenu.getMultiplyButton(), clickedButtonStyle, MatrixCalculatorActivity(),
@@ -112,63 +125,6 @@ class MatrixResultActivity : ComponentActivity() {
             "+", resultMatrix, resultMatrixRows, resultMatrixColumns)
         clickFunction(matrixMenu.getSubtractButton(), clickedButtonStyle, MatrixCalculatorActivity(),
             "-", resultMatrix, resultMatrixRows, resultMatrixColumns)
-
-        // Create custom view for information!!!!
-        clickFunction(matrixMenu.getInfoButton(), clickedButtonStyle, MatrixCalculatorActivity(),
-            "i", resultMatrix, resultMatrixRows, resultMatrixColumns)
-
-        // Power matrix to handler
-        matrixMenu.clickPowerButton()
-
-        for (i in  0 until matrixMenu.getPowersToButtons().size) {
-            matrixMenu.getPowersToButtons()[i].setOnClickListener {
-                matrixMenu.getPowersToButtons()[i].setBackgroundResource(clickedButtonStyle)
-
-                val powerTo = i + 1
-                var iterator = 0
-                while (iterator < powerTo) {
-                    var resultMatrixIndex = 0
-                    var row = 0
-                    while (resultMatrixIndex < resultMatrix.size) {
-                        var leapLimit = 0
-
-                        while (leapLimit < resultMatrixColumns) {
-                            var leap = leapLimit
-                            var equation = 0
-                            var col = 0
-
-                            while (col < resultMatrixColumns) {
-                                val index = (row * resultMatrixColumns) + col
-                                equation += resultMatrix[index] * resultMatrixBuffor[leap]
-                                leap += resultMatrixColumns
-                                col++
-                            }
-
-                            resultMatrixAfterExp[resultMatrixIndex] = equation
-                            resultMatrixIndex++
-                            leapLimit++
-                        }
-
-                        row++
-                    }
-
-                    resultMatrixBuffor = resultMatrixAfterExp.copyOf()
-                    iterator++
-                }
-
-                resultMatrix = resultMatrixAfterExp.copyOf()
-                matrix.setResultMatrix(matrix, resultMatrix, resultMatrixRows, resultMatrixColumns, false)
-
-                Handler(Looper.getMainLooper()).postDelayed({
-                    matrixMenu.getPowersToButtons()[i].setBackgroundResource(unClickedButtonStyle)
-                }, 100)
-            }
-        }
-
-        matrixMenu.clickBackButton()
-
-        // Inverse matrix handler
-
     }
 
     override fun onBackPressed() {

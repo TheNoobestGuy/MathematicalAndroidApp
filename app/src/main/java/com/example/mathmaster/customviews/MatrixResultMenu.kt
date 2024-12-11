@@ -7,12 +7,10 @@ import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.Button
+import android.widget.GridLayout
 import android.widget.LinearLayout
 import com.example.mathmaster.R
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlin.math.*
 
 class MatrixResultMenu @JvmOverloads constructor(
     context: Context,
@@ -20,18 +18,45 @@ class MatrixResultMenu @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : LinearLayout(context, attrs, defStyleAttr) {
 
+    private var quadraticMatrix: Boolean = false
+
+    // Base matrix data
+    private lateinit var matrix: Matrix
+    private lateinit var backupMatrix: IntArray
+    private var backupMatrixRows: Int = 0
+    private var backupMatrixColumns: Int = 0
+    private lateinit var resultMatrix: IntArray
+    private var resultMatrixRows: Int = 0
+    private var resultMatrixColumns: Int = 0
+
+    // Transpose
+    private lateinit var transposeMatrix: IntArray
+
+    // Power to
+    private lateinit var resultMatrixBuffor: IntArray
+    private lateinit var resultMatrixBeforeExp: IntArray
+    private lateinit var resultMatrixAfterExp: IntArray
+
+    // Inverse
+    val resultMatrixAfterInverse: IntArray = IntArray(resultMatrixRows*resultMatrixColumns)
+
     private val multiplyButton: Button
     private val addButton: Button
     private val subtractButton: Button
-    private val powerButton: Button
-    private val inverseButton: Button
-    private val infoButton: Button
+    private val rankButton: Button
+    private val transposeButton: Button
+    private val undoButton: Button
 
-    private val buttonsArray: Array<Button>
+    private val powerButton: Button
+    private val complementButton: Button
+    private val inverseButton: Button
+    private val detRankButton: Button
+
+    private val powerButtonsArray: Array<Button>
     private val powerTo2Button: Button
     private val powerTo3Button: Button
-    private val powerTo4Button: Button
-    private val backButton: Button
+    private val undoPowerButton: Button
+    private val backPowerButton: Button
 
     private val clickedButtonStyle: Int
     private val unClickedButtonStyle: Int
@@ -43,29 +68,64 @@ class MatrixResultMenu @JvmOverloads constructor(
         multiplyButton = findViewById<Button>(R.id.MultiplyMatrix)
         addButton = findViewById<Button>(R.id.AddMatrix)
         subtractButton = findViewById<Button>(R.id.SubtractMatrix)
+        transposeButton = findViewById<Button>(R.id.TransposeMatrix)
+        rankButton = findViewById<Button>(R.id.RankMatrix)
+        undoButton = findViewById<Button>(R.id.UndoMatrix)
+
+        // Square matrix menu buttons
         powerButton = findViewById<Button>(R.id.PowerMatrix)
+        complementButton = findViewById<Button>(R.id.ComplementMatrix)
         inverseButton = findViewById<Button>(R.id.InverseMatrix)
-        infoButton = findViewById<Button>(R.id.InfoMatrix)
+        detRankButton = findViewById<Button>(R.id.DetRankMatrix)
 
         // Power to menu
         powerTo2Button = findViewById<Button>(R.id.PowerTo2)
         powerTo3Button = findViewById<Button>(R.id.PowerTo3)
-        powerTo4Button = findViewById<Button>(R.id.PowerTo4)
-        backButton = findViewById<Button>(R.id.Back)
+        undoPowerButton = findViewById<Button>(R.id.UndoPower)
+        backPowerButton = findViewById<Button>(R.id.BackPower)
 
-        buttonsArray = arrayOf(
+        powerButtonsArray = arrayOf(
             powerTo2Button,
-            powerTo3Button,
-            powerTo4Button
+            powerTo3Button
         )
 
         clickedButtonStyle = R.drawable.menubutton_background_clicked
         unClickedButtonStyle = R.drawable.menubutton_background
     }
 
+    fun setMatrix(obj: Matrix, array: IntArray, rows: Int, columns:Int) {
+        matrix = obj
+        backupMatrix = array.copyOf()
+        backupMatrixRows = rows
+        backupMatrixColumns = columns
+
+        resultMatrix = array.copyOf()
+        resultMatrixRows = rows
+        resultMatrixColumns = columns
+
+        resultMatrixBuffor = array.copyOf()
+        resultMatrixBeforeExp = array.copyOf()
+    }
+
     fun matrixIsQuadratic() {
+        rankButton.visibility = View.GONE
+
         powerButton.visibility = View.VISIBLE
         inverseButton.visibility = View.VISIBLE
+        detRankButton.visibility = View.VISIBLE
+        complementButton.visibility = View.VISIBLE
+
+        var params = transposeButton.layoutParams as GridLayout.LayoutParams
+        params.rowSpec = GridLayout.spec(2, 1f)
+        params.columnSpec = GridLayout.spec(0, 1f)
+        transposeButton.layoutParams = params
+
+        params = undoButton.layoutParams as GridLayout.LayoutParams
+        params.rowSpec = GridLayout.spec(2, 1f)
+        params.columnSpec = GridLayout.spec(2, 1f)
+        undoButton.layoutParams = params
+
+        quadraticMatrix = true
     }
 
     fun getMultiplyButton(): Button {
@@ -80,6 +140,57 @@ class MatrixResultMenu @JvmOverloads constructor(
         return subtractButton
     }
 
+    fun clickTransposeButton() {
+        transposeButton.setOnClickListener {
+            transposeButton.setBackgroundResource(clickedButtonStyle)
+
+            // Transpose rows and columns
+            transposeMatrix = IntArray(resultMatrixRows * resultMatrixColumns)
+
+            // Transpose matrix
+            var index = 0
+            var iterator = 0
+            var currentCol = 1
+            while (currentCol * resultMatrixRows <= resultMatrix.size) {
+                transposeMatrix[iterator] = resultMatrix[index]
+
+                index += resultMatrixColumns
+                iterator++
+
+                if (index >= resultMatrix.size) {
+                    index = currentCol
+                    currentCol++
+                }
+            }
+
+            // Set new matrix
+            val buffor = resultMatrixRows
+            resultMatrixRows = resultMatrixColumns
+            resultMatrixColumns = buffor
+            matrix.setResultMatrix(transposeMatrix, resultMatrixRows, resultMatrixColumns, false)
+
+            Handler(Looper.getMainLooper()).postDelayed({
+                transposeButton.setBackgroundResource(unClickedButtonStyle)
+            }, 100)
+        }
+    }
+
+    fun clickUndoButton() {
+        undoButton.setOnClickListener {
+            undoButton.setBackgroundResource(clickedButtonStyle)
+
+            matrix.setResultMatrix(backupMatrix, backupMatrixRows, backupMatrixColumns, false)
+
+            resultMatrix = backupMatrix.copyOf()
+            resultMatrixRows = backupMatrixRows
+            resultMatrixColumns = backupMatrixColumns
+
+            Handler(Looper.getMainLooper()).postDelayed({
+                undoButton.setBackgroundResource(unClickedButtonStyle)
+            }, 100)
+        }
+    }
+
     fun clickPowerButton() {
         powerButton.setOnClickListener {
             powerButton.setBackgroundResource(clickedButtonStyle)
@@ -89,54 +200,195 @@ class MatrixResultMenu @JvmOverloads constructor(
                 multiplyButton.visibility = View.GONE
                 addButton.visibility = View.GONE
                 subtractButton.visibility = View.GONE
+                rankButton.visibility = View.GONE
+                undoButton.visibility = View.GONE
                 powerButton.visibility = View.GONE
                 inverseButton.visibility = View.GONE
-                infoButton.visibility = View.GONE
+                detRankButton.visibility = View.GONE
+                complementButton.visibility = View.GONE
+                transposeButton.visibility = View.GONE
 
                 // Show menu
                 powerTo2Button.visibility = View.VISIBLE
                 powerTo3Button.visibility = View.VISIBLE
-                powerTo4Button.visibility = View.VISIBLE
-                backButton.visibility = View.VISIBLE
+                undoPowerButton.visibility = View.VISIBLE
+                backPowerButton.visibility = View.VISIBLE
 
                 powerButton.setBackgroundResource(unClickedButtonStyle)
             }, 100)
         }
     }
 
-    fun getPowersToButtons(): Array<Button> {
-        return buttonsArray
+    fun clickPowersToButtons() {
+        for (i in powerButtonsArray.indices) {
+            powerButtonsArray[i].setOnClickListener {
+                powerButtonsArray[i].setBackgroundResource(clickedButtonStyle)
+
+                resultMatrixAfterExp = IntArray(resultMatrixRows*resultMatrixColumns)
+
+                val powerTo = i + 1
+                var iterator = 0
+                while (iterator < powerTo) {
+                    var resultMatrixIndex = 0
+                    var row = 0
+                    while (resultMatrixIndex < resultMatrix.size) {
+                        var leapLimit = 0
+
+                        while (leapLimit < resultMatrixColumns) {
+                            var leap = leapLimit
+                            var equation = 0
+                            var col = 0
+
+                            while (col < resultMatrixColumns) {
+                                val index = (row * resultMatrixColumns) + col
+                                equation += resultMatrixBeforeExp[index] * resultMatrixBuffor[leap]
+                                leap += resultMatrixColumns
+                                col++
+                            }
+
+                            resultMatrixAfterExp[resultMatrixIndex] = equation
+                            resultMatrixIndex++
+                            leapLimit++
+                        }
+
+                        row++
+                    }
+
+                    resultMatrixBeforeExp = resultMatrixAfterExp.copyOf()
+                    iterator++
+                }
+
+                resultMatrixBeforeExp = resultMatrixAfterExp.copyOf()
+                matrix.setResultMatrix(resultMatrixBeforeExp, resultMatrixRows, resultMatrixColumns, false)
+
+                Handler(Looper.getMainLooper()).postDelayed({
+                    powerButtonsArray[i].setBackgroundResource(unClickedButtonStyle)
+                }, 100)
+            }
+        }
+    }
+
+    fun clickUndoPowerButton() {
+        undoPowerButton.setOnClickListener {
+            undoPowerButton.setBackgroundResource(clickedButtonStyle)
+
+            matrix.setResultMatrix(resultMatrix, resultMatrixRows, resultMatrixColumns, false)
+
+            resultMatrix = resultMatrix.copyOf()
+            resultMatrixBuffor = resultMatrix.copyOf()
+            resultMatrixBeforeExp = resultMatrix.copyOf()
+
+            Handler(Looper.getMainLooper()).postDelayed({
+                undoPowerButton.setBackgroundResource(unClickedButtonStyle)
+            }, 100)
+        }
     }
 
     fun clickBackButton() {
-        backButton.setOnClickListener {
-            backButton.setBackgroundResource(clickedButtonStyle)
+        backPowerButton.setOnClickListener {
+            backPowerButton.setBackgroundResource(clickedButtonStyle)
 
             Handler(Looper.getMainLooper()).postDelayed({
                 // Hide menu
                 powerTo2Button.visibility = View.GONE
                 powerTo3Button.visibility = View.GONE
-                powerTo4Button.visibility = View.GONE
-                backButton.visibility = View.GONE
+                undoPowerButton.visibility = View.GONE
+                backPowerButton.visibility = View.GONE
 
                 // Show menu
                 multiplyButton.visibility = View.VISIBLE
                 addButton.visibility = View.VISIBLE
                 subtractButton.visibility = View.VISIBLE
-                powerButton.visibility = View.VISIBLE
-                inverseButton.visibility = View.VISIBLE
-                infoButton.visibility = View.VISIBLE
+                rankButton.visibility = View.VISIBLE
+                transposeButton.visibility = View.VISIBLE
+                undoButton.visibility = View.VISIBLE
 
-                backButton.setBackgroundResource(unClickedButtonStyle)
+                if (quadraticMatrix) {
+                    rankButton.visibility = View.GONE
+                    powerButton.visibility = View.VISIBLE
+                    inverseButton.visibility = View.VISIBLE
+                    detRankButton.visibility = View.VISIBLE
+                    complementButton.visibility = View.VISIBLE
+                }
+
+                backPowerButton.setBackgroundResource(unClickedButtonStyle)
             }, 100)
         }
     }
 
-    fun getInverseButton(): Button {
-        return inverseButton
+    private fun subMatrix(array: IntArray, dimension: Int, row: Int, col: Int): IntArray {
+        val subMatrix: IntArray = IntArray(dimension*dimension)
+
+        var iterator = 0
+        var leapRow = row * (dimension+1)
+        var leapCol = col
+
+        for (cell in array.indices) {
+            var found = false
+
+            if (cell == leapRow && leapRow < ((row+1) * (dimension+1))) {
+                leapRow++
+                found = true
+            }
+
+            if (cell == leapCol) {
+                leapCol += dimension+1
+                found = true
+            }
+
+            if (!found) {
+                subMatrix[iterator] = array[cell]
+                iterator++
+            }
+        }
+
+        return subMatrix
     }
 
-    fun getInfoButton(): Button {
-        return infoButton
+    private fun recurrentionDeterminant(array: IntArray, dimension: Int): Int {
+        if (dimension == 1) {
+            return array[0]
+        }
+        if (dimension == 2) {
+            return (array[0] * array[3]) - (array[1] * array[2])
+        }
+
+        var result = 0
+        var rowIndex = 0
+        var colIndex = 0
+        while (rowIndex < dimension) {
+            if (array[colIndex] != 0) {
+                val subMatrix = subMatrix(array, dimension-1, rowIndex, colIndex)
+                val firstEquationPart = (-1.0).pow(colIndex+rowIndex).toInt()*array[colIndex]
+                result += firstEquationPart * recurrentionDeterminant(subMatrix, dimension-1)
+            }
+
+            colIndex++
+
+            if (colIndex >= dimension) {
+                rowIndex++
+                colIndex = 0
+            }
+        }
+
+        return result
+    }
+
+    fun clickDeterminantRankButton() {
+        detRankButton.setOnClickListener {
+            detRankButton.setBackgroundResource(clickedButtonStyle)
+
+            val result = recurrentionDeterminant(resultMatrix, resultMatrixRows)
+            println("DETERMINANT $result")
+
+            Handler(Looper.getMainLooper()).postDelayed({
+               detRankButton.setBackgroundResource(unClickedButtonStyle)
+            }, 100)
+        }
+    }
+
+
+    fun getInverseButton(): Button {
+        return inverseButton
     }
 }

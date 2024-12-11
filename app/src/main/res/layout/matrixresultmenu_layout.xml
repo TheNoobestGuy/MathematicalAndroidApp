@@ -4,7 +4,7 @@
     android:id="@+id/MatrixResultMenu"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:columnCount="2"
+    android:columnCount="3"
     android:rowCount="3">
 
         <Button
@@ -40,6 +40,19 @@
             android:background="@drawable/menubutton_background"
             android:layout_width="0dp"
             android:layout_height="0dp"
+            android:layout_row="0"
+            android:layout_column="2"
+            android:layout_rowWeight="1"
+            android:layout_columnWeight="1"
+            android:layout_margin="4dp"/>
+
+        <Button
+            android:id="@+id/TransposeMatrix"
+            android:text="@string/TransposeMatrix"
+            android:textColor="@color/White"
+            android:background="@drawable/menubutton_background"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
             android:layout_row="1"
             android:layout_column="0"
             android:layout_rowWeight="1"
@@ -47,8 +60,8 @@
             android:layout_margin="4dp"/>
 
         <Button
-            android:id="@+id/InfoMatrix"
-            android:text="@string/InfoMatrix"
+            android:id="@+id/RankMatrix"
+            android:text="@string/RankMatrix"
             android:textColor="@color/White"
             android:background="@drawable/menubutton_background"
             android:layout_width="0dp"
@@ -60,14 +73,41 @@
             android:layout_margin="4dp"/>
 
         <Button
+            android:id="@+id/UndoMatrix"
+            android:text="@string/Undo"
+            android:textColor="@color/White"
+            android:background="@drawable/menubutton_background"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_row="1"
+            android:layout_column="2"
+            android:layout_rowWeight="1"
+            android:layout_columnWeight="1"
+            android:layout_margin="4dp"/>
+
+        <Button
             android:id="@+id/PowerMatrix"
             android:text="@string/PowerMatrix"
             android:textColor="@color/White"
             android:background="@drawable/menubutton_background"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:layout_row="2"
+            android:layout_row="1"
             android:layout_column="0"
+            android:layout_rowWeight="1"
+            android:layout_columnWeight="1"
+            android:layout_margin="4dp"
+            android:visibility="gone"/>
+
+        <Button
+            android:id="@+id/ComplementMatrix"
+            android:text="@string/ComplementMatrix"
+            android:textColor="@color/White"
+            android:background="@drawable/menubutton_background"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_row="1"
+            android:layout_column="1"
             android:layout_rowWeight="1"
             android:layout_columnWeight="1"
             android:layout_margin="4dp"
@@ -76,6 +116,20 @@
         <Button
             android:id="@+id/InverseMatrix"
             android:text="@string/InverseMatrix"
+            android:textColor="@color/White"
+            android:background="@drawable/menubutton_background"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_row="1"
+            android:layout_column="2"
+            android:layout_rowWeight="1"
+            android:layout_columnWeight="1"
+            android:layout_margin="4dp"
+            android:visibility="gone"/>
+
+        <Button
+            android:id="@+id/DetRankMatrix"
+            android:text="@string/DeterminantRankMatrix"
             android:textColor="@color/White"
             android:background="@drawable/menubutton_background"
             android:layout_width="0dp"
@@ -116,8 +170,8 @@
             android:visibility="gone"/>
 
         <Button
-            android:id="@+id/PowerTo4"
-            android:text="@string/PowerTo4"
+            android:id="@+id/UndoPower"
+            android:text="@string/Undo"
             android:textColor="@color/White"
             android:background="@drawable/menubutton_background"
             android:layout_width="0dp"
@@ -130,7 +184,7 @@
             android:visibility="gone"/>
 
         <Button
-            android:id="@+id/Back"
+            android:id="@+id/BackPower"
             android:text="@string/Back"
             android:textColor="@color/White"
             android:background="@drawable/menubutton_background"

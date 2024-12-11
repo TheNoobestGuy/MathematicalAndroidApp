@@ -233,7 +233,7 @@ class Matrix @JvmOverloads constructor(
         updateGrid()
     }
 
-    fun setResultMatrix(matrix: Matrix, resultMatrix: IntArray, rows: Int, columns: Int, clickable: Boolean) {
+    fun setResultMatrix(resultMatrix: IntArray, rows: Int, columns: Int, clickable: Boolean) {
         // Fill matrix
         cellsArray.clear()
         for(i in resultMatrix) {
@@ -259,10 +259,10 @@ class Matrix @JvmOverloads constructor(
         // Change matrix size
         val newWidth: Float = (columns * 0.25f)
         val newHeight: Float = (rows * 0.25f)
-        val params = matrix.layoutParams as ConstraintLayout.LayoutParams
+        val params = this.layoutParams as ConstraintLayout.LayoutParams
         params.matchConstraintPercentWidth = newWidth
         params.matchConstraintPercentHeight = newHeight
-        matrix.layoutParams = params
+        this.layoutParams = params
     }
 
     fun getMatrixValues(): MutableList<Int> {
