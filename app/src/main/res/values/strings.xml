@@ -76,7 +76,7 @@
     <string name="SubtractMatrix" translatable="false">Subtract</string>
     <string name="InverseMatrix" translatable="false">Inverse</string>
     <string name="TransposeMatrix" translatable="false">Transpose</string>
-    <string name="ComplementMatrix" translatable="false">Complement</string>
+    <string name="ComplementMatrix" translatable="false">Complements</string>
     <string name="DeterminantRankMatrix" translatable="false">Det/Rank</string>
     <string name="RankMatrix" translatable="false">Rank</string>
     <string name="PowerMatrix" translatable="false">Power</string>

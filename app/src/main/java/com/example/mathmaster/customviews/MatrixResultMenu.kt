@@ -9,6 +9,7 @@ import android.view.View
 import android.widget.Button
 import android.widget.GridLayout
 import android.widget.LinearLayout
+import android.widget.Toast
 import com.example.mathmaster.R
 import kotlin.math.*
 
@@ -22,23 +23,26 @@ class MatrixResultMenu @JvmOverloads constructor(
 
     // Base matrix data
     private lateinit var matrix: Matrix
-    private lateinit var backupMatrix: IntArray
+    private lateinit var backupMatrix: DoubleArray
     private var backupMatrixRows: Int = 0
     private var backupMatrixColumns: Int = 0
-    private lateinit var resultMatrix: IntArray
+    private lateinit var resultMatrix: DoubleArray
     private var resultMatrixRows: Int = 0
     private var resultMatrixColumns: Int = 0
 
     // Transpose
-    private lateinit var transposeMatrix: IntArray
+    private lateinit var transposeMatrix: DoubleArray
+
+    // Complements
+    private lateinit var complementsMatrix: DoubleArray
 
     // Power to
-    private lateinit var resultMatrixBuffor: IntArray
-    private lateinit var resultMatrixBeforeExp: IntArray
-    private lateinit var resultMatrixAfterExp: IntArray
+    private lateinit var resultMatrixBuffor: DoubleArray
+    private lateinit var resultMatrixBeforeExp: DoubleArray
+    private lateinit var resultMatrixAfterExp: DoubleArray
 
     // Inverse
-    val resultMatrixAfterInverse: IntArray = IntArray(resultMatrixRows*resultMatrixColumns)
+    private lateinit var inverseMatrix: DoubleArray
 
     private val multiplyButton: Button
     private val addButton: Button
@@ -93,7 +97,7 @@ class MatrixResultMenu @JvmOverloads constructor(
         unClickedButtonStyle = R.drawable.menubutton_background
     }
 
-    fun setMatrix(obj: Matrix, array: IntArray, rows: Int, columns:Int) {
+    fun setMatrix(obj: Matrix, array: DoubleArray, rows: Int, columns:Int) {
         matrix = obj
         backupMatrix = array.copyOf()
         backupMatrixRows = rows
@@ -140,34 +144,142 @@ class MatrixResultMenu @JvmOverloads constructor(
         return subtractButton
     }
 
+    private fun transpose(array: DoubleArray, dimension: Int): DoubleArray {
+        val bufforArray = DoubleArray(array.size)
+
+        var index = 0
+        var iterator = 0
+        var currentCol = 1
+        while (currentCol * dimension <= array.size) {
+            bufforArray[iterator] = array[index]
+
+            index += dimension
+            iterator++
+
+            if (index >= array.size) {
+                index = currentCol
+                currentCol++
+            }
+        }
+
+        return bufforArray
+    }
+
+    private fun subMatrix(array: DoubleArray, dimension: Int, row: Int, col: Int): DoubleArray {
+        val subMatrix: DoubleArray = DoubleArray(dimension*dimension)
+
+        var iterator = 0
+        var leapRow = row * (dimension+1)
+        var leapCol = col
+
+        for (cell in array.indices) {
+            var found = false
+
+            if (cell == leapRow && leapRow < ((row+1) * (dimension+1))) {
+                leapRow++
+                found = true
+            }
+
+            if (cell == leapCol) {
+                leapCol += dimension+1
+                found = true
+            }
+
+            if (!found) {
+                subMatrix[iterator] = array[cell]
+                iterator++
+            }
+        }
+
+        return subMatrix
+    }
+
+    private fun recurrentionDeterminant(array: DoubleArray, dimension: Int): Double {
+        if (dimension == 1) {
+            return array[0]
+        }
+        if (dimension == 2) {
+            return (array[0] * array[3]) - (array[1] * array[2])
+        }
+
+        var result = 0.0
+        var rowIndex = 0
+        var colIndex = 0
+        while (rowIndex < dimension) {
+            if (array[colIndex] != 0.0) {
+                val subMatrix = subMatrix(array, dimension-1, rowIndex, colIndex)
+                val firstEquationPart = (-1.0).pow(colIndex+rowIndex)*array[colIndex]
+                result += firstEquationPart * recurrentionDeterminant(subMatrix, dimension-1)
+            }
+
+            colIndex++
+
+            if (colIndex >= dimension) {
+                rowIndex++
+                colIndex = 0
+            }
+        }
+
+        return result
+    }
+
+    private fun complementsMatrix(array: DoubleArray, dimension: Int) {
+        complementsMatrix = DoubleArray(dimension*dimension)
+
+        var rowIndex = 0
+        var colIndex = 0
+        for (cell in array.indices) {
+            val subMatrix = subMatrix(array, dimension-1, rowIndex, colIndex)
+            val firstEquationPart = (-1.0).pow(colIndex+rowIndex)
+            complementsMatrix[cell] = firstEquationPart * recurrentionDeterminant(subMatrix, dimension-1)
+
+            colIndex++
+
+            if (colIndex >= dimension) {
+                rowIndex++
+                colIndex = 0
+            }
+        }
+    }
+
+    private fun inverseMatrix(array: DoubleArray, dimension: Int): Boolean {
+        val determinant = recurrentionDeterminant(array, dimension)
+
+        if (determinant == 0.0) {
+            Toast.makeText(context, "Determinant is equal 0 so there is no inverse matrix", Toast.LENGTH_LONG).show()
+            return false
+        }
+        else {
+            inverseMatrix = DoubleArray(dimension*dimension)
+
+            complementsMatrix(array, dimension)
+            complementsMatrix = transpose(complementsMatrix, dimension).copyOf()
+
+            val inverseDeterminant = 1/determinant
+            for (cell in complementsMatrix.indices) {
+                inverseMatrix[cell] = inverseDeterminant * complementsMatrix[cell]
+            }
+
+            complementsMatrix = resultMatrix.copyOf()
+
+            return true
+        }
+    }
+
     fun clickTransposeButton() {
         transposeButton.setOnClickListener {
             transposeButton.setBackgroundResource(clickedButtonStyle)
 
             // Transpose rows and columns
-            transposeMatrix = IntArray(resultMatrixRows * resultMatrixColumns)
-
-            // Transpose matrix
-            var index = 0
-            var iterator = 0
-            var currentCol = 1
-            while (currentCol * resultMatrixRows <= resultMatrix.size) {
-                transposeMatrix[iterator] = resultMatrix[index]
-
-                index += resultMatrixColumns
-                iterator++
-
-                if (index >= resultMatrix.size) {
-                    index = currentCol
-                    currentCol++
-                }
-            }
+            transposeMatrix = DoubleArray(resultMatrixRows * resultMatrixColumns)
+            transposeMatrix = transpose(resultMatrix, resultMatrixRows).copyOf()
 
             // Set new matrix
             val buffor = resultMatrixRows
             resultMatrixRows = resultMatrixColumns
             resultMatrixColumns = buffor
             matrix.setResultMatrix(transposeMatrix, resultMatrixRows, resultMatrixColumns, false)
+            resultMatrix = transposeMatrix.copyOf()
 
             Handler(Looper.getMainLooper()).postDelayed({
                 transposeButton.setBackgroundResource(unClickedButtonStyle)
@@ -224,7 +336,7 @@ class MatrixResultMenu @JvmOverloads constructor(
             powerButtonsArray[i].setOnClickListener {
                 powerButtonsArray[i].setBackgroundResource(clickedButtonStyle)
 
-                resultMatrixAfterExp = IntArray(resultMatrixRows*resultMatrixColumns)
+                resultMatrixAfterExp = DoubleArray(resultMatrixRows*resultMatrixColumns)
 
                 val powerTo = i + 1
                 var iterator = 0
@@ -236,7 +348,7 @@ class MatrixResultMenu @JvmOverloads constructor(
 
                         while (leapLimit < resultMatrixColumns) {
                             var leap = leapLimit
-                            var equation = 0
+                            var equation = 0.0
                             var col = 0
 
                             while (col < resultMatrixColumns) {
@@ -316,62 +428,34 @@ class MatrixResultMenu @JvmOverloads constructor(
         }
     }
 
-    private fun subMatrix(array: IntArray, dimension: Int, row: Int, col: Int): IntArray {
-        val subMatrix: IntArray = IntArray(dimension*dimension)
+    fun clickComplementButton() {
+        complementButton.setOnClickListener {
+            complementButton.setBackgroundResource(clickedButtonStyle)
 
-        var iterator = 0
-        var leapRow = row * (dimension+1)
-        var leapCol = col
+            complementsMatrix(resultMatrix, resultMatrixRows)
+            matrix.setResultMatrix(complementsMatrix, resultMatrixRows, resultMatrixColumns, false)
+            resultMatrix = complementsMatrix.copyOf()
 
-        for (cell in array.indices) {
-            var found = false
-
-            if (cell == leapRow && leapRow < ((row+1) * (dimension+1))) {
-                leapRow++
-                found = true
-            }
-
-            if (cell == leapCol) {
-                leapCol += dimension+1
-                found = true
-            }
-
-            if (!found) {
-                subMatrix[iterator] = array[cell]
-                iterator++
-            }
+            Handler(Looper.getMainLooper()).postDelayed({
+                complementButton.setBackgroundResource(unClickedButtonStyle)
+            }, 100)
         }
-
-        return subMatrix
     }
 
-    private fun recurrentionDeterminant(array: IntArray, dimension: Int): Int {
-        if (dimension == 1) {
-            return array[0]
-        }
-        if (dimension == 2) {
-            return (array[0] * array[3]) - (array[1] * array[2])
-        }
+    fun clickInverseButton() {
+        inverseButton.setOnClickListener {
+            inverseButton.setBackgroundResource(clickedButtonStyle)
 
-        var result = 0
-        var rowIndex = 0
-        var colIndex = 0
-        while (rowIndex < dimension) {
-            if (array[colIndex] != 0) {
-                val subMatrix = subMatrix(array, dimension-1, rowIndex, colIndex)
-                val firstEquationPart = (-1.0).pow(colIndex+rowIndex).toInt()*array[colIndex]
-                result += firstEquationPart * recurrentionDeterminant(subMatrix, dimension-1)
+            val run = inverseMatrix(resultMatrix, resultMatrixRows)
+            if (run) {
+                matrix.setResultMatrix(inverseMatrix, resultMatrixRows, resultMatrixColumns,false)
+                resultMatrix = inverseMatrix.copyOf()
             }
 
-            colIndex++
-
-            if (colIndex >= dimension) {
-                rowIndex++
-                colIndex = 0
-            }
+            Handler(Looper.getMainLooper()).postDelayed({
+                inverseButton.setBackgroundResource(unClickedButtonStyle)
+            }, 100)
         }
-
-        return result
     }
 
     fun clickDeterminantRankButton() {
@@ -379,14 +463,13 @@ class MatrixResultMenu @JvmOverloads constructor(
             detRankButton.setBackgroundResource(clickedButtonStyle)
 
             val result = recurrentionDeterminant(resultMatrix, resultMatrixRows)
-            println("DETERMINANT $result")
+            Toast.makeText(context, "Determinant is equal $result", Toast.LENGTH_LONG).show()
 
             Handler(Looper.getMainLooper()).postDelayed({
                detRankButton.setBackgroundResource(unClickedButtonStyle)
             }, 100)
         }
     }
-
 
     fun getInverseButton(): Button {
         return inverseButton

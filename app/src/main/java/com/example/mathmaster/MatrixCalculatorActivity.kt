@@ -19,10 +19,10 @@ class MatrixCalculatorActivity : ComponentActivity() {
     private val handler = Handler(Looper.getMainLooper())
 
     // Matrix
-    private var firstMatrix: MutableList<Int> = mutableListOf()
+    private var firstMatrix: MutableList<Double> = mutableListOf()
     private var firstMatrixRows: Int = 0
     private var firstMatrixColumns: Int = 0
-    private var secondMatrix: MutableList<Int> = mutableListOf()
+    private var secondMatrix: MutableList<Double> = mutableListOf()
 
     // Counter function to show equation sign after pressing enter
     private val showSign = object : Runnable {
@@ -78,7 +78,7 @@ class MatrixCalculatorActivity : ComponentActivity() {
         val matrix: Matrix = findViewById<Matrix>(R.id.Matrix)
 
         var matrixCounter = intent.getIntExtra("matrixCounter", 1)
-        var resultMatrix: IntArray = intent.getIntArrayExtra("resultMatrix")!!
+        var resultMatrix: DoubleArray = intent.getDoubleArrayExtra("resultMatrix")!!
         var resultMatrixRows: Int = intent.getIntExtra("resultMatrixRows", 0)
         var resultMatrixColumns: Int = intent.getIntExtra("resultMatrixColumns", 0)
 
@@ -277,14 +277,14 @@ class MatrixCalculatorActivity : ComponentActivity() {
                         resultMatrixRows = matrix.getMatrixRows()
                         resultMatrixColumns = matrix.getMatrixColumns()
                         val resultMatrixSize = resultMatrixRows * resultMatrixColumns
-                        resultMatrix = IntArray(resultMatrixSize)
+                        resultMatrix = DoubleArray(resultMatrixSize)
                         scalar = true
                     }
                     else {
                         resultMatrixRows = firstMatrixRows
                         resultMatrixColumns = matrix.getMatrixColumns()
                         val resultMatrixSize = resultMatrixRows * resultMatrixColumns
-                        resultMatrix = IntArray(resultMatrixSize)
+                        resultMatrix = DoubleArray(resultMatrixSize)
                     }
 
                     if (sign == "+") {
@@ -310,7 +310,7 @@ class MatrixCalculatorActivity : ComponentActivity() {
 
                                 while (leapLimit < matrix.getMatrixColumns()) {
                                     var leap = leapLimit
-                                    var equation = 0
+                                    var equation = 0.0
                                     var col = 0
 
                                     while (col < firstMatrixColumns) {

@@ -233,12 +233,23 @@ class Matrix @JvmOverloads constructor(
         updateGrid()
     }
 
-    fun setResultMatrix(resultMatrix: IntArray, rows: Int, columns: Int, clickable: Boolean) {
+    private fun hasDecimal(num: Double): Boolean {
+        return num % 1.0 != 0.0
+    }
+
+    fun setResultMatrix(resultMatrix: DoubleArray, rows: Int, columns: Int, clickable: Boolean) {
         // Fill matrix
         cellsArray.clear()
         for(i in resultMatrix) {
             val cell = createCell()
-            cell.cell.setText(i.toString())
+
+            if (hasDecimal(i)) {
+                cell.cell.setText(i.toString())
+            }
+            else {
+                cell.cell.setText(i.toInt().toString())
+            }
+
             if(!clickable) {
                 cell.cell.isClickable = false
             }
@@ -265,16 +276,16 @@ class Matrix @JvmOverloads constructor(
         this.layoutParams = params
     }
 
-    fun getMatrixValues(): MutableList<Int> {
-        val listOfValues: MutableList<Int> = mutableListOf()
+    fun getMatrixValues(): MutableList<Double> {
+        val listOfValues: MutableList<Double> = mutableListOf()
 
         for (cell in cellsArray) {
             val value = cell.cell.text.toString()
             if (value == "") {
-                listOfValues.add(0)
+                listOfValues.add(0.0)
             }
             else {
-                listOfValues.add(value.toInt())
+                listOfValues.add(value.toDouble())
             }
         }
 

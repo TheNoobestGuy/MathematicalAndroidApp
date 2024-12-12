@@ -27,7 +27,7 @@ class MatrixResultActivity : ComponentActivity() {
     }
 
     private fun clickFunction (button: Button, drawable: Int, view: ComponentActivity,
-                               sign: String, resultMatrix: IntArray,
+                               sign: String, resultMatrix: DoubleArray,
                                resultMatrixRows: Int, resultMatrixColumns: Int) {
         button.setOnClickListener {
             button.setBackgroundResource(drawable)
@@ -85,14 +85,14 @@ class MatrixResultActivity : ComponentActivity() {
 
         // Matrix
         val matrix: Matrix = findViewById<Matrix>(R.id.Matrix)
-        val resultMatrix: IntArray = intent.getIntArrayExtra("resultMatrix")!!
+        val resultMatrix: DoubleArray = intent.getDoubleArrayExtra("resultMatrix")!!
         val resultMatrixRows: Int = intent.getIntExtra("resultMatrixRows", 0)
         val resultMatrixColumns: Int = intent.getIntExtra("resultMatrixColumns", 0)
         matrix.setResultMatrix(resultMatrix, resultMatrixRows, resultMatrixColumns, false)
 
         // Menu buttons
         val matrixMenu: MatrixResultMenu = findViewById<MatrixResultMenu>(R.id.MenuBlock)
-        matrixMenu.setMatrix(matrix,resultMatrix, resultMatrixRows, resultMatrixColumns)
+        matrixMenu.setMatrix(matrix, resultMatrix, resultMatrixRows, resultMatrixColumns)
         if (resultMatrixRows == resultMatrixColumns) {
             matrixMenu.matrixIsQuadratic()
         }
@@ -102,6 +102,12 @@ class MatrixResultActivity : ComponentActivity() {
 
         // Determinant
         matrixMenu.clickDeterminantRankButton()
+
+        // Complements
+        matrixMenu.clickComplementButton()
+
+        // Inverse
+        matrixMenu.clickInverseButton()
 
         // Undo
         matrixMenu.clickUndoButton()

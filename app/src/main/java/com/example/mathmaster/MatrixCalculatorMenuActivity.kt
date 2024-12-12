@@ -21,7 +21,7 @@ class MatrixCalculatorMenuActivity : ComponentActivity() {
         button.setOnClickListener {
             button.setBackgroundResource(drawable)
 
-            val resultMatrix: IntArray = IntArray(0)
+            val resultMatrix: DoubleArray = DoubleArray(0)
             val resultMatrixRows: Int = 0
             val resultMatrixColumns: Int = 0
 
