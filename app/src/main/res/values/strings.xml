@@ -46,12 +46,16 @@
     <string name="AdvancedCalculator" translatable="false">Advanced calculator</string>
 
     // Advance calculator
+    <string name="FirstCalc" translatable="false">1st</string>
     <string name="SecondCalc" translatable="false">2nd</string>
     <string name="DegreeCalc" translatable="false">deg</string>
     <string name="RadiansCalc" translatable="false">rad</string>
     <string name="Sin" translatable="false">sin</string>
     <string name="Cos" translatable="false">cos</string>
     <string name="Tan" translatable="false">tan</string>
+    <string name="ASin" translatable="false">arcsin</string>
+    <string name="ACos" translatable="false">arccos</string>
+    <string name="ATan" translatable="false">arctan</string>
 
     <string name="PowerTo" translatable="false">^</string>
     <string name="Logaritm" translatable="false">lg</string>
@@ -78,6 +82,7 @@
     <string name="TransposeMatrix" translatable="false">Transpose</string>
     <string name="ComplementMatrix" translatable="false">Complements</string>
     <string name="DeterminantRankMatrix" translatable="false">Det/Rank</string>
+    <string name="OtherMatrix" translatable="false">Other</string>
     <string name="RankMatrix" translatable="false">Rank</string>
     <string name="PowerMatrix" translatable="false">Power</string>
     <string name="PowerTo2" translatable="false">Power to 2</string>

@@ -194,7 +194,7 @@ class MatrixResultMenu @JvmOverloads constructor(
         return subMatrix
     }
 
-    private fun recurrentionDeterminant(array: DoubleArray, dimension: Int): Double {
+    private fun determinant(array: DoubleArray, dimension: Int): Double {
         if (dimension == 1) {
             return array[0]
         }
@@ -209,7 +209,7 @@ class MatrixResultMenu @JvmOverloads constructor(
             if (array[colIndex] != 0.0) {
                 val subMatrix = subMatrix(array, dimension-1, rowIndex, colIndex)
                 val firstEquationPart = (-1.0).pow(colIndex+rowIndex)*array[colIndex]
-                result += firstEquationPart * recurrentionDeterminant(subMatrix, dimension-1)
+                result += firstEquationPart * determinant(subMatrix, dimension-1)
             }
 
             colIndex++
@@ -231,7 +231,7 @@ class MatrixResultMenu @JvmOverloads constructor(
         for (cell in array.indices) {
             val subMatrix = subMatrix(array, dimension-1, rowIndex, colIndex)
             val firstEquationPart = (-1.0).pow(colIndex+rowIndex)
-            complementsMatrix[cell] = firstEquationPart * recurrentionDeterminant(subMatrix, dimension-1)
+            complementsMatrix[cell] = firstEquationPart * determinant(subMatrix, dimension-1)
 
             colIndex++
 
@@ -243,7 +243,7 @@ class MatrixResultMenu @JvmOverloads constructor(
     }
 
     private fun inverseMatrix(array: DoubleArray, dimension: Int): Boolean {
-        val determinant = recurrentionDeterminant(array, dimension)
+        val determinant = determinant(array, dimension)
 
         if (determinant == 0.0) {
             Toast.makeText(context, "Determinant is equal 0 so there is no inverse matrix", Toast.LENGTH_LONG).show()
@@ -462,7 +462,7 @@ class MatrixResultMenu @JvmOverloads constructor(
         detRankButton.setOnClickListener {
             detRankButton.setBackgroundResource(clickedButtonStyle)
 
-            val result = recurrentionDeterminant(resultMatrix, resultMatrixRows)
+            val result = determinant(resultMatrix, resultMatrixRows)
             Toast.makeText(context, "Determinant is equal $result", Toast.LENGTH_LONG).show()
 
             Handler(Looper.getMainLooper()).postDelayed({

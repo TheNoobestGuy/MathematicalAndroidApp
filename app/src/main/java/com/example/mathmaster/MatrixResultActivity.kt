@@ -118,9 +118,6 @@ class MatrixResultActivity : ComponentActivity() {
         matrixMenu.clickUndoPowerButton()
         matrixMenu.clickBackButton()
 
-        // Inverse matrix handler
-
-
         // Style of clicked button
         val clickedButtonStyle = R.drawable.menubutton_background_clicked
 

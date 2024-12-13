@@ -7,7 +7,6 @@ import androidx.activity.ComponentActivity
 import com.example.mathmaster.customviews.MatrixResultMenu
 
 class MatrixCalculatorMenuActivity : ComponentActivity() {
-
     private fun clickFunction(button: Button, drawable: Int, view: ComponentActivity) {
         button.setOnClickListener {
             button.setBackgroundResource(drawable)
@@ -41,15 +40,20 @@ class MatrixCalculatorMenuActivity : ComponentActivity() {
         setContentView(R.layout.matrixcalculatormenu_activity)
 
         // Menu buttons
-        val matrixMenu: MatrixResultMenu = findViewById<MatrixResultMenu>(R.id.MenuBlock)
+        val multiplyButton = findViewById<Button>(R.id.MenuMultiply)
+        val addButton = findViewById<Button>(R.id.MenuAdd)
+        val subtractButton = findViewById<Button>(R.id.MenuSubtract)
+        val otherButton = findViewById<Button>(R.id.MenuOther)
 
         // Style of clicked button
         val clickedButtonStyle = R.drawable.menubutton_background_clicked
 
         // On click functions
-        clickFunction(matrixMenu.getMultiplyButton(), clickedButtonStyle, MatrixCalculatorActivity(), "×")
-        clickFunction(matrixMenu.getAddButton(), clickedButtonStyle, MatrixCalculatorActivity(), "+")
-        clickFunction(matrixMenu.getSubtractButton(), clickedButtonStyle, MatrixCalculatorActivity(), "-")
+        clickFunction(multiplyButton, clickedButtonStyle, MatrixCalculatorActivity(), "×")
+        clickFunction(addButton, clickedButtonStyle, MatrixCalculatorActivity(), "+")
+        clickFunction(subtractButton, clickedButtonStyle, MatrixCalculatorActivity(), "-")
+        clickFunction(otherButton, clickedButtonStyle, MatrixCalculatorActivity(), "i")
+
     }
 
     override fun onBackPressed() {
