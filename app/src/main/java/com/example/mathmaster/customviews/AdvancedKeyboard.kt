@@ -276,42 +276,6 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     }
                 }
 
-                // Preparing brackets for multiplication and division
-                if (element == '×' || element == '/') {
-                    if (transformedEquation.isNotEmpty()) {
-                        var openBrackets = 0
-                        var closeBrackets = 0
-                        var indexBuffer = 0
-                        var index = 0
-                        val range = transformedEquation.size - 1 downTo 0
-                        for (i in range) {
-                            if (transformedEquation[i] == ')') {
-                                closeBrackets++
-                            } else if (transformedEquation[i] == '(') {
-                                openBrackets++
-                            } else if (indexBuffer == 0 &&
-                                (transformedEquation[i] == '+' || transformedEquation[i] == '-')) {
-                                indexBuffer = i
-                            }
-
-                            if (closeBrackets == openBrackets) {
-                                index = i
-                                break
-                            }
-                        }
-                        if (closeBrackets != openBrackets) {
-                            addBracketIndex = if (indexBuffer == 0) 0 else ++indexBuffer
-                        } else if (index >= 1) {
-                            if (transformedEquation[index - 1].toString()[0].isLetter()) {
-                                index--
-                            }
-                            addBracketIndex = index
-                        } else {
-                            addBracketIndex = 0
-                        }
-                    }
-                }
-
                 // Root
                 if (element == '√') {
                     if (functionIndex >= 0) {
@@ -361,6 +325,42 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     multiplyDivide = false
                 }
 
+                // Preparing brackets for multiplication and division
+                if (element == '×' || element == '/') {
+                    if (transformedEquation.isNotEmpty()) {
+                        var openBrackets = 0
+                        var closeBrackets = 0
+                        var indexBuffer = 0
+                        var index = 0
+                        val range = transformedEquation.size - 1 downTo 0
+                        for (i in range) {
+                            if (transformedEquation[i] == ')') {
+                                closeBrackets++
+                            } else if (transformedEquation[i] == '(') {
+                                openBrackets++
+                            } else if (indexBuffer == 0 &&
+                                (transformedEquation[i] == '+' || transformedEquation[i] == '-')) {
+                                indexBuffer = i
+                            }
+
+                            if (closeBrackets == openBrackets) {
+                                index = i
+                                break
+                            }
+                        }
+                        if (closeBrackets != openBrackets) {
+                            addBracketIndex = if (indexBuffer == 0) 0 else ++indexBuffer
+                        } else if (index >= 1) {
+                            if (transformedEquation[index - 1].toString()[0].isLetter()) {
+                                index--
+                            }
+                            addBracketIndex = index
+                        } else {
+                            addBracketIndex = 0
+                        }
+                    }
+                }
+
                 // Recognize functions
                 if (whatFunction != 'a') {
                     when (element) {
@@ -397,6 +397,9 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         if (transformedEquation.last() != '×' && transformedEquation.last() != '/'
                             && transformedEquation.last() != '+' && transformedEquation.last() != '-'
                             && transformedEquation.last() != '(') {
+
+
+
                             transformedEquation.add('×')
                         }
                     }
@@ -457,8 +460,6 @@ class AdvancedKeyboard @JvmOverloads constructor(
                             while(bracketsInsideFunction[functionIndex].isNotEmpty()) {
                                 transformedEquation.add(bracketsInsideFunction[functionIndex].removeLast())
                             }
-
-                            bracketsInsideFunction.removeLast()
                         }
                     } else {
                         if (openedBracketsInput.isNotEmpty()) {
@@ -651,8 +652,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                             multiplyDivide = true
                         }
                         else {
-                            val index = if (transformedEquation.size - 1 >= 2)
-                                transformedEquation.size - 2 else 0
+                            val index = 0
 
                             transformedEquation.add(index, '(')
                             transformedEquation.add(element)
@@ -1764,7 +1764,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     }
                 }
                 else {
-                    var functionEnd = getCurrentFunctionEnd(textView)
+                    var (function, functionEnd) = getCurrentFunctionAndItsEnd(textView)
                     val range = specialFunctions.size-1 downTo 0
 
                     textView.text = textView.text.dropLast(functionEnd)
@@ -1800,6 +1800,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
                             updateFunctionsLength(-1)
                             bracketsCounter++
+                            function.brackets++
                         }
                     }
                     else if (textView.text.last() == '(') {
@@ -1840,6 +1841,9 @@ class AdvancedKeyboard @JvmOverloads constructor(
                             if (bracketsCounter > 0) {
                                 bracketsCounter--
                             }
+                            if (function.brackets > 0) {
+                                function.brackets--
+                            }
 
                             updateFunctionsLength(-(counter+1))
                         }
@@ -1855,6 +1859,9 @@ class AdvancedKeyboard @JvmOverloads constructor(
                             }
                             if (bracketsCounter > 0) {
                                 bracketsCounter--
+                            }
+                            if (function.brackets > 0) {
+                                function.brackets--
                             }
 
                             updateFunctionsLength(-1)
@@ -1886,9 +1893,6 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         while (functionEnd > 0) {
                             textView.append(")")
                             functionEnd--
-                        }
-                        if (bracketsCounter > 0) {
-                            bracketsCounter--
                         }
 
                         updateFunctionsLength(-1)
