@@ -304,6 +304,10 @@ class AdvancedKeyboard @JvmOverloads constructor(
                             bracketsInsideFunction[functionIndex].add(')')
                             transformedEquation.add(buffer)
 
+                            if (powerTo && powerToLevel > 0) {
+                                powerToBrackets[powerToLevel]++
+                            }
+
                             transformedEquation.add('×')
                             multiplyDivide = true
                         }
@@ -326,6 +330,10 @@ class AdvancedKeyboard @JvmOverloads constructor(
                                 transformedEquation.add('(')
                                 openedBrackets.add(')')
                                 transformedEquation.add(buffer)
+
+                                if (powerTo && powerToLevel > 0) {
+                                    powerToBrackets[powerToLevel]++
+                                }
 
                                 transformedEquation.add('×')
                                 multiplyDivide = true
