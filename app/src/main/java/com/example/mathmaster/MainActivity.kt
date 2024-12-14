@@ -3,9 +3,7 @@ package com.example.mathmaster
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
-import android.widget.TextView
 import androidx.activity.ComponentActivity
-import androidx.constraintlayout.widget.ConstraintLayout
 
 class MainActivity : ComponentActivity() {
 
@@ -23,12 +21,11 @@ class MainActivity : ComponentActivity() {
         setContentView(R.layout.mainmenu_activity)
 
         // Menu content
-        val logo: TextView = findViewById<TextView>(R.id.Logo)
-        val learnButton: Button = findViewById<Button>(R.id.Learn)
-        val practiceButton: Button = findViewById<Button>(R.id.Practice)
-        val challengeButton: Button = findViewById<Button>(R.id.Challenge)
-        val toolsButton: Button = findViewById<Button>(R.id.Tools)
-        val statisticsButton: Button = findViewById<Button>(R.id.Statistics)
+        val learnButton: Button = findViewById(R.id.Learn)
+        val practiceButton: Button = findViewById(R.id.Practice)
+        val challengeButton: Button = findViewById(R.id.Challenge)
+        val toolsButton: Button = findViewById(R.id.Tools)
+        val statisticsButton: Button = findViewById(R.id.Statistics)
 
         // Style of clicked button
         val clickedButtonStyle = R.drawable.menubutton_background_clicked

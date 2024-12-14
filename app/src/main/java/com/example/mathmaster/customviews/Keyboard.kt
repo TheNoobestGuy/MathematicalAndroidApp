@@ -41,18 +41,18 @@ class Keyboard @JvmOverloads constructor(
         textField = findViewById<Button>(R.id.TextField)
 
         // Buttons
-        enterButton = findViewById<Button>(R.id.Enter)
-        deleteButton = findViewById<Button>(R.id.Delete)
-        zeroButton = findViewById<Button>(R.id.Zero)
-        oneButton = findViewById<Button>(R.id.One)
-        twoButton = findViewById<Button>(R.id.Two)
-        threeButton = findViewById<Button>(R.id.Three)
-        fourButton = findViewById<Button>(R.id.Four)
-        fiveButton = findViewById<Button>(R.id.Five)
-        sixButton = findViewById<Button>(R.id.Six)
-        sevenButton = findViewById<Button>(R.id.Seven)
-        eightButton = findViewById<Button>(R.id.Eight)
-        nineButton = findViewById<Button>(R.id.Nine)
+        enterButton = findViewById(R.id.Enter)
+        deleteButton = findViewById(R.id.Delete)
+        zeroButton = findViewById(R.id.Zero)
+        oneButton = findViewById(R.id.One)
+        twoButton = findViewById(R.id.Two)
+        threeButton = findViewById(R.id.Three)
+        fourButton = findViewById(R.id.Four)
+        fiveButton = findViewById(R.id.Five)
+        sixButton = findViewById(R.id.Six)
+        sevenButton = findViewById(R.id.Seven)
+        eightButton = findViewById(R.id.Eight)
+        nineButton = findViewById(R.id.Nine)
 
         clickedButtonStyle = R.drawable.menubutton_background_clicked
         unClickedButtonStyle = R.drawable.menubutton_background
@@ -94,10 +94,10 @@ class Keyboard @JvmOverloads constructor(
             if (textField.text.isNotEmpty()) {
                 deleteButton.setBackgroundResource(clickedButtonStyle)
 
-                if (textField.text.length > 4) {
-                } else if (textField.text.length == 1) {
+                if (textField.text.length == 1) {
                     textField.text = context.getString(R.string.EnterNumber)
-                } else {
+                }
+                else if (textField.text.length <= 4) {
                     val currentText = textField.text.toString()
                     textField.text = currentText.substring(0, currentText.length - 1)
                 }

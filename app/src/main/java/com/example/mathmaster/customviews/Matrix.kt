@@ -37,7 +37,7 @@ class Matrix @JvmOverloads constructor(
         LayoutInflater.from(context).inflate(R.layout.matrix_layout, this, true)
 
         // Initialize grid layout
-        gridLayout = findViewById<GridLayout>(R.id.GridLayoutMatrix)
+        gridLayout = findViewById(R.id.GridLayoutMatrix)
         var row = 0
         var col = 0
         for (i in 0 until gridLayout.childCount) {
@@ -46,9 +46,9 @@ class Matrix @JvmOverloads constructor(
                 col = 0
             }
             val cell =  gridLayout.getChildAt(i) as EditText
-            val buffor = MutableTriple(row, col, cell)
+            val buffer = MutableTriple(row, col, cell)
 
-            cellsArray.add(buffor)
+            cellsArray.add(buffer)
             col++
         }
 

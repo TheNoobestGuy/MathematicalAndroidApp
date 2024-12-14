@@ -21,11 +21,11 @@ class MainMenuActivity : ComponentActivity() {
         setContentView(R.layout.mainmenu_activity)
 
         // Menu content
-        val learnButton = findViewById<Button>(R.id.Learn)
-        val practiceButton = findViewById<Button>(R.id.Practice)
-        val challengeButton = findViewById<Button>(R.id.Challenge)
-        val toolsButton = findViewById<Button>(R.id.Tools)
-        val statisticsButton = findViewById<Button>(R.id.Statistics)
+        val learnButton: Button = findViewById(R.id.Learn)
+        val practiceButton: Button = findViewById(R.id.Practice)
+        val challengeButton: Button = findViewById(R.id.Challenge)
+        val toolsButton: Button = findViewById(R.id.Tools)
+        val statisticsButton: Button = findViewById(R.id.Statistics)
 
         // Style of clicked button
         val clickedButtonStyle = R.drawable.menubutton_background_clicked

@@ -3,13 +3,12 @@ package com.example.mathmaster
 import com.example.mathmaster.customviews.Keyboard
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Button
 import android.widget.TextView
 import androidx.activity.ComponentActivity
 import android.os.Handler
 import android.os.Looper
 import android.view.View
-import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.activity.OnBackPressedCallback
 import kotlin.random.Random
 
 class DivideActivity : ComponentActivity() {
@@ -22,10 +21,10 @@ class DivideActivity : ComponentActivity() {
     private val countBeforeStart = object : Runnable {
         override fun run() {
             // Get content
-            val timeCounter: TextView = findViewById<TextView>(R.id.TimeCounter)
-            val questionCounter: TextView = findViewById<TextView>(R.id.QuestionCounter)
-            val equation: TextView = findViewById<TextView>(R.id.Equation)
-            val keyboard: Keyboard = findViewById<Keyboard>(R.id.Keyboard)
+            val timeCounter: TextView = findViewById(R.id.TimeCounter)
+            val questionCounter: TextView = findViewById(R.id.QuestionCounter)
+            val equation: TextView = findViewById(R.id.Equation)
+            val keyboard: Keyboard = findViewById(R.id.Keyboard)
 
             // Disable visibility of content
             questionCounter.visibility = View.INVISIBLE
@@ -52,16 +51,6 @@ class DivideActivity : ComponentActivity() {
         }
     }
 
-    // Change page with intent after click
-    private fun clickFunction (button: Button, drawable: Int, view: ComponentActivity) {
-        button.setOnClickListener {
-            button.setBackgroundResource(drawable)
-
-            val intent = Intent(this, view::class.java)
-            startActivity(intent)
-        }
-    }
-
     private fun hasDecimalPart(value: Float): Boolean {
         return value != value.toInt().toFloat()
     }
@@ -71,9 +60,9 @@ class DivideActivity : ComponentActivity() {
         setContentView(R.layout.practice_game_activity)
 
         // Interactive menu
-        val questionCounter: TextView = findViewById<TextView>(R.id.QuestionCounter)
-        val equation: TextView = findViewById<TextView>(R.id.Equation)
-        val keyboard: Keyboard = findViewById<Keyboard>(R.id.Keyboard)
+        val questionCounter: TextView = findViewById(R.id.QuestionCounter)
+        val equation: TextView = findViewById(R.id.Equation)
+        val keyboard: Keyboard = findViewById(R.id.Keyboard)
 
         // Count before start of game
         handler.post(countBeforeStart)
@@ -126,14 +115,14 @@ class DivideActivity : ComponentActivity() {
         }
 
         // Show question counter and equation
-        var questionCounterValueBuffor = questionCounterValue + 1
-        var bufforQuestionCounter = "$questionCounterValueBuffor/$numberOfQuestions"
-        questionCounter.text = bufforQuestionCounter
+        var questionCounterValueBuffer = questionCounterValue + 1
+        var bufferQuestionCounter = "$questionCounterValueBuffer/$numberOfQuestions"
+        questionCounter.text = bufferQuestionCounter
 
         var firstNum = numbersFromQuestions[0][questionCounterValue]
         var secondNum = numbersFromQuestions[1][questionCounterValue]
-        var bufforEquation: String = "$firstNum / $secondNum"
-        equation.text = bufforEquation
+        var bufferEquation = "$firstNum / $secondNum"
+        equation.text = bufferEquation
 
         // Keyboard
         keyboard.numberButtonClick()
@@ -163,23 +152,23 @@ class DivideActivity : ComponentActivity() {
                 val intent = Intent(this, DivideEndActivity()::class.java)
 
                 // Extract numbers from questions
-                val firstNumsFromQuestions = IntArray(numberOfQuestions)
-                val secondNumsFromQuestions = IntArray(numberOfQuestions)
+                val firstNumbersFromQuestions = IntArray(numberOfQuestions)
+                val secondNumbersFromQuestions = IntArray(numberOfQuestions)
 
                 for (i in numbersFromQuestions[0].indices)
                 {
-                    firstNumsFromQuestions[i] = numbersFromQuestions[0][i]
+                    firstNumbersFromQuestions[i] = numbersFromQuestions[0][i]
                 }
 
                 for (i in numbersFromQuestions[0].indices)
                 {
-                    secondNumsFromQuestions[i] = numbersFromQuestions[1][i]
+                    secondNumbersFromQuestions[i] = numbersFromQuestions[1][i]
                 }
 
-                // Pass informations that are needed for end statistic overview
+                // Pass information that is needed for end statistic overview
                 intent.putExtra("numberOfQuestions", numberOfQuestions)
-                intent.putExtra("firstNumsFromQuestions", firstNumsFromQuestions)
-                intent.putExtra("secondNumsFromQuestions", secondNumsFromQuestions)
+                intent.putExtra("firstNumbersFromQuestions", firstNumbersFromQuestions)
+                intent.putExtra("secondNumbersFromQuestions", secondNumbersFromQuestions)
                 intent.putExtra("correctnessOfAnswers", correctnessOfAnswers)
                 intent.putExtra("correctAnswersArray", correctAnswersArray)
                 intent.putExtra("answersArray", answersArray)
@@ -188,14 +177,14 @@ class DivideActivity : ComponentActivity() {
             }
             // Update question counter and change equation also append answer
             else {
-                questionCounterValueBuffor = questionCounterValue + 1
-                bufforQuestionCounter = "$questionCounterValueBuffor/$numberOfQuestions"
-                questionCounter.text = bufforQuestionCounter
+                questionCounterValueBuffer = questionCounterValue + 1
+                bufferQuestionCounter = "$questionCounterValueBuffer/$numberOfQuestions"
+                questionCounter.text = bufferQuestionCounter
 
                 firstNum = numbersFromQuestions[0][questionCounterValue]
                 secondNum = numbersFromQuestions[1][questionCounterValue]
-                bufforEquation = "$firstNum / $secondNum"
-                equation.text = bufforEquation
+                bufferEquation = "$firstNum / $secondNum"
+                equation.text = bufferEquation
 
                 firstNum = numbersFromQuestions[0][questionCounterValue-1]
                 secondNum = numbersFromQuestions[1][questionCounterValue-1]
@@ -206,10 +195,13 @@ class DivideActivity : ComponentActivity() {
 
             keyboard.unClickEnterButton()
         }
-    }
 
-    override fun onBackPressed() {
-        val intent = Intent(this, PracticeActivity()::class.java)
-        startActivity(intent)
+        // Handle the back press
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                val intent = Intent(this@DivideActivity, PracticeActivity()::class.java)
+                startActivity(intent)
+            }
+        })
     }
 }

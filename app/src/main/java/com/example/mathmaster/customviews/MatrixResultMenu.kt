@@ -37,7 +37,7 @@ class MatrixResultMenu @JvmOverloads constructor(
     private lateinit var complementsMatrix: DoubleArray
 
     // Power to
-    private lateinit var resultMatrixBuffor: DoubleArray
+    private lateinit var resultMatrixBuffer: DoubleArray
     private lateinit var resultMatrixBeforeExp: DoubleArray
     private lateinit var resultMatrixAfterExp: DoubleArray
 
@@ -69,24 +69,24 @@ class MatrixResultMenu @JvmOverloads constructor(
         LayoutInflater.from(context).inflate(R.layout.matrixresultmenu_layout, this, true)
 
         // Get buttons
-        multiplyButton = findViewById<Button>(R.id.MultiplyMatrix)
-        addButton = findViewById<Button>(R.id.AddMatrix)
-        subtractButton = findViewById<Button>(R.id.SubtractMatrix)
-        transposeButton = findViewById<Button>(R.id.TransposeMatrix)
-        rankButton = findViewById<Button>(R.id.RankMatrix)
-        undoButton = findViewById<Button>(R.id.UndoMatrix)
+        multiplyButton = findViewById(R.id.MultiplyMatrix)
+        addButton = findViewById(R.id.AddMatrix)
+        subtractButton = findViewById(R.id.SubtractMatrix)
+        transposeButton = findViewById(R.id.TransposeMatrix)
+        rankButton = findViewById(R.id.RankMatrix)
+        undoButton = findViewById(R.id.UndoMatrix)
 
         // Square matrix menu buttons
-        powerButton = findViewById<Button>(R.id.PowerMatrix)
-        complementButton = findViewById<Button>(R.id.ComplementMatrix)
-        inverseButton = findViewById<Button>(R.id.InverseMatrix)
-        detRankButton = findViewById<Button>(R.id.DetRankMatrix)
+        powerButton = findViewById(R.id.PowerMatrix)
+        complementButton = findViewById(R.id.ComplementMatrix)
+        inverseButton = findViewById(R.id.InverseMatrix)
+        detRankButton = findViewById(R.id.DetRankMatrix)
 
         // Power to menu
-        powerTo2Button = findViewById<Button>(R.id.PowerTo2)
-        powerTo3Button = findViewById<Button>(R.id.PowerTo3)
-        undoPowerButton = findViewById<Button>(R.id.UndoPower)
-        backPowerButton = findViewById<Button>(R.id.BackPower)
+        powerTo2Button = findViewById(R.id.PowerTo2)
+        powerTo3Button = findViewById(R.id.PowerTo3)
+        undoPowerButton = findViewById(R.id.UndoPower)
+        backPowerButton = findViewById(R.id.BackPower)
 
         powerButtonsArray = arrayOf(
             powerTo2Button,
@@ -107,7 +107,7 @@ class MatrixResultMenu @JvmOverloads constructor(
         resultMatrixRows = rows
         resultMatrixColumns = columns
 
-        resultMatrixBuffor = array.copyOf()
+        resultMatrixBuffer = array.copyOf()
         resultMatrixBeforeExp = array.copyOf()
     }
 
@@ -145,13 +145,13 @@ class MatrixResultMenu @JvmOverloads constructor(
     }
 
     private fun transpose(array: DoubleArray, dimension: Int): DoubleArray {
-        val bufforArray = DoubleArray(array.size)
+        val bufferArray = DoubleArray(array.size)
 
         var index = 0
         var iterator = 0
         var currentCol = 1
         while (currentCol * dimension <= array.size) {
-            bufforArray[iterator] = array[index]
+            bufferArray[iterator] = array[index]
 
             index += dimension
             iterator++
@@ -162,11 +162,11 @@ class MatrixResultMenu @JvmOverloads constructor(
             }
         }
 
-        return bufforArray
+        return bufferArray
     }
 
     private fun subMatrix(array: DoubleArray, dimension: Int, row: Int, col: Int): DoubleArray {
-        val subMatrix: DoubleArray = DoubleArray(dimension*dimension)
+        val subMatrix = DoubleArray(dimension*dimension)
 
         var iterator = 0
         var leapRow = row * (dimension+1)
@@ -275,9 +275,9 @@ class MatrixResultMenu @JvmOverloads constructor(
             transposeMatrix = transpose(resultMatrix, resultMatrixRows).copyOf()
 
             // Set new matrix
-            val buffor = resultMatrixRows
+            val buffer = resultMatrixRows
             resultMatrixRows = resultMatrixColumns
-            resultMatrixColumns = buffor
+            resultMatrixColumns = buffer
             matrix.setResultMatrix(transposeMatrix, resultMatrixRows, resultMatrixColumns, false)
             resultMatrix = transposeMatrix.copyOf()
 
@@ -353,7 +353,7 @@ class MatrixResultMenu @JvmOverloads constructor(
 
                             while (col < resultMatrixColumns) {
                                 val index = (row * resultMatrixColumns) + col
-                                equation += resultMatrixBeforeExp[index] * resultMatrixBuffor[leap]
+                                equation += resultMatrixBeforeExp[index] * resultMatrixBuffer[leap]
                                 leap += resultMatrixColumns
                                 col++
                             }
@@ -387,7 +387,7 @@ class MatrixResultMenu @JvmOverloads constructor(
             matrix.setResultMatrix(resultMatrix, resultMatrixRows, resultMatrixColumns, false)
 
             resultMatrix = resultMatrix.copyOf()
-            resultMatrixBuffor = resultMatrix.copyOf()
+            resultMatrixBuffer = resultMatrix.copyOf()
             resultMatrixBeforeExp = resultMatrix.copyOf()
 
             Handler(Looper.getMainLooper()).postDelayed({
@@ -469,9 +469,5 @@ class MatrixResultMenu @JvmOverloads constructor(
                detRankButton.setBackgroundResource(unClickedButtonStyle)
             }, 100)
         }
-    }
-
-    fun getInverseButton(): Button {
-        return inverseButton
     }
 }

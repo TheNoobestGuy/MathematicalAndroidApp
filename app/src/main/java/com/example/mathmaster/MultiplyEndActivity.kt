@@ -2,7 +2,6 @@ package com.example.mathmaster
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Button
 import android.widget.TextView
 import android.view.View
 import androidx.activity.ComponentActivity
@@ -12,25 +11,17 @@ import android.graphics.Color
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.graphics.Typeface
+import androidx.activity.OnBackPressedCallback
 
 class MultiplyEndActivity : ComponentActivity() {
-
-    private fun clickFunction (button: Button, drawable: Int, view: ComponentActivity) {
-        button.setOnClickListener {
-            button.setBackgroundResource(drawable)
-
-            val intent = Intent(this, view::class.java)
-            startActivity(intent)
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.practice_end_activity)
 
         // Database
-        val firstNumsFromQuestions: IntArray = intent.getIntArrayExtra("firstNumsFromQuestions")!!
-        val secondNumsFromQuestions: IntArray = intent.getIntArrayExtra("secondNumsFromQuestions")!!
+        val firstNumbersFromQuestions: IntArray = intent.getIntArrayExtra("firstNumbersFromQuestions")!!
+        val secondNumbersFromQuestions: IntArray = intent.getIntArrayExtra("secondNumbersFromQuestions")!!
 
         val numberOfQuestions: Int = intent.getIntExtra("numberOfQuestions", 0)
         val answersArray: IntArray = intent.getIntArrayExtra("answersArray")!!
@@ -38,12 +29,12 @@ class MultiplyEndActivity : ComponentActivity() {
         val correctnessOfAnswers: BooleanArray = intent.getBooleanArrayExtra("correctnessOfAnswers")!!
 
         // Statistics
-        val totalQuestions: TextView = findViewById<TextView>(R.id.MultiplyStatisticsTotalValue)
-        val correctAnswersValue: TextView = findViewById<TextView>(R.id.MultiplyStatisticsCorrectValue)
-        val incorrectAnswersValue: TextView = findViewById<TextView>(R.id.MultiplyStatisticsIncorrectValue)
+        val totalQuestions: TextView = findViewById(R.id.MultiplyStatisticsTotalValue)
+        val correctAnswersValue: TextView = findViewById(R.id.MultiplyStatisticsCorrectValue)
+        val incorrectAnswersValue: TextView = findViewById(R.id.MultiplyStatisticsIncorrectValue)
 
         // Get relative layout that is inside scroll view
-        val scrollBoxLinearLayout: LinearLayout = findViewById<LinearLayout>(R.id.ScrollBox)
+        val scrollBoxLinearLayout: LinearLayout = findViewById(R.id.ScrollBox)
 
         // Database to create row in scroll box
         val equationList = mutableListOf<TextView>()
@@ -52,8 +43,8 @@ class MultiplyEndActivity : ComponentActivity() {
 
         // Create the list of equation
         for (i in answersArray.indices) {
-            val firstNum = firstNumsFromQuestions[i]
-            val secondNum = secondNumsFromQuestions[i]
+            val firstNum = firstNumbersFromQuestions[i]
+            val secondNum = secondNumbersFromQuestions[i]
             val answer = answersArray[i]
 
             val counter = i + 1
@@ -211,10 +202,13 @@ class MultiplyEndActivity : ComponentActivity() {
         totalQuestions.text = numberOfQuestions.toString()
         correctAnswersValue.text = correctAnswersCounter.toString()
         incorrectAnswersValue.text = incorrectAnswersCounter.toString()
-    }
 
-    override fun onBackPressed() {
-        val intent = Intent(this, PracticeActivity()::class.java)
-        startActivity(intent)
+        // Handle the back press
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                val intent = Intent(this@MultiplyEndActivity, PracticeActivity()::class.java)
+                startActivity(intent)
+            }
+        })
     }
 }

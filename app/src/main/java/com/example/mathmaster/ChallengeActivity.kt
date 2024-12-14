@@ -5,8 +5,7 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.LinearLayout
 import androidx.activity.ComponentActivity
-import androidx.cardview.widget.CardView
-import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.activity.OnBackPressedCallback
 
 class ChallengeActivity : ComponentActivity() {
 
@@ -24,14 +23,17 @@ class ChallengeActivity : ComponentActivity() {
         setContentView(R.layout.challenge_activity)
 
         // Statistics
-        val menuBlockView: LinearLayout = findViewById<LinearLayout>(R.id.MenuBlock)
+        val menuBlockView: LinearLayout = findViewById(R.id.MenuBlock)
 
         // Style of clicked button
         val clickedButtonStyle = R.drawable.menubutton_background_clicked
-    }
 
-    override fun onBackPressed() {
-        val intent = Intent(this, MainMenuActivity()::class.java)
-        startActivity(intent)
+        // Handle the back press
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                val intent = Intent(this@ChallengeActivity, MainMenuActivity()::class.java)
+                startActivity(intent)
+            }
+        })
     }
 }

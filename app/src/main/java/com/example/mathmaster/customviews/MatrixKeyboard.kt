@@ -49,27 +49,27 @@ class MatrixKeyboard @JvmOverloads constructor(
         LayoutInflater.from(context).inflate(R.layout.matrixkeyboard_layout, this, true)
 
         // Get grid layout
-        calculatorGrid = findViewById<GridLayout>(R.id.MatrixKeyboard)
+        calculatorGrid = findViewById(R.id.MatrixKeyboard)
 
         // Buttons
-        enterButton = findViewById<Button>(R.id.Enter)
-        deleteButton = findViewById<Button>(R.id.Delete)
+        enterButton = findViewById(R.id.Enter)
+        deleteButton = findViewById(R.id.Delete)
 
-        rowPlusButton = findViewById<Button>(R.id.RowPlus)
-        rowMinusButton = findViewById<Button>(R.id.RowMinus)
-        colPlusButton = findViewById<Button>(R.id.ColPlus)
-        colMinusButton = findViewById<Button>(R.id.ColMinus)
+        rowPlusButton = findViewById(R.id.RowPlus)
+        rowMinusButton = findViewById(R.id.RowMinus)
+        colPlusButton = findViewById(R.id.ColPlus)
+        colMinusButton = findViewById(R.id.ColMinus)
 
-        zeroButton = findViewById<Button>(R.id.Zero)
-        oneButton = findViewById<Button>(R.id.One)
-        twoButton = findViewById<Button>(R.id.Two)
-        threeButton = findViewById<Button>(R.id.Three)
-        fourButton = findViewById<Button>(R.id.Four)
-        fiveButton = findViewById<Button>(R.id.Five)
-        sixButton = findViewById<Button>(R.id.Six)
-        sevenButton = findViewById<Button>(R.id.Seven)
-        eightButton = findViewById<Button>(R.id.Eight)
-        nineButton = findViewById<Button>(R.id.Nine)
+        zeroButton = findViewById(R.id.Zero)
+        oneButton = findViewById(R.id.One)
+        twoButton = findViewById(R.id.Two)
+        threeButton = findViewById(R.id.Three)
+        fourButton = findViewById(R.id.Four)
+        fiveButton = findViewById(R.id.Five)
+        sixButton = findViewById(R.id.Six)
+        sevenButton = findViewById(R.id.Seven)
+        eightButton = findViewById(R.id.Eight)
+        nineButton = findViewById(R.id.Nine)
 
         clickedButtonStyle = R.drawable.menubutton_background_clicked
         unClickedButtonStyle = R.drawable.menubutton_background
@@ -218,25 +218,28 @@ class MatrixKeyboard @JvmOverloads constructor(
         var changedButtons = 0
         while (i < limit && (removedCount < 2 || changedButtons < 2)) {
             val button = calculatorGrid.getChildAt(i) as Button
-            if (button.text == context.getString(R.string.RowPlus) || button.text == context.getString(R.string.RowMinus)) {
-                calculatorGrid.removeView(button)
-                removedCount++
-                limit--
-                i--
-            }
-            else if (button.text == context.getString(R.string.ColPlus)) {
-                val params = button.layoutParams as GridLayout.LayoutParams
-                params.columnSpec = GridLayout.spec(0, 2, 1f)
-                params.rowSpec = GridLayout.spec(0, 1,1f)
-                button.layoutParams = params
-                changedButtons++
-            }
-            else if (button.text == context.getString(R.string.ColMinus)) {
-                val params = button.layoutParams as GridLayout.LayoutParams
-                params.columnSpec = GridLayout.spec(2, 2, 1f)
-                params.rowSpec = GridLayout.spec(0, 1,1f)
-                button.layoutParams = params
-                changedButtons++
+
+            when (button.text) {
+                context.getString(R.string.RowPlus), context.getString(R.string.RowMinus)  -> {
+                    calculatorGrid.removeView(button)
+                    removedCount++
+                    limit--
+                    i--
+                }
+                context.getString(R.string.ColPlus) -> {
+                    val params = button.layoutParams as GridLayout.LayoutParams
+                    params.columnSpec = GridLayout.spec(0, 2, 1f)
+                    params.rowSpec = GridLayout.spec(0, 1,1f)
+                    button.layoutParams = params
+                    changedButtons++
+                }
+                context.getString(R.string.ColMinus) -> {
+                    val params = button.layoutParams as GridLayout.LayoutParams
+                    params.columnSpec = GridLayout.spec(2, 2, 1f)
+                    params.rowSpec = GridLayout.spec(0, 1,1f)
+                    button.layoutParams = params
+                    changedButtons++
+                }
             }
 
             i++
@@ -248,11 +251,7 @@ class MatrixKeyboard @JvmOverloads constructor(
             calculatorButtons[i].setOnClickListener {
                 calculatorButtons[i].setBackgroundResource(clickedButtonStyle)
 
-                val clickedCell: EditText? = matrix.getClickedCell()
-
-                if (clickedCell != null) {
-                    clickedCell.append(i.toString())
-                }
+                matrix.getClickedCell()?.append(i.toString())
 
                 Handler(Looper.getMainLooper()).postDelayed({
                     calculatorButtons[i].setBackgroundResource(unClickedButtonStyle)

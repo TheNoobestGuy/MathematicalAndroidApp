@@ -4,25 +4,17 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import androidx.activity.ComponentActivity
-import com.example.mathmaster.customviews.MatrixResultMenu
+import androidx.activity.OnBackPressedCallback
 
 class MatrixCalculatorMenuActivity : ComponentActivity() {
-    private fun clickFunction(button: Button, drawable: Int, view: ComponentActivity) {
-        button.setOnClickListener {
-            button.setBackgroundResource(drawable)
-
-            val intent = Intent(this, view::class.java)
-            startActivity(intent)
-        }
-    }
 
     private fun clickFunction (button: Button, drawable: Int, view: ComponentActivity, sign: String) {
         button.setOnClickListener {
             button.setBackgroundResource(drawable)
 
-            val resultMatrix: DoubleArray = DoubleArray(0)
-            val resultMatrixRows: Int = 0
-            val resultMatrixColumns: Int = 0
+            val resultMatrix = DoubleArray(0)
+            val resultMatrixRows = 0
+            val resultMatrixColumns = 0
 
             val intent = Intent(this, view::class.java)
             intent.putExtra("show", false)
@@ -54,10 +46,12 @@ class MatrixCalculatorMenuActivity : ComponentActivity() {
         clickFunction(subtractButton, clickedButtonStyle, MatrixCalculatorActivity(), "-")
         clickFunction(otherButton, clickedButtonStyle, MatrixCalculatorActivity(), "i")
 
-    }
-
-    override fun onBackPressed() {
-        val intent = Intent(this, ToolsActivity()::class.java)
-        startActivity(intent)
+        // Handle the back press
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                val intent = Intent(this@MatrixCalculatorMenuActivity, ToolsActivity()::class.java)
+                startActivity(intent)
+            }
+        })
     }
 }

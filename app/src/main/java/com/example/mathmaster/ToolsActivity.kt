@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import androidx.activity.ComponentActivity
+import androidx.activity.OnBackPressedCallback
 
 class ToolsActivity : ComponentActivity() {
 
@@ -21,8 +22,8 @@ class ToolsActivity : ComponentActivity() {
         setContentView(R.layout.tools_activity)
 
         // Menu buttons
-        val matrixCalcButton: Button = findViewById<Button>(R.id.MatrixCalculator)
-        val advancedCalcButton: Button = findViewById<Button>(R.id.AdvancedCalculator)
+        val matrixCalcButton: Button = findViewById(R.id.MatrixCalculator)
+        val advancedCalcButton: Button = findViewById(R.id.AdvancedCalculator)
 
         // Style of clicked button
         val clickedButtonStyle = R.drawable.menubutton_background_clicked
@@ -30,10 +31,13 @@ class ToolsActivity : ComponentActivity() {
         // On click functions
         clickFunction(matrixCalcButton, clickedButtonStyle, MatrixCalculatorMenuActivity())
         clickFunction(advancedCalcButton, clickedButtonStyle, AdvancedCalculatorActivity())
-    }
 
-    override fun onBackPressed() {
-        val intent = Intent(this, MainMenuActivity()::class.java)
-        startActivity(intent)
+        // Handle the back press
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                val intent = Intent(this@ToolsActivity, MainMenuActivity()::class.java)
+                startActivity(intent)
+            }
+        })
     }
 }

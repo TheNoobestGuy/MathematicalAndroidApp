@@ -3,12 +3,12 @@ package com.example.mathmaster
 import com.example.mathmaster.customviews.Keyboard
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Button
 import android.widget.TextView
 import androidx.activity.ComponentActivity
 import android.os.Handler
 import android.os.Looper
 import android.view.View
+import androidx.activity.OnBackPressedCallback
 import kotlin.random.Random
 import java.util.ArrayDeque
 
@@ -22,10 +22,10 @@ class MixedActivity : ComponentActivity() {
     private val countBeforeStart = object : Runnable {
         override fun run() {
             // Get content
-            val timeCounter: TextView = findViewById<TextView>(R.id.TimeCounter)
-            val questionCounter: TextView = findViewById<TextView>(R.id.QuestionCounter)
-            val equation: TextView = findViewById<TextView>(R.id.Equation)
-            val keyboard: Keyboard = findViewById<Keyboard>(R.id.Keyboard)
+            val timeCounter: TextView = findViewById(R.id.TimeCounter)
+            val questionCounter: TextView = findViewById(R.id.QuestionCounter)
+            val equation: TextView = findViewById(R.id.Equation)
+            val keyboard: Keyboard = findViewById(R.id.Keyboard)
 
             // Disable visibility of content
             questionCounter.visibility = View.INVISIBLE
@@ -52,86 +52,76 @@ class MixedActivity : ComponentActivity() {
         }
     }
 
-    // Change page with intent after click
-    private fun clickFunction (button: Button, drawable: Int, view: ComponentActivity) {
-        button.setOnClickListener {
-            button.setBackgroundResource(drawable)
-
-            val intent = Intent(this, view::class.java)
-            startActivity(intent)
-        }
-    }
-
     private fun hasDecimalPart(value: Float): Boolean {
         return value != value.toInt().toFloat()
     }
 
     private fun calculateEquation(equation: String): Int {
-        val bufforEquation = equation.split(' ')
+        val bufferEquation = equation.split(' ')
 
         // Stacks
-        val nums = ArrayDeque<Int>()
+        val numbers = ArrayDeque<Int>()
         val signs = ArrayDeque<String>()
 
-        // Get nums and signs from equation
-        for (i in bufforEquation.indices) {
-            if (bufforEquation[i] == "+" || bufforEquation[i] == "-") {
-                signs.push(bufforEquation[i])
+        // Get numbers and signs from equation
+        for (i in bufferEquation.indices) {
+            if (bufferEquation[i] == "+" || bufferEquation[i] == "-") {
+                signs.push(bufferEquation[i])
             }
-            else if (bufforEquation[i] == "*" || bufforEquation[i] == "/") {
-                signs.push(bufforEquation[i])
+            else if (bufferEquation[i] == "*" || bufferEquation[i] == "/") {
+                signs.push(bufferEquation[i])
             }
             else {
-                nums.push(bufforEquation[i].toInt())
+                numbers.push(bufferEquation[i].toInt())
             }
         }
 
         // Evaluate equation
-        var result: Int = nums.removeLast()!!
-        var bufforNum: Int
+        var result: Int = numbers.removeLast()!!
+        var bufferNum: Int
 
         while(signs.isNotEmpty()) {
-            if (nums.isNotEmpty()) {
+            if (numbers.isNotEmpty()) {
                 if (signs.peekLast() == "+") {
-                    bufforNum = nums.removeLast()!!
+                    bufferNum = numbers.removeLast()!!
                     signs.removeLast()
                     if (signs.isNotEmpty()) {
                         if (signs.peekLast() == "*") {
-                            result += bufforNum * nums.removeLast()!!
+                            result += bufferNum * numbers.removeLast()!!
                             signs.removeLast()
                             continue
                         }
                         else if (signs.peekLast() == "/") {
-                            result += bufforNum / nums.removeLast()!!
+                            result += bufferNum / numbers.removeLast()!!
                             signs.removeLast()
                             continue
                         }
                     }
-                    result += bufforNum
+                    result += bufferNum
                 }
                 else if (signs.peekLast() == "-") {
-                    bufforNum = nums.removeLast()!!
+                    bufferNum = numbers.removeLast()!!
                     signs.removeLast()
                     if (signs.isNotEmpty()) {
                         if (signs.peekLast() == "*") {
-                            result -= bufforNum * nums.removeLast()!!
+                            result -= bufferNum * numbers.removeLast()!!
                             signs.removeLast()
                             continue
                         }
                         else if (signs.peekLast() == "/") {
-                            result -= bufforNum / nums.removeLast()!!
+                            result -= bufferNum / numbers.removeLast()!!
                             signs.removeLast()
                             continue
                         }
                     }
-                    result -= bufforNum
+                    result -= bufferNum
                 }
                 else if (signs.peekLast() == "/") {
-                    result /= nums.removeLast()!!
+                    result /= numbers.removeLast()!!
                     signs.removeLast()
                 }
                 else {
-                    result *= nums.removeLast()!!
+                    result *= numbers.removeLast()!!
                     signs.removeLast()
                 }
             }
@@ -145,9 +135,9 @@ class MixedActivity : ComponentActivity() {
         setContentView(R.layout.practice_game_activity)
 
         // Interactive menu
-        val questionCounter: TextView = findViewById<TextView>(R.id.QuestionCounter)
-        val equation: TextView = findViewById<TextView>(R.id.Equation)
-        val keyboard: Keyboard = findViewById<Keyboard>(R.id.Keyboard)
+        val questionCounter: TextView = findViewById(R.id.QuestionCounter)
+        val equation: TextView = findViewById(R.id.Equation)
+        val keyboard: Keyboard = findViewById(R.id.Keyboard)
 
         // Count before start of game
         handler.post(countBeforeStart)
@@ -182,15 +172,15 @@ class MixedActivity : ComponentActivity() {
                     var passNumber = false
                     firstNumber = if (k == 0)  twoNumbersRange.random() else numbersFromQuestions[1][i]
 
-                    // Restrict second divisioning so it doesnt go float
+                    // Restrict second division so it doesn't go float
                     if (k == 1) {
                         if (firstEquationSigns[i] == '*') {
-                            val bufforEquation = numbersFromQuestions[0].last() * numbersFromQuestions[1].last()
-                            firstNumber = bufforEquation
+                            val bufferEquation = numbersFromQuestions[0].last() * numbersFromQuestions[1].last()
+                            firstNumber = bufferEquation
                         }
                         else if (firstEquationSigns[i] == '/') {
-                            val bufforEquation = numbersFromQuestions[0].last() / numbersFromQuestions[1].last()
-                            firstNumber = bufforEquation
+                            val bufferEquation = numbersFromQuestions[0].last() / numbersFromQuestions[1].last()
+                            firstNumber = bufferEquation
                         }
                     }
 
@@ -250,17 +240,17 @@ class MixedActivity : ComponentActivity() {
                         // Prevent multiplication from being greater than the number from which it will be subtracted
                         if (firstEquationSigns[i] == '-') {
                             val listOfMultipliers: MutableList<Int> = mutableListOf()
-                            val bufforNum = numbersFromQuestions[0].last()
+                            val bufferNumber = numbersFromQuestions[0].last()
                             var partValue: Int
                             var counter = 1
 
                             do {
                                 partValue = numbersFromQuestions[1].last() * counter
-                                if (partValue <= bufforNum) {
+                                if (partValue <= bufferNumber) {
                                     listOfMultipliers.add(counter)
                                 }
                                 counter++
-                            } while (partValue <= bufforNum)
+                            } while (partValue <= bufferNumber)
 
                             val randomMultiplier = Random.nextInt(listOfMultipliers.size)
                             numbersFromQuestions[2].add(listOfMultipliers[randomMultiplier])
@@ -280,20 +270,20 @@ class MixedActivity : ComponentActivity() {
 
                         // Prevent result of equation to be greater than 9999
                         val listOfMultipliers: MutableList<Int> = mutableListOf()
-                        var bufforEquation: Int = 0
+                        var bufferEquation = 0
 
                         if (firstEquationSigns[i] == '*') {
-                            bufforEquation = numbersFromQuestions[0].last() * numbersFromQuestions[1].last()
+                            bufferEquation = numbersFromQuestions[0].last() * numbersFromQuestions[1].last()
                         }
                         else if (firstEquationSigns[i] == '/') {
-                            bufforEquation = numbersFromQuestions[0].last() / numbersFromQuestions[1].last()
+                            bufferEquation = numbersFromQuestions[0].last() / numbersFromQuestions[1].last()
                         }
 
                         var partValue: Int
                         var counter = 1
 
                         do {
-                            partValue = bufforEquation * counter
+                            partValue = bufferEquation * counter
                             listOfMultipliers.add(counter)
                             counter++
 
@@ -332,22 +322,18 @@ class MixedActivity : ComponentActivity() {
                         if (k == 1) {
                             val firstNum = numbersFromQuestions[0].last()
                             val secondNum = numbersFromQuestions[1].last()
-                            var bufforEquation: Int = 0
 
-                            if (firstEquationSigns[i] == '*') {
-                                bufforEquation = firstNum * secondNum
-                            }
-                            else if (firstEquationSigns[i] == '/') {
-                                bufforEquation = firstNum / secondNum
-                            }
-                            else if (firstEquationSigns[i] == '-') {
-                                bufforEquation = firstNum - secondNum
-                            }
-                            else {
-                                bufforEquation = firstNum + secondNum
+                            val bufferEquation = if (firstEquationSigns[i] == '*') {
+                                firstNum * secondNum
+                            } else if (firstEquationSigns[i] == '/') {
+                                firstNum / secondNum
+                            } else if (firstEquationSigns[i] == '-') {
+                                firstNum - secondNum
+                            } else {
+                                firstNum + secondNum
                             }
 
-                            limiter = if (bufforEquation > 99) 99 else bufforEquation
+                            limiter = if (bufferEquation > 99) 99 else bufferEquation
                         }
 
                         val secondNumberRange = 1 until limiter
@@ -367,9 +353,9 @@ class MixedActivity : ComponentActivity() {
         }
 
         // Show question counter and equation
-        var questionCounterValueBuffor = questionCounterValue + 1
-        var bufforQuestionCounter = "$questionCounterValueBuffor/$numberOfQuestions"
-        questionCounter.text = bufforQuestionCounter
+        var questionCounterValueBuffer = questionCounterValue + 1
+        var bufferQuestionCounter = "$questionCounterValueBuffer/$numberOfQuestions"
+        questionCounter.text = bufferQuestionCounter
 
         var firstNum = numbersFromQuestions[0][questionCounterValue]
         var secondNum = numbersFromQuestions[1][questionCounterValue]
@@ -378,8 +364,8 @@ class MixedActivity : ComponentActivity() {
         var firstSign = firstEquationSigns[questionCounterValue]
         var secondSign = secondEquationSigns[questionCounterValue]
 
-        var bufforEquation: String = "$firstNum $firstSign $secondNum $secondSign $thirdNum"
-        equation.text = bufforEquation
+        var bufferEquation = "$firstNum $firstSign $secondNum $secondSign $thirdNum"
+        equation.text = bufferEquation
 
         // Keyboard
         keyboard.numberButtonClick()
@@ -400,8 +386,8 @@ class MixedActivity : ComponentActivity() {
                 firstSign = firstEquationSigns[questionCounterValue-1]
                 secondSign = secondEquationSigns[questionCounterValue-1]
 
-                bufforEquation = "$firstNum $firstSign $secondNum $secondSign $thirdNum"
-                correctAnswersArray[questionCounterValue-1] = calculateEquation(bufforEquation)
+                bufferEquation = "$firstNum $firstSign $secondNum $secondSign $thirdNum"
+                correctAnswersArray[questionCounterValue-1] = calculateEquation(bufferEquation)
 
                 answersArray[questionCounterValue-1] = keyboard.getTextField()
                 keyboard.resetTextField()
@@ -416,30 +402,30 @@ class MixedActivity : ComponentActivity() {
                 val intent = Intent(this, MixedEndActivity()::class.java)
 
                 // Extract numbers from questions
-                val firstNumsFromQuestions = IntArray(numberOfQuestions)
-                val secondNumsFromQuestions = IntArray(numberOfQuestions)
-                val thirdNumsFromQuestions = IntArray(numberOfQuestions)
+                val firstNumbersFromQuestions = IntArray(numberOfQuestions)
+                val secondNumbersFromQuestions = IntArray(numberOfQuestions)
+                val thirdNumbersFromQuestions = IntArray(numberOfQuestions)
 
                 for (i in numbersFromQuestions[0].indices)
                 {
-                    firstNumsFromQuestions[i] = numbersFromQuestions[0][i]
+                    firstNumbersFromQuestions[i] = numbersFromQuestions[0][i]
                 }
 
                 for (i in numbersFromQuestions[0].indices)
                 {
-                    secondNumsFromQuestions[i] = numbersFromQuestions[1][i]
+                    secondNumbersFromQuestions[i] = numbersFromQuestions[1][i]
                 }
 
                 for (i in numbersFromQuestions[0].indices)
                 {
-                    thirdNumsFromQuestions[i] = numbersFromQuestions[2][i]
+                    thirdNumbersFromQuestions[i] = numbersFromQuestions[2][i]
                 }
 
-                // Pass informations that are needed for end statistic overview
+                // Pass information that is needed for end statistic overview
                 intent.putExtra("numberOfQuestions", numberOfQuestions)
-                intent.putExtra("firstNumsFromQuestions", firstNumsFromQuestions)
-                intent.putExtra("secondNumsFromQuestions", secondNumsFromQuestions)
-                intent.putExtra("thirdNumsFromQuestions", thirdNumsFromQuestions)
+                intent.putExtra("firstNumbersFromQuestions", firstNumbersFromQuestions)
+                intent.putExtra("secondNumbersFromQuestions", secondNumbersFromQuestions)
+                intent.putExtra("thirdNumbersFromQuestions", thirdNumbersFromQuestions)
                 intent.putExtra("firstEquationSigns", firstEquationSigns)
                 intent.putExtra("secondEquationSigns", secondEquationSigns)
                 intent.putExtra("correctnessOfAnswers", correctnessOfAnswers)
@@ -450,9 +436,9 @@ class MixedActivity : ComponentActivity() {
             }
             // Update question counter and change equation also append answer
             else {
-                questionCounterValueBuffor = questionCounterValue + 1
-                bufforQuestionCounter = "$questionCounterValueBuffor/$numberOfQuestions"
-                questionCounter.text = bufforQuestionCounter
+                questionCounterValueBuffer = questionCounterValue + 1
+                bufferQuestionCounter = "$questionCounterValueBuffer/$numberOfQuestions"
+                questionCounter.text = bufferQuestionCounter
 
                 firstNum = numbersFromQuestions[0][questionCounterValue]
                 secondNum = numbersFromQuestions[1][questionCounterValue]
@@ -461,8 +447,8 @@ class MixedActivity : ComponentActivity() {
                 firstSign = firstEquationSigns[questionCounterValue]
                 secondSign = secondEquationSigns[questionCounterValue]
 
-                bufforEquation = "$firstNum $firstSign $secondNum $secondSign $thirdNum"
-                equation.text = bufforEquation
+                bufferEquation = "$firstNum $firstSign $secondNum $secondSign $thirdNum"
+                equation.text = bufferEquation
 
                 firstNum = numbersFromQuestions[0][questionCounterValue-1]
                 secondNum = numbersFromQuestions[1][questionCounterValue-1]
@@ -471,8 +457,8 @@ class MixedActivity : ComponentActivity() {
                 firstSign = firstEquationSigns[questionCounterValue-1]
                 secondSign = secondEquationSigns[questionCounterValue-1]
 
-                bufforEquation = "$firstNum $firstSign $secondNum $secondSign $thirdNum"
-                correctAnswersArray[questionCounterValue-1] = calculateEquation(bufforEquation)
+                bufferEquation = "$firstNum $firstSign $secondNum $secondSign $thirdNum"
+                correctAnswersArray[questionCounterValue-1] = calculateEquation(bufferEquation)
 
                 answersArray[questionCounterValue-1] = keyboard.getTextField()
                 keyboard.resetTextField()
@@ -480,10 +466,13 @@ class MixedActivity : ComponentActivity() {
 
             keyboard.unClickEnterButton()
         }
-    }
 
-    override fun onBackPressed() {
-        val intent = Intent(this, PracticeActivity()::class.java)
-        startActivity(intent)
+        // Handle the back press
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                val intent = Intent(this@MixedActivity, PracticeActivity()::class.java)
+                startActivity(intent)
+            }
+        })
     }
 }

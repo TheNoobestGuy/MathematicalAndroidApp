@@ -3,10 +3,8 @@ package com.example.mathmaster
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
-import android.widget.LinearLayout
 import androidx.activity.ComponentActivity
-import androidx.cardview.widget.CardView
-import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.activity.OnBackPressedCallback
 
 class PracticeActivity : ComponentActivity() {
 
@@ -23,14 +21,11 @@ class PracticeActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.practice_activity)
 
-        // Statistics
-        val menuBlockView: LinearLayout = findViewById<LinearLayout>(R.id.MenuBlock)
-
         // Menu buttons
-        val multiplyButton: Button = findViewById<Button>(R.id.Multiply)
-        val divideButton: Button = findViewById<Button>(R.id.Divide)
-        val addSubtractButton: Button = findViewById<Button>(R.id.AddSubtract)
-        val mixedButton: Button = findViewById<Button>(R.id.Mixed)
+        val multiplyButton: Button = findViewById(R.id.Multiply)
+        val divideButton: Button = findViewById(R.id.Divide)
+        val addSubtractButton: Button = findViewById(R.id.AddSubtract)
+        val mixedButton: Button = findViewById(R.id.Mixed)
 
         // Style of clicked button
         val clickedButtonStyle = R.drawable.menubutton_background_clicked
@@ -40,10 +35,13 @@ class PracticeActivity : ComponentActivity() {
         clickFunction(divideButton, clickedButtonStyle, DivideActivity())
         clickFunction(addSubtractButton, clickedButtonStyle, AddSubtractActivity())
         clickFunction(mixedButton, clickedButtonStyle, MixedActivity())
-    }
 
-    override fun onBackPressed() {
-        val intent = Intent(this, MainMenuActivity()::class.java)
-        startActivity(intent)
+        // Handle the back press
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                val intent = Intent(this@PracticeActivity, MainMenuActivity()::class.java)
+                startActivity(intent)
+            }
+        })
     }
 }
