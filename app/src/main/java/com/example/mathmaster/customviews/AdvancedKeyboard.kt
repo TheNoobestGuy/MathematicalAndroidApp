@@ -278,6 +278,57 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
                 // Root
                 if (element == '√') {
+                    if (transformedEquation.isNotEmpty()) {
+                        var openBrackets = 0
+                        var closeBrackets = 0
+                        var indexBuffer = 0
+                        var index = 0
+                        val range = transformedEquation.size - 1 downTo 0
+
+                        for (i in range) {
+                            if (transformedEquation[i] == ')') {
+                                closeBrackets++
+                            } else if (transformedEquation[i] == '(') {
+                                openBrackets++
+                            } else if (indexBuffer == 0 &&
+                                (transformedEquation[i] == '+' || transformedEquation[i] == '-')) {
+                                indexBuffer = i
+                            }
+
+                            if (closeBrackets == openBrackets) {
+                                index = i
+                                break
+                            }
+                        }
+                        if (closeBrackets != openBrackets) {
+                            addBracketIndex = if (indexBuffer == 0) 0 else ++indexBuffer
+                        } else if (index >= 1) {
+                            if (transformedEquation[index-1] == '(') {
+                                addBracketIndex = ++index
+                                multiplyDivide = true
+                            }
+                            else if (transformedEquation[index-1].toString()[0].isLetter()) {
+                                addBracketIndex = --index
+                            }
+                            else {
+                                addBracketIndex = index
+                            }
+                        } else {
+                            addBracketIndex = 0
+                        }
+
+                        transformedEquation.add(addBracketIndex, '(')
+
+                        if (functionIndex >= 0) {
+                            bracketsInsideFunction[functionIndex].add(')')
+                        }
+                        else {
+                            openedBrackets.add(')')
+                        }
+
+                        multiplyDivide = true
+                    }
+
                     if (functionIndex >= 0) {
                         if (inRoot && transformedEquation.last().toString()[0].isDigit()) {
                             transformedEquation.add(bracketsInsideFunction[functionIndex].removeLast())
@@ -466,15 +517,13 @@ class AdvancedKeyboard @JvmOverloads constructor(
                                 }
                             }
 
-                            if (!multiplyDivide) {
-                                transformedEquation.add(addBracketIndex, '(')
+                            transformedEquation.add(addBracketIndex, '(')
 
-                                if (functionIndex >= 0) {
-                                    bracketsInsideFunction[functionIndex].add(')')
-                                }
-                                else {
-                                    openedBrackets.add(')')
-                                }
+                            if (functionIndex >= 0) {
+                                bracketsInsideFunction[functionIndex].add(')')
+                            }
+                            else {
+                                openedBrackets.add(')')
                             }
                         }
 
@@ -774,7 +823,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
         val result: PairEquation<Double, Int> = PairEquation(0.0, index)
         var iterator: Int = index
         val threshold = 1E-10
-
+        println(equation)
         while (iterator < equation.size) {
             when (equation[iterator]) {
                 is Char -> {
