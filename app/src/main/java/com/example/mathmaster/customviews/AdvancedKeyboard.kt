@@ -307,15 +307,13 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 // Handle subtract and add
                 if (element == '+' || element == '-') {
                     if (functionIndex >= 0) {
-                        if (lastChar != '^' && lastChar != '(' && lastChar != '-'
-                            && lastChar != '+') {
+                        if (lastChar != '(' && lastChar != '-' && lastChar != '+') {
                             while (bracketsInsideFunction[functionIndex].isNotEmpty()) {
                                 transformedEquation.add(bracketsInsideFunction[functionIndex].removeLast())
                             }
                         }
                     } else {
-                        if (lastChar != '^' && lastChar != '(' && lastChar != '-'
-                            && lastChar != '+') {
+                        if (lastChar != '(' && lastChar != '-' && lastChar != '+') {
                             while (openedBrackets.isNotEmpty()) {
                                 transformedEquation.add(openedBrackets.removeLast())
                             }
@@ -333,6 +331,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         var indexBuffer = 0
                         var index = 0
                         val range = transformedEquation.size - 1 downTo 0
+
                         for (i in range) {
                             if (transformedEquation[i] == ')') {
                                 closeBrackets++
@@ -351,10 +350,16 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         if (closeBrackets != openBrackets) {
                             addBracketIndex = if (indexBuffer == 0) 0 else ++indexBuffer
                         } else if (index >= 1) {
-                            if (transformedEquation[index - 1].toString()[0].isLetter()) {
-                                index--
+                            if (transformedEquation[index-1] == '(') {
+                                addBracketIndex = ++index
+                                multiplyDivide = true
                             }
-                            addBracketIndex = index
+                            else if (transformedEquation[index-1].toString()[0].isLetter()) {
+                                addBracketIndex = --index
+                            }
+                            else {
+                                addBracketIndex = index
+                            }
                         } else {
                             addBracketIndex = 0
                         }
@@ -388,29 +393,26 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
                 // Append function symbol and handle brackets
                 if (whatFunction != '0' && element == '(') {
+                    var addMultiplication = false
+
                     // Append multiplication if before number is other function or constants
                     if (lastChar == 'π' || lastChar == 'e') {
-                        transformedEquation.add('×')
+                        addMultiplication = true
                         lastChar = '0'
                     }
                     else if (transformedEquation.isNotEmpty() && numBuffer.isEmpty()) {
                         if (transformedEquation.last() != '×' && transformedEquation.last() != '/'
                             && transformedEquation.last() != '+' && transformedEquation.last() != '-'
                             && transformedEquation.last() != '(') {
-
-
-
-                            transformedEquation.add('×')
+                            addMultiplication = true
                         }
                     }
 
                     // Append number that is before function as multiplication
                     if (numBuffer.isNotEmpty()) {
                         val outputNumber: Double = transformedEquation.removeLast() as Double
-                        transformedEquation.add('(')
                         transformedEquation.add(outputNumber)
-                        transformedEquation.add('×')
-                        bracketsInsideFunction[functionIndex].add(')')
+                        addMultiplication = true
                     }
 
                     functionIndex++
@@ -419,7 +421,66 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
                     // Act as it is multiplication when some number is before function
                     if (lastChar == ',') {
+                        addMultiplication = true
+                    }
+
+                    if (addMultiplication) {
+                        if(!multiplyDivide) {
+                            if (transformedEquation.isNotEmpty()) {
+                                var openBrackets = 0
+                                var closeBrackets = 0
+                                var indexBuffer = 0
+                                var index = 0
+                                val range = transformedEquation.size - 1 downTo 0
+
+                                for (i in range) {
+                                    if (transformedEquation[i] == ')') {
+                                        closeBrackets++
+                                    } else if (transformedEquation[i] == '(') {
+                                        openBrackets++
+                                    } else if (indexBuffer == 0 &&
+                                        (transformedEquation[i] == '+' || transformedEquation[i] == '-')) {
+                                        indexBuffer = i
+                                    }
+
+                                    if (closeBrackets == openBrackets) {
+                                        index = i
+                                        break
+                                    }
+                                }
+                                if (closeBrackets != openBrackets) {
+                                    addBracketIndex = if (indexBuffer == 0) 0 else ++indexBuffer
+                                } else if (index >= 1) {
+                                    if (transformedEquation[index-1] == '(') {
+                                        addBracketIndex = ++index
+                                        multiplyDivide = true
+                                    }
+                                    else if (transformedEquation[index-1].toString()[0].isLetter()) {
+                                        addBracketIndex = --index
+                                    }
+                                    else {
+                                        addBracketIndex = index
+                                    }
+                                } else {
+                                    addBracketIndex = 0
+                                }
+                            }
+
+                            if (!multiplyDivide) {
+                                transformedEquation.add(addBracketIndex, '(')
+
+                                if (functionIndex >= 0) {
+                                    bracketsInsideFunction[functionIndex].add(')')
+                                }
+                                else {
+                                    openedBrackets.add(')')
+                                }
+                            }
+                        }
+
                         transformedEquation.add('×')
+
+                        multiplyDivide = true
                     }
 
                     transformedEquation.add(whatFunction)
@@ -437,6 +498,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     if (powerTo) {
                         powerToLevel++
                     }
+
+                    multiplyDivide = false
                 }
                 else if (element == ')') {
                     if (functionIndex >= 0) {
@@ -507,18 +570,26 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     }
                     else {
                         if (numBuffer.isEmpty() && !transformedEquation.last().toString()[0].isDigit()) {
-                            transformedEquation.add('(')
                             transformedEquation.add(num)
-                            if (functionIndex >= 0) {
-                                bracketsInsideFunction[functionIndex].add(')')
-                            }
-                            else {
-                                openedBrackets.add(')')
-                            }
                         }
                         else {
+                            val bufferNum: Double
+                            if (transformedEquation.last().toString()[0].isDigit()) {
+                                bufferNum = transformedEquation.last() as Double
+                                transformedEquation.removeLast()
+
+                                transformedEquation.add('(')
+                                if (functionIndex >= 0) {
+                                    bracketsInsideFunction[functionIndex].add(')')
+                                }
+                                else {
+                                    openedBrackets.add(')')
+                                }
+                                transformedEquation.add(bufferNum)
+                            }
                             transformedEquation.add('×')
                             transformedEquation.add(num)
+                            multiplyDivide = true
                         }
                     }
                 }
@@ -636,27 +707,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         inRoot = false
                     }
                     '×', '/' -> {
-                        if (addBracketIndex >= 0) {
-                            if (!multiplyDivide) {
-                                transformedEquation.add(addBracketIndex, '(')
-
-                                if (functionIndex >= 0) {
-                                    bracketsInsideFunction[functionIndex].add(')')
-                                }
-                                else {
-                                    openedBrackets.add(')')
-                                }
-                            }
-
-                            transformedEquation.add(element)
-                            multiplyDivide = true
-                        }
-                        else {
-                            val index = 0
-
-                            transformedEquation.add(index, '(')
-                            transformedEquation.add(element)
-
+                        if (!multiplyDivide) {
+                            transformedEquation.add(addBracketIndex, '(')
                             if (functionIndex >= 0) {
                                 bracketsInsideFunction[functionIndex].add(')')
                             }
@@ -664,7 +716,9 @@ class AdvancedKeyboard @JvmOverloads constructor(
                                 openedBrackets.add(')')
                             }
                         }
+                        transformedEquation.add(element)
 
+                        multiplyDivide = true
                         lastChar = element
                         inRoot = false
                     }
