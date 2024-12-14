@@ -205,6 +205,13 @@ class AdvancedKeyboard @JvmOverloads constructor(
     private fun transformEquation(equation: String): MutableList<Any> {
         val transformedEquation: MutableList<Any> = mutableListOf()
 
+        // Copy of functions
+        val specialFunctionsCopy: MutableList<Function<Int>> = mutableListOf()
+        for (func in specialFunctions) {
+            val copyOfFunction = Function(func.start, func.end, func.deep, 0)
+            specialFunctionsCopy.add(copyOfFunction)
+        }
+
         // Equation variables
         var intConverter = 0
         var lastChar = '?'
@@ -213,14 +220,15 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
         // Equation validation
         var multiplyDivide = false
+
+        val powerToBrackets: MutableList<Int> = mutableListOf()
+        powerToBrackets.add(0)
         var powerTo = false
         var powerToLevel = 0
+
         var inRoot = false
+
         var addBracketIndex = -1
-
-        val openedBracketsInput = ArrayDeque<Char>()
-        val bracketsInsideFunctionInput: MutableList<MutableList<Char>> = mutableListOf()
-
         val openedBrackets: MutableList<Char> = mutableListOf()
         val bracketsInsideFunction: MutableList<MutableList<Char>> = mutableListOf()
 
@@ -235,6 +243,14 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 // Add digit to buffer
                 numBuffer.add((element.code - 48).toDouble())
                 intConverter++
+
+                if (powerTo && powerToLevel < 0) {
+                    val buffer = powerToBrackets[0]
+                    powerTo = false
+                    powerToBrackets.clear()
+                    powerToLevel = 0
+                    powerToBrackets.add(buffer)
+                }
 
                 // Decimal number
                 if (lastChar == ',') {
@@ -265,10 +281,6 @@ class AdvancedKeyboard @JvmOverloads constructor(
                             numberBase = outputNumber
                         }
                     }
-
-                    if (functionIndex < 0) {
-                        powerTo = false
-                    }
                 }
 
                 // Root
@@ -277,11 +289,21 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         if (inRoot && transformedEquation.last().toString()[0].isDigit()) {
                             if (bracketsInsideFunction[functionIndex].isNotEmpty()) {
                                 transformedEquation.add(bracketsInsideFunction[functionIndex].removeLast())
+
+                                if (powerTo && powerToLevel > 0) {
+                                    powerToBrackets[powerToLevel]--
+                                }
                             }
                             transformedEquation.add('×')
                             multiplyDivide = true
                         }
                         else if (transformedEquation.last().toString()[0].isDigit()) {
+                            val buffer =  transformedEquation.removeLast()
+
+                            transformedEquation.add('(')
+                            bracketsInsideFunction[functionIndex].add(')')
+                            transformedEquation.add(buffer)
+
                             transformedEquation.add('×')
                             multiplyDivide = true
                         }
@@ -289,12 +311,22 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         if (inRoot) {
                             if (openedBrackets.isNotEmpty()) {
                                 transformedEquation.add(openedBrackets.removeLast())
+                                if (powerTo && powerToLevel > 0) {
+                                    powerToBrackets[powerToLevel]--
+                                }
                             }
+
                             transformedEquation.add('×')
                             multiplyDivide = true
                         }
                         else if (transformedEquation.isNotEmpty()) {
                             if (transformedEquation.last().toString()[0].isDigit()) {
+                                val buffer =  transformedEquation.removeLast()
+
+                                transformedEquation.add('(')
+                                openedBrackets.add(')')
+                                transformedEquation.add(buffer)
+
                                 transformedEquation.add('×')
                                 multiplyDivide = true
                             }
@@ -308,6 +340,9 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     }
                     else {
                         openedBrackets.add(')')
+                    }
+                    if (powerTo) {
+                        powerToBrackets[powerToLevel]++
                     }
 
                     if (!multiplyDivide) {
@@ -337,7 +372,6 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         } else if (index >= 1) {
                             if (transformedEquation[index-1] == '(') {
                                 addBracketIndex = ++index
-                                multiplyDivide = true
                             }
                             else if (transformedEquation[index-1].toString()[0].isLetter()) {
                                 addBracketIndex = --index
@@ -366,15 +400,43 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 // Handle subtract and add
                 if (element == '+' || element == '-') {
                     if (functionIndex >= 0) {
-                        if (lastChar != '(' && lastChar != '-' && lastChar != '+') {
-                            while (bracketsInsideFunction[functionIndex].isNotEmpty()) {
-                                transformedEquation.add(bracketsInsideFunction[functionIndex].removeLast())
+                        if (powerTo) {
+                            if (powerToLevel > 0) {
+                                if (lastChar != '(' && lastChar != '-' && lastChar != '+') {
+                                    println(powerToBrackets[powerToLevel])
+                                    var counter = 0
+                                    while (bracketsInsideFunction[functionIndex].isNotEmpty()
+                                        && counter < powerToBrackets[powerToLevel]) {
+                                        transformedEquation.add(bracketsInsideFunction[functionIndex].removeLast())
+                                        counter++
+                                    }
+                                }
                             }
                         }
-                    } else {
-                        if (lastChar != '(' && lastChar != '-' && lastChar != '+') {
-                            while (openedBrackets.isNotEmpty()) {
-                                transformedEquation.add(openedBrackets.removeLast())
+                        else {
+                            if (lastChar != '(' && lastChar != '-' && lastChar != '+') {
+                                while (bracketsInsideFunction[functionIndex].isNotEmpty()) {
+                                    transformedEquation.add(bracketsInsideFunction[functionIndex].removeLast())
+                                }
+                            }
+                        }
+                    }
+                    else {
+                        if (powerTo && powerToLevel > 0) {
+                            if (lastChar != '(' && lastChar != '-' && lastChar != '+') {
+                                var counter = 0
+                                while (openedBrackets.isNotEmpty()
+                                    && counter < powerToBrackets[powerToLevel]) {
+                                    transformedEquation.add(openedBrackets.removeLast())
+                                    counter++
+                                }
+                            }
+                        }
+                        else {
+                            if (lastChar != '(' && lastChar != '-' && lastChar != '+') {
+                                while (openedBrackets.isNotEmpty()) {
+                                    transformedEquation.add(openedBrackets.removeLast())
+                                }
                             }
                         }
                     }
@@ -384,13 +446,34 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 if (element == '×' || element == '/') {
                     if (inRoot || lastChar == '^' || powerTo) {
                         if (functionIndex >= 0) {
-                            if (bracketsInsideFunction[functionIndex].isNotEmpty()) {
-                                transformedEquation.add(bracketsInsideFunction[functionIndex].removeLast())
+                            if (powerTo && powerToLevel > 0) {
+                                var counter = 0
+                                while (bracketsInsideFunction[functionIndex].isNotEmpty()
+                                    && counter < powerToBrackets[powerToLevel]) {
+                                    transformedEquation.add(bracketsInsideFunction[functionIndex].removeLast())
+                                    powerToBrackets[powerToLevel]--
+                                    counter++
+                                }
                             }
-                        }
-                        else {
-                            if (openedBrackets.isNotEmpty()) {
-                                transformedEquation.add(openedBrackets.removeLast())
+                            else {
+                                while (bracketsInsideFunction[functionIndex].isNotEmpty()) {
+                                    transformedEquation.add(bracketsInsideFunction[functionIndex].removeLast())
+                                }
+                            }
+                        } else {
+                            if (powerTo && powerToLevel > 0) {
+                                var counter = 0
+                                while (openedBrackets.isNotEmpty()
+                                    && counter < powerToBrackets[powerToLevel]) {
+                                    transformedEquation.add(openedBrackets.removeLast())
+                                    powerToBrackets[powerToLevel]--
+                                    counter++
+                                }
+                            }
+                            else {
+                                while (openedBrackets.isNotEmpty()) {
+                                    transformedEquation.add(openedBrackets.removeLast())
+                                }
                             }
                         }
 
@@ -402,14 +485,45 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         var closeBrackets = 0
                         var indexBuffer = 0
                         var index = 0
+                        var iteratorBuffer = iterator
                         val range = transformedEquation.size - 1 downTo 0
 
                         for (i in range) {
+                            iteratorBuffer--
+
                             if (transformedEquation[i] == ')') {
                                 closeBrackets++
-                            } else if (transformedEquation[i] == '(') {
+                            }
+                            else if (transformedEquation[i] == '(') {
                                 openBrackets++
-                            } else if (indexBuffer == 0 &&
+
+                                if (functionIndex >= 0) {
+                                    // Find current function
+                                    var bufferFunction = Function(0, 0, 0, 0)
+                                    for (func in specialFunctionsCopy) {
+                                        if (func.deep == functionIndex+1) {
+                                            bufferFunction = func
+                                            break
+                                        }
+                                    }
+
+                                    if (iteratorBuffer == bufferFunction.start) {
+                                        index = i
+                                        openBrackets = closeBrackets
+                                        break
+                                    }
+                                }
+
+                                if (i >= 1) {
+                                    if (transformedEquation[i-1].toString()[0].isLetter()) {
+                                        openBrackets--
+                                    }
+                                }
+                            }
+                            else if (transformedEquation[i] == '√') {
+                                openBrackets++
+                            }
+                            else if (indexBuffer == 0 &&
                                 (transformedEquation[i] == '+' || transformedEquation[i] == '-')) {
                                 indexBuffer = i
                             }
@@ -423,8 +537,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                             addBracketIndex = if (indexBuffer == 0) 0 else ++indexBuffer
                         } else if (index >= 1) {
                             if (transformedEquation[index-1] == '(') {
-                                addBracketIndex = ++index
-                                multiplyDivide = true
+                                addBracketIndex = index
                             }
                             else if (transformedEquation[index-1].toString()[0].isLetter()) {
                                 addBracketIndex = --index
@@ -483,13 +596,26 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     // Append number that is before function as multiplication
                     if (numBuffer.isNotEmpty()) {
                         val outputNumber: Double = transformedEquation.removeLast() as Double
+                        if (!multiplyDivide) {
+                            transformedEquation.add('(')
+                        }
                         transformedEquation.add(outputNumber)
+
+                        if (!multiplyDivide) {
+                            if(functionIndex >= 0) {
+                                bracketsInsideFunction[functionIndex].add(')')
+                            }
+                            else {
+                                println("YES")
+                                openedBrackets.add(')')
+                            }
+                        }
+
                         addMultiplication = true
                     }
 
                     functionIndex++
                     bracketsInsideFunction.add(mutableListOf())
-                    bracketsInsideFunctionInput.add(mutableListOf())
 
                     // Act as it is multiplication when some number is before function
                     if (lastChar == ',') {
@@ -498,57 +624,112 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
                     if (addMultiplication) {
                         if(!multiplyDivide && lastChar != '^' && !powerTo) {
-                            if (transformedEquation.isNotEmpty()) {
-                                var openBrackets = 0
-                                var closeBrackets = 0
-                                var indexBuffer = 0
-                                var index = 0
-                                val range = transformedEquation.size - 1 downTo 0
+                            var openBrackets = 0
+                            var closeBrackets = 0
+                            var indexBuffer = 0
+                            var index = 0
+                            var iteratorBuffer = iterator
+                            val range = transformedEquation.size - 1 downTo 0
 
-                                for (i in range) {
-                                    if (transformedEquation[i] == ')') {
-                                        closeBrackets++
-                                    } else if (transformedEquation[i] == '(') {
-                                        openBrackets++
-                                    } else if (indexBuffer == 0 &&
-                                        (transformedEquation[i] == '+' || transformedEquation[i] == '-')) {
-                                        indexBuffer = i
+                            for (i in range) {
+                                iteratorBuffer--
+
+                                if (transformedEquation[i] == ')') {
+                                    closeBrackets++
+                                }
+                                else if (transformedEquation[i] == '(') {
+                                    openBrackets++
+
+                                    if (functionIndex >= 0) {
+                                        // Find current function
+                                        var bufferFunction = Function(0, 0, 0, 0)
+                                        for (func in specialFunctionsCopy) {
+                                            if (func.deep == functionIndex+1) {
+                                                bufferFunction = func
+                                                break
+                                            }
+                                        }
+
+                                        if (iteratorBuffer == bufferFunction.start) {
+                                            index = i
+                                            openBrackets = closeBrackets
+                                            break
+                                        }
                                     }
 
-                                    if (closeBrackets == openBrackets) {
-                                        index = i
-                                        break
+                                    if (i >= 1) {
+                                        if (transformedEquation[i-1].toString()[0].isLetter()) {
+                                            openBrackets--
+                                        }
                                     }
                                 }
-                                if (closeBrackets != openBrackets) {
-                                    addBracketIndex = if (indexBuffer == 0) 0 else ++indexBuffer
-                                } else if (index >= 1) {
-                                    if (transformedEquation[index-1] == '(') {
-                                        addBracketIndex = ++index
-                                        multiplyDivide = true
-                                    }
-                                    else if (transformedEquation[index-1].toString()[0].isLetter()) {
-                                        addBracketIndex = --index
-                                    }
-                                    else {
-                                        addBracketIndex = index
-                                    }
-                                } else {
-                                    addBracketIndex = 0
+                                else if (transformedEquation[i] == '√') {
+                                    openBrackets++
+                                }
+                                else if (indexBuffer == 0 &&
+                                    (transformedEquation[i] == '+' || transformedEquation[i] == '-')) {
+                                    indexBuffer = i
+                                }
+
+                                if (closeBrackets == openBrackets) {
+                                    index = i
+                                    break
                                 }
                             }
-
-                            transformedEquation.add(addBracketIndex, '(')
-
-                            if (functionIndex >= 0) {
-                                bracketsInsideFunction[functionIndex].add(')')
-                            }
-                            else {
-                                openedBrackets.add(')')
+                            if (closeBrackets != openBrackets) {
+                                addBracketIndex = if (indexBuffer == 0) 0 else ++indexBuffer
+                            } else if (index >= 1) {
+                                if (transformedEquation[index-1] == '(') {
+                                    addBracketIndex = index
+                                }
+                                else if (transformedEquation[index-1].toString()[0].isLetter()) {
+                                    addBracketIndex = --index
+                                }
+                                else {
+                                    addBracketIndex = index
+                                }
+                            } else {
+                                addBracketIndex = 0
                             }
                         }
 
-                        if (lastChar != '^' || !powerTo) {
+                        if (powerTo) {
+                            if (lastChar != '^') {
+                                if (!multiplyDivide) {
+                                    if (functionIndex-1 >= 0) {
+                                        if (bracketsInsideFunction[functionIndex-1].isNotEmpty()) {
+                                            transformedEquation.add(bracketsInsideFunction[functionIndex-1].removeLast())
+                                        }
+                                    }
+                                }
+
+                                transformedEquation.add('×')
+                                multiplyDivide = true
+                            }
+                        }
+                        else {
+                            if (lastChar != '^') {
+                                if (!multiplyDivide) {
+                                    if (functionIndex - 1 >= 0) {
+                                        if (bracketsInsideFunction[functionIndex - 1].isNotEmpty()) {
+                                            transformedEquation.add(bracketsInsideFunction[functionIndex - 1].removeLast())
+                                        }
+                                    }
+                                    else {
+                                        var counter = 0
+                                        while (openedBrackets.isNotEmpty() &&
+                                            counter < powerToBrackets[powerToLevel]) {
+                                            transformedEquation.add(openedBrackets.removeLast())
+                                            powerToBrackets[powerToLevel]--
+                                            counter++
+                                        }
+                                        if (powerToBrackets.isEmpty()) {
+                                            powerToBrackets.add(0)
+                                        }
+                                    }
+                                }
+                            }
+
                             transformedEquation.add('×')
                             multiplyDivide = true
                         }
@@ -556,72 +737,82 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
                     transformedEquation.add(whatFunction)
                     whatFunction = '0'
+
+                    if (powerTo && powerToLevel > 0) {
+                        powerToBrackets.add(0)
+                        powerToLevel++
+                    }
+                    else {
+                        if (powerTo) {
+                            val buffer = powerToBrackets[0]
+                            powerTo = false
+                            powerToBrackets.clear()
+                            powerToLevel = 0
+                            powerToBrackets.add(buffer)
+                        }
+                    }
                 }
 
                 // Brackets handling
                 else if (element == '(') {
-                    if (functionIndex >= 0) {
-                        bracketsInsideFunctionInput[functionIndex].add(')')
-                    } else {
-                        openedBracketsInput.addLast(')')
-                    }
-
                     if (powerTo) {
+                        powerToBrackets.add(0)
                         powerToLevel++
                     }
 
                     multiplyDivide = false
                 }
                 else if (element == ')') {
-                    if (functionIndex >= 0) {
-                        if (iterator == specialFunctions[functionIndex].end) {
-                            while(bracketsInsideFunctionInput[functionIndex].isNotEmpty()) {
-                                transformedEquation.add(bracketsInsideFunctionInput[functionIndex].removeLast())
-                            }
 
+                    if (powerTo) {
+                        var counter = 0
+                        while (counter < powerToBrackets[powerToLevel]) {
+                            if (functionIndex >= 0) {
+                                if (bracketsInsideFunction[functionIndex].isNotEmpty()) {
+                                    transformedEquation.add(')')
+                                    bracketsInsideFunction[functionIndex].removeLast()
+                                    powerToBrackets[powerToLevel]--
+                                }
+                            }
+                            else {
+                                if (openedBrackets.isNotEmpty()) {
+                                    transformedEquation.add(')')
+                                    openedBrackets.removeLast()
+                                    powerToBrackets[powerToLevel]--
+                                }
+                            }
+                            counter++
+                        }
+
+                        powerToLevel--
+                        powerToBrackets.removeLast()
+
+                        if (powerToLevel < 0) {
+                            powerTo = false
+                            powerToBrackets.clear()
+                            powerToLevel = 0
+                            powerToBrackets.add(0)
+                        }
+                    }
+
+                    if (functionIndex >= 0) {
+                        // Find current function
+                        var bufferFunction = Function(0, 0, 0, 0)
+                        for (func in specialFunctionsCopy) {
+                            if (func.deep == functionIndex+1) {
+                                bufferFunction = func
+                                break
+                            }
+                        }
+
+                        if (iterator == bufferFunction.end) {
                             while(bracketsInsideFunction[functionIndex].isNotEmpty()) {
                                 transformedEquation.add(bracketsInsideFunction[functionIndex].removeLast())
                             }
 
                             bracketsInsideFunction.removeLast()
+                            specialFunctionsCopy.remove(bufferFunction)
                             functionIndex--
-                        }
-                        else {
-                            if (bracketsInsideFunctionInput[functionIndex].isNotEmpty()) {
-                                bracketsInsideFunctionInput[functionIndex].removeLast()
-                            }
-
-                            while(bracketsInsideFunction[functionIndex].isNotEmpty()) {
-                                transformedEquation.add(bracketsInsideFunction[functionIndex].removeLast())
-                            }
-                        }
-                    } else {
-                        if (openedBracketsInput.isNotEmpty()) {
-                            openedBracketsInput.removeLast()
-                        }
-
-                        while (openedBrackets.isNotEmpty()) {
-                            transformedEquation.add(openedBrackets.removeLast())
-                        }
-                    }
-
-                    if (powerTo) {
-                        powerToLevel--
-
-                        if (powerToLevel <= 0) {
-                            powerToLevel = 0
-                            powerTo = false
-
-                            if (functionIndex >= 0) {
-                                if (bracketsInsideFunction[functionIndex].isNotEmpty()) {
-                                    transformedEquation.add(bracketsInsideFunction[functionIndex].removeLast())
-                                }
-                            }
-                            else {
-                                if (openedBrackets.isNotEmpty()) {
-                                    transformedEquation.add(openedBrackets.removeLast())
-                                }
-                            }
                         }
                     }
                 }
@@ -661,6 +852,10 @@ class AdvancedKeyboard @JvmOverloads constructor(
                                 else {
                                     openedBrackets.add(')')
                                 }
+                                if (powerTo) {
+                                    powerToBrackets[powerToLevel]++
+                                }
+
                                 transformedEquation.add(bufferNum)
                             }
                             transformedEquation.add('×')
@@ -677,14 +872,40 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         var closeBrackets = 0
                         var indexBuffer = 0
                         var index = 0
+                        var iteratorBuffer = iterator
                         val range = transformedEquation.size - 1 downTo 0
 
                         for (i in range) {
+                            iteratorBuffer--
+
                             if (transformedEquation[i] == ')') {
                                 closeBrackets++
                             }
                             else if (transformedEquation[i] == '(') {
                                 openBrackets++
+
+                                if (functionIndex >= 0) {
+                                    // Find current function
+                                    var bufferFunction = Function(0, 0, 0, 0)
+                                    for (func in specialFunctionsCopy) {
+                                        if (func.deep == functionIndex+1) {
+                                            bufferFunction = func
+                                            break
+                                        }
+                                    }
+
+                                    if (iteratorBuffer == bufferFunction.start) {
+                                        index = i
+                                        openBrackets = closeBrackets
+                                        break
+                                    }
+                                }
+
+                                if (i >= 1) {
+                                    if (transformedEquation[i-1].toString()[0].isLetter()) {
+                                        openBrackets--
+                                    }
+                                }
                             }
                             else if (transformedEquation[i] == '√') {
                                 openBrackets++
@@ -703,8 +924,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                             addBracketIndex = if (indexBuffer == 0) 0 else ++indexBuffer
                         } else if (index >= 1) {
                             if (transformedEquation[index-1] == '(') {
-                                addBracketIndex = ++index
-                                multiplyDivide = true
+                                addBracketIndex = index
                             }
                             else if (transformedEquation[index-1].toString()[0].isLetter()) {
                                 addBracketIndex = --index
@@ -716,7 +936,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                             addBracketIndex = 0
                         }
                     }
-                    
+
                     transformedEquation.add(addBracketIndex, '(')
                     transformedEquation.add('^')
 
@@ -726,33 +946,88 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     else {
                         openedBrackets.add(')')
                     }
+                    if (powerTo && powerToLevel > 0) {
+                        powerToBrackets[powerToLevel]++
+                    }
 
-                    powerTo = true
-                    multiplyDivide = true
+                    if (powerToLevel <= 0) {
+                        powerTo = true
+                        powerToBrackets[powerToLevel] = 1
+                    }
+
+                    multiplyDivide = false
                 }
 
                 // Factorial and percent
                 if (element == '!' || element == '%' || element == '°') {
                     if (transformedEquation.last() == ')') {
                         // Count brackets that are before factorial
-                        var openedBracketsCounter = 0
-                        var closeBracketsCounter = 1
-                        var index = transformedEquation.size-2
+                        var openBrackets = 0
+                        var closeBrackets = 0
+                        var indexBuffer = 0
+                        var index = 0
+                        var iteratorBuffer = iterator
+                        val range = transformedEquation.size - 1 downTo 0
 
-                        while(index >= 0 && openedBracketsCounter != closeBracketsCounter) {
-                            if (transformedEquation[index] == '(') {
-                                openedBracketsCounter++
+                        for (i in range) {
+                            iteratorBuffer--
+
+                            if (transformedEquation[i] == ')') {
+                                closeBrackets++
                             }
-                            else if (transformedEquation[index] == ')') {
-                                closeBracketsCounter++
+                            else if (transformedEquation[i] == '(') {
+                                openBrackets++
+
+                                if (functionIndex >= 0) {
+                                    // Find current function
+                                    var bufferFunction = Function(0, 0, 0, 0)
+                                    for (func in specialFunctionsCopy) {
+                                        if (func.deep == functionIndex+1) {
+                                            bufferFunction = func
+                                            break
+                                        }
+                                    }
+
+                                    if (iteratorBuffer == bufferFunction.start) {
+                                        index = i
+                                        openBrackets = closeBrackets
+                                        break
+                                    }
+                                }
+
+                                if (i >= 1) {
+                                    if (transformedEquation[i-1].toString()[0].isLetter()) {
+                                        openBrackets--
+                                    }
+                                }
                             }
-                            index--
+                            else if (transformedEquation[i] == '√') {
+                                openBrackets++
+                            }
+                            else if (indexBuffer == 0 &&
+                                (transformedEquation[i] == '+' || transformedEquation[i] == '-')) {
+                                indexBuffer = i
+                            }
+
+                            if (closeBrackets == openBrackets) {
+                                index = i
+                                break
+                            }
                         }
-                        if (index <= 0) {
-                            index = 0
-                        }
-                        else {
-                            index++
+                        if (closeBrackets != openBrackets) {
+                            addBracketIndex = if (indexBuffer == 0) 0 else ++indexBuffer
+                        } else if (index >= 1) {
+                            if (transformedEquation[index-1] == '(') {
+                                addBracketIndex = index
+                            }
+                            else if (transformedEquation[index-1].toString()[0].isLetter()) {
+                                addBracketIndex = --index
+                            }
+                            else {
+                                addBracketIndex = index
+                            }
+                        } else {
+                            addBracketIndex = 0
                         }
 
                         transformedEquation.add(index, '(')
@@ -811,28 +1086,15 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     }
                     '×', '/' -> {
                         if (!multiplyDivide) {
-                            if (powerToLevel == 0 && powerTo) {
-                                if (functionIndex >= 0) {
-                                    if (bracketsInsideFunction[functionIndex].isNotEmpty()) {
-                                        transformedEquation.add(bracketsInsideFunction[functionIndex].removeLast())
-                                    }
-                                }
-                                else {
-                                    if (openedBrackets.isNotEmpty()) {
-                                        transformedEquation.add(openedBrackets.removeLast())
-                                    }
-                                }
-
-                                powerTo = false
+                            transformedEquation.add(addBracketIndex, '(')
+                            if (functionIndex >= 0) {
+                                bracketsInsideFunction[functionIndex].add(')')
                             }
                             else {
-                                transformedEquation.add(addBracketIndex, '(')
-                                if (functionIndex >= 0) {
-                                    bracketsInsideFunction[functionIndex].add(')')
-                                }
-                                else {
-                                    openedBrackets.add(')')
-                                }
+                                openedBrackets.add(')')
+                            }
+                            if (powerTo) {
+                                powerToBrackets[powerToLevel]++
                             }
                         }
                         if (inRoot) {
@@ -841,6 +1103,9 @@ class AdvancedKeyboard @JvmOverloads constructor(
                             }
                             else {
                                 openedBrackets.add(')')
+                            }
+                            if (powerTo) {
+                                powerToBrackets[powerToLevel]++
                             }
                         }
                         transformedEquation.add(element)
@@ -876,13 +1141,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
         }
 
         while (openedBrackets.isNotEmpty()) {
-            transformedEquation.add(')')
-            openedBrackets.removeLast()
-        }
-
-        while (openedBracketsInput.isNotEmpty()) {
-            transformedEquation.add(')')
-            openedBracketsInput.removeLast()
+            transformedEquation.add(openedBrackets.removeLast())
         }
 
         return transformedEquation
@@ -1189,7 +1448,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
                         val bufferText = textView.text.dropLast(functionEnd)
                         if (bufferText.last() != ')' && bufferText.last() != 'π'
-                            && bufferText.last() != 'e') {
+                            && bufferText.last() != '!' && bufferText.last() != 'e') {
                             textView.text = bufferText
 
                             if (textView.text.last() == '°') {
@@ -1219,7 +1478,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         }
                     } else {
                         if (textView.text.last() != ')' && textView.text.last() != 'π'
-                                && textView.text.last() != 'e') {
+                            && textView.text.last() != '!' && textView.text.last() != 'e') {
                             textView.append(i.toString())
                             addedNumber = true
                         }
