@@ -548,7 +548,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                             }
                         }
 
-                        if (lastChar != '^') {
+                        if (lastChar != '^' || !powerTo) {
                             transformedEquation.add('×')
                             multiplyDivide = true
                         }
@@ -900,7 +900,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
         val result: PairEquation<Double, Int> = PairEquation(0.0, index)
         var iterator: Int = index
         val threshold = 1E-10
-
+        println(equation)
         while (iterator < equation.size) {
             when (equation[iterator]) {
                 is Char -> {
