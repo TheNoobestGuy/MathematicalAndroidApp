@@ -706,7 +706,6 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         }
                     }
 
-                    println("L: " + transformedEquation.last())
                     transformedEquation.add(addBracketIndex, '(')
                     transformedEquation.add('^')
 
@@ -862,7 +861,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
         val result: PairEquation<Double, Int> = PairEquation(0.0, index)
         var iterator: Int = index
         val threshold = 1E-10
-        println(equation)
+        
         while (iterator < equation.size) {
             when (equation[iterator]) {
                 is Char -> {
