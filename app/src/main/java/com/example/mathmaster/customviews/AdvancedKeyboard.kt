@@ -302,6 +302,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
         var inRoot = false
 
         var addBracketIndex = -1
+        val bracketsInput: MutableList<Char> = mutableListOf()
+        val insideFunctionBracketsInput: MutableList<MutableList<Char>> = mutableListOf()
         val openedBrackets: MutableList<Char> = mutableListOf()
         val bracketsInsideFunction: MutableList<MutableList<Char>> = mutableListOf()
 
@@ -490,7 +492,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
                 // Preparing brackets for multiplication and division
                 if (element == '×' || element == '/') {
-                    if (inRoot || lastChar == '^' || powerTo) {
+                    if ((inRoot || lastChar == '^' || powerTo) && !multiplyDivide) {
                         if (functionIndex >= 0) {
                             if (powerTo && powerToLevel > 0) {
                                 var counter = 0
@@ -653,6 +655,9 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     transformedEquation.add(whatFunction)
                     whatFunction = '0'
 
+                    insideFunctionBracketsInput.add(mutableListOf())
+                    insideFunctionBracketsInput[functionIndex].add(')')
+
                     if (powerTo && powerToLevel > 0) {
                         powerToBrackets.add(0)
                         powerToLevel++
@@ -675,9 +680,21 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         powerToLevel++
                     }
 
+                    if (functionIndex >= 0) {
+                        insideFunctionBracketsInput[functionIndex].add(')')
+                    }
+                    else {
+                        bracketsInput.add(')')
+                    }
                     multiplyDivide = false
                 }
                 else if (element == ')') {
+                    if (functionIndex < 0) {
+                        bracketsInput.removeLast()
+                    }
+                    else {
+                        insideFunctionBracketsInput[functionIndex].removeLast()
+                    }
 
                     if (powerTo) {
                         var counter = 0
@@ -725,6 +742,11 @@ class AdvancedKeyboard @JvmOverloads constructor(
                                 transformedEquation.add(bracketsInsideFunction[functionIndex].removeLast())
                             }
 
+                            while(insideFunctionBracketsInput[functionIndex].isNotEmpty()) {
+                                transformedEquation.add(insideFunctionBracketsInput[functionIndex].removeLast())
+                            }
+
+                            insideFunctionBracketsInput.removeLast()
                             bracketsInsideFunction.removeLast()
                             specialFunctionsCopy.remove(bufferFunction)
                             functionIndex--
@@ -927,6 +949,10 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
         while (openedBrackets.isNotEmpty()) {
             transformedEquation.add(openedBrackets.removeLast())
+        }
+
+        while (bracketsInput.isNotEmpty()) {
+            transformedEquation.add(bracketsInput.removeLast())
         }
 
         return transformedEquation
@@ -1513,22 +1539,24 @@ class AdvancedKeyboard @JvmOverloads constructor(
         factorialButton.setOnClickListener {
             factorialButton.setBackgroundResource(clickedButtonStyle)
             var appendedFactorial = false
-            if (textView.text.isNotEmpty() && !commaUsed) {
+            if (textView.text.isNotEmpty()) {
                 if (specialFunctionDeep > 0) {
-                    var functionEnd = getCurrentFunctionEnd(textView)
+                    if (textView.text.last() != ',') {
+                        var functionEnd = getCurrentFunctionEnd(textView)
 
-                    val bufferText = textView.text.dropLast(functionEnd)
+                        val bufferText = textView.text.dropLast(functionEnd)
 
-                    if (bufferText.last().isDigit() || bufferText.last() == ')') {
-                        textView.text = bufferText
-                        val text = "!"
-                        textView.append(text)
-                        while (functionEnd > 0) {
-                            textView.append(")")
-                            functionEnd--
+                        if (bufferText.last().isDigit() || bufferText.last() == ')') {
+                            textView.text = bufferText
+                            val text = "!"
+                            textView.append(text)
+                            while (functionEnd > 0) {
+                                textView.append(")")
+                                functionEnd--
+                            }
+                            updateFunctionsLength(text.length)
+                            appendedFactorial = true
                         }
-                        updateFunctionsLength(text.length)
-                        appendedFactorial = true
                     }
                 } else if (textView.text.last().isDigit() || textView.text.last() == ')') {
                     textView.append("!")
@@ -1607,20 +1635,15 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     val bufferText = textView.text.dropLast(functionEnd)
 
                     if (bufferText.last().isDigit() || bufferText.last() == ')') {
-                        if (bufferText.last() == ')') {
-                            textView.text = bufferText
-
-                            val text = "%"
-                            textView.append(text)
-
-                            while (functionEnd > 0) {
-                                textView.append(")")
-                                functionEnd--
-                            }
-
-                            updateFunctionsLength(text.length)
-                            appendedPercent = true
+                        textView.text = bufferText
+                        val text = "%"
+                        textView.append(text)
+                        while (functionEnd > 0) {
+                            textView.append(")")
+                            functionEnd--
                         }
+                        updateFunctionsLength(text.length)
+                        appendedPercent = true
                     }
                 } else if (textView.text.last().isDigit() || textView.text.last() == ')') {
                     textView.append("%")
@@ -1802,7 +1825,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 if (specialFunctionDeep == 0) {
                     if (textView.text.last().isDigit() || textView.text.last() == ')'
                         || textView.text.last() == '!' || textView.text.last() == 'π'
-                        || textView.text.last() == 'e') {
+                        || textView.text.last() == 'e' || textView.text.last() == '%') {
                         textView.append(closeBracketButton.text)
                         bracketsCounter--
                     }
@@ -1810,15 +1833,12 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     var (function, functionEnd) = getCurrentFunctionAndItsEnd(textView)
 
                     if (function.brackets > 0) {
-                        var bufferText = textView.text.dropLast(functionEnd)
+                        val bufferText = textView.text.dropLast(functionEnd)
 
                         if (bufferText.last().isDigit() || bufferText.last() == ')'
                             || bufferText.last() == '!' || bufferText.last() == 'π'
-                            || bufferText.last() == 'e' || bufferText.last() == '°') {
-
-                            if(bufferText.last() == '°') {
-                                bufferText = bufferText.dropLast(1)
-                            }
+                            || bufferText.last() == 'e' || bufferText.last() == '°'
+                            || bufferText.last() == '%') {
 
                             textView.text = bufferText
 
@@ -1826,10 +1846,6 @@ class AdvancedKeyboard @JvmOverloads constructor(
                             textView.append(text)
                             bracketsCounter--
                             function.brackets--
-
-                            if (!radians) {
-                                textView.append("°")
-                            }
 
                             while (functionEnd > 0) {
                                 textView.append(")")
