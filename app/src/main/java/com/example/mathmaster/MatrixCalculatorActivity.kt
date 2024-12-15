@@ -269,7 +269,7 @@ class MatrixCalculatorActivity : ComponentActivity() {
                         scalar = true
                     }
                     else {
-                        resultMatrixRows = firstMatrixRows
+                        resultMatrixRows = matrix.getMatrixRows()
                         resultMatrixColumns = matrix.getMatrixColumns()
                         val resultMatrixSize = resultMatrixRows * resultMatrixColumns
                         resultMatrix = DoubleArray(resultMatrixSize)
@@ -339,7 +339,7 @@ class MatrixCalculatorActivity : ComponentActivity() {
         // Handle the back press
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                val intent = Intent(this@MatrixCalculatorActivity, ToolsActivity()::class.java)
+                val intent = Intent(this@MatrixCalculatorActivity, MatrixCalculatorMenuActivity()::class.java)
                 startActivity(intent)
             }
         })

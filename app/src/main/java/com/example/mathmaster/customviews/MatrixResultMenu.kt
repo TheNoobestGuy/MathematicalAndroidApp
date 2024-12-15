@@ -297,6 +297,9 @@ class MatrixResultMenu @JvmOverloads constructor(
             resultMatrixRows = backupMatrixRows
             resultMatrixColumns = backupMatrixColumns
 
+            resultMatrixBeforeExp = backupMatrix.copyOf()
+            resultMatrixBuffer = backupMatrix.copyOf()
+
             Handler(Looper.getMainLooper()).postDelayed({
                 undoButton.setBackgroundResource(unClickedButtonStyle)
             }, 100)
@@ -371,6 +374,7 @@ class MatrixResultMenu @JvmOverloads constructor(
                 }
 
                 resultMatrixBeforeExp = resultMatrixAfterExp.copyOf()
+                resultMatrixBuffer = resultMatrixAfterExp.copyOf()
                 matrix.setResultMatrix(resultMatrixBeforeExp, resultMatrixRows, resultMatrixColumns, false)
 
                 Handler(Looper.getMainLooper()).postDelayed({

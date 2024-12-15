@@ -8,7 +8,7 @@ import androidx.activity.OnBackPressedCallback
 
 class MatrixCalculatorMenuActivity : ComponentActivity() {
 
-    private fun clickFunction (button: Button, drawable: Int, view: ComponentActivity, sign: String) {
+    private fun clickFunction (button: Button, drawable: Int, view: ComponentActivity, sign: String, show: Boolean) {
         button.setOnClickListener {
             button.setBackgroundResource(drawable)
 
@@ -17,7 +17,7 @@ class MatrixCalculatorMenuActivity : ComponentActivity() {
             val resultMatrixColumns = 0
 
             val intent = Intent(this, view::class.java)
-            intent.putExtra("show", false)
+            intent.putExtra("show", show)
             intent.putExtra("sign", sign)
             intent.putExtra("matrixCounter", 1)
             intent.putExtra("resultMatrix", resultMatrix)
@@ -41,10 +41,10 @@ class MatrixCalculatorMenuActivity : ComponentActivity() {
         val clickedButtonStyle = R.drawable.menubutton_background_clicked
 
         // On click functions
-        clickFunction(multiplyButton, clickedButtonStyle, MatrixCalculatorActivity(), "×")
-        clickFunction(addButton, clickedButtonStyle, MatrixCalculatorActivity(), "+")
-        clickFunction(subtractButton, clickedButtonStyle, MatrixCalculatorActivity(), "-")
-        clickFunction(otherButton, clickedButtonStyle, MatrixCalculatorActivity(), "i")
+        clickFunction(multiplyButton, clickedButtonStyle, MatrixCalculatorActivity(), "×", false)
+        clickFunction(addButton, clickedButtonStyle, MatrixCalculatorActivity(), "+", false)
+        clickFunction(subtractButton, clickedButtonStyle, MatrixCalculatorActivity(), "-", false)
+        clickFunction(otherButton, clickedButtonStyle, MatrixCalculatorActivity(), "i", true)
 
         // Handle the back press
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
