@@ -501,6 +501,7 @@ class MatrixResultMenu @JvmOverloads constructor(
         if (dimension == 1) {
             return 1
         }
+
         var rank = 1
         var row = 0
         var column = 0
@@ -570,20 +571,8 @@ class MatrixResultMenu @JvmOverloads constructor(
             }
         }
 
-        // Find first possible square matrix
-        var dimension = resultMatrixRows
-        var columnsBuffer = resultMatrixColumns
-
-        while (dimension != columnsBuffer) {
-            if (dimension > columnsBuffer) {
-                dimension--
-            }
-            else {
-                columnsBuffer--
-            }
-        }
-
         // Find rank of matrix
+        val dimension = if (resultMatrixRows >= resultMatrixColumns) resultMatrixRows else resultMatrixColumns
         rank = checkSubMatricesForRank(resultMatrix, dimension, resultMatrixColumns)
 
         return rank
