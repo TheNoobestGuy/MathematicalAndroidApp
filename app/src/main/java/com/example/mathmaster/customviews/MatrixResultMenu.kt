@@ -246,7 +246,7 @@ class MatrixResultMenu @JvmOverloads constructor(
         val determinant = determinant(array, dimension)
 
         if (determinant == 0.0) {
-            Toast.makeText(context, "Determinant is equal 0 so there is no inverse matrix", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "DET(A) = 0, so there is no inverse matrix!", Toast.LENGTH_LONG).show()
             return false
         }
         else {
@@ -462,12 +462,152 @@ class MatrixResultMenu @JvmOverloads constructor(
         }
     }
 
+    private fun subMatrixForRank(array: DoubleArray, dimension: Int, row: Int, col: Int): DoubleArray {
+        val subMatrix = DoubleArray(dimension*dimension)
+
+        var iterator = 0
+        var columnLimit = 0
+        var rowLimit = 0
+
+        var currentRow = row
+        var currentColumn = col
+
+        for (cell in array.indices) {
+            if (columnLimit > dimension) {
+                rowLimit++
+                if (rowLimit == dimension) {
+                    break
+                }
+
+                columnLimit = 0
+                currentColumn = (++currentRow * dimension) + col
+            }
+
+            if (cell == currentColumn) {
+                subMatrix[iterator] = cell.toDouble()
+                currentColumn++
+                columnLimit++
+                iterator++
+            }
+        }
+
+        return subMatrix
+    }
+
+    private fun checkSubMatricesForRank(array: DoubleArray, dimension: Int, columns: Int): Int {
+        if (dimension == 1) {
+            return 1
+        }
+
+        var rank = 1
+        var row = 0
+        var column = 0
+        var columnLimit = 0
+        val dimensionLimit = if (dimension == columns) dimension-1 else dimension
+
+        for (cell in array.indices) {
+            // Move column index if reached end of possibilities of creating a new sub arrays
+            if ((columnLimit + dimensionLimit) > columns) {
+                row++
+                column = row*dimension
+                columnLimit = 0
+
+                // Check does new sub matrix can exist
+                var counter = 1
+                var rowBuffer = row
+                while(counter < dimension) {
+                    rowBuffer++
+                    val columnBuffer = rowBuffer*dimension
+
+                    if (columnBuffer >= array.size-1) {
+                        return rank
+                    }
+
+                    counter++
+                }
+            }
+
+            // Create new sub matrix for every possibilities of creating it
+            if (cell == column) {
+                val subMatrix = subMatrixForRank(array, dimension, row, column)
+                val determinant = determinant(subMatrix, dimension)
+
+                if (determinant != 0.0) {
+                    return dimension
+                }
+                else {
+                    rank = checkSubMatricesForRank(subMatrix, dimension-1, dimension)
+                }
+
+                column++
+            }
+
+            columnLimit++
+        }
+
+        return rank
+    }
+
+    private fun findRank(): Int {
+        var rank = 1
+
+        if (resultMatrixRows == 1 && resultMatrixColumns == 1) {
+            return rank
+        }
+        else if (resultMatrixRows == resultMatrixColumns) {
+            val determinant = determinant(resultMatrix, resultMatrixRows)
+
+            if (determinant != 0.0) {
+                return resultMatrixRows
+            }
+        }
+
+        // Find first possible square matrix
+        var dimension = resultMatrixRows
+        var columnsBuffer = resultMatrixColumns
+
+        while (dimension != columnsBuffer) {
+            if (dimension > columnsBuffer) {
+                dimension--
+            }
+            else {
+                columnsBuffer--
+            }
+        }
+
+        // Find rank of matrix
+        rank = checkSubMatricesForRank(resultMatrix, dimension, resultMatrixColumns)
+
+        return rank
+    }
+
+    fun clickRankButton() {
+        rankButton.setOnClickListener {
+            rankButton.setBackgroundResource(clickedButtonStyle)
+
+            val rank = findRank()
+
+            Toast.makeText(context, "RANK(A) = $rank", Toast.LENGTH_LONG).show()
+
+            Handler(Looper.getMainLooper()).postDelayed({
+                rankButton.setBackgroundResource(unClickedButtonStyle)
+            }, 100)
+        }
+    }
+
     fun clickDeterminantRankButton() {
         detRankButton.setOnClickListener {
             detRankButton.setBackgroundResource(clickedButtonStyle)
 
-            val result = determinant(resultMatrix, resultMatrixRows)
-            Toast.makeText(context, "Determinant is equal $result", Toast.LENGTH_LONG).show()
+            val determinant = determinant(resultMatrix, resultMatrixRows)
+
+            if (determinant == 0.0) {
+                val rank = findRank()
+                Toast.makeText(context, "Determinant is equal 0! RANK(A) = $rank", Toast.LENGTH_LONG).show()
+            }
+            else {
+                Toast.makeText(context, "DET(A) = $determinant", Toast.LENGTH_LONG).show()
+            }
 
             Handler(Looper.getMainLooper()).postDelayed({
                detRankButton.setBackgroundResource(unClickedButtonStyle)

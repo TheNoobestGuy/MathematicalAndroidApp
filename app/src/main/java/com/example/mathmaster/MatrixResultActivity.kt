@@ -92,7 +92,10 @@ class MatrixResultActivity : ComponentActivity() {
         // Transpose
         matrixMenu.clickTransposeButton()
 
-        // Determinant
+        // Rank button
+        matrixMenu.clickRankButton()
+
+        // Determinant and rank
         matrixMenu.clickDeterminantRankButton()
 
         // Complements
