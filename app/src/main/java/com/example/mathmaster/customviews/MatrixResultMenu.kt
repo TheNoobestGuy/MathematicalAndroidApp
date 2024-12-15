@@ -560,7 +560,7 @@ class MatrixResultMenu @JvmOverloads constructor(
 
             // Create new sub matrix for every possibilities of creating it
             if (cell == column) {
-                if (rank < dimension-1) {
+                if (rank < dimension) {
                     val subMatrix = subMatrixForRank(array, dimension-1, row, column, columns, flag)
                     val determinant = determinant(subMatrix, dimension-1)
 
@@ -571,6 +571,9 @@ class MatrixResultMenu @JvmOverloads constructor(
                         val buffer = checkSubMatricesForRank(subMatrix, dimension-1, dimension, false)
                         rank = if (buffer > rank) buffer else rank
                     }
+                }
+                else {
+                    return rank
                 }
 
                 column++
@@ -591,7 +594,12 @@ class MatrixResultMenu @JvmOverloads constructor(
         }
 
         // Find rank of matrix
-        val dimension = if (resultMatrixRows > resultMatrixColumns) resultMatrixColumns else resultMatrixRows
+        val dimension = if (flag) {
+            if (resultMatrixRows > resultMatrixColumns) resultMatrixColumns else resultMatrixRows
+        }
+        else {
+            resultMatrixColumns-1
+        }
         val rank = checkSubMatricesForRank(resultMatrix, dimension+1, resultMatrixColumns, flag)
 
         return rank
