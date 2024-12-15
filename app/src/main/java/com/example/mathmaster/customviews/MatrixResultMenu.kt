@@ -466,25 +466,28 @@ class MatrixResultMenu @JvmOverloads constructor(
         val subMatrix = DoubleArray(dimension*dimension)
 
         var iterator = 0
-        var columnLimit = 0
+        var columnLimit = 1
         var rowLimit = 0
 
         var currentRow = row
         var currentColumn = col
-
         for (cell in array.indices) {
+            if (iterator > subMatrix.size) {
+                return subMatrix
+            }
+
             if (columnLimit > dimension) {
                 rowLimit++
                 if (rowLimit == dimension) {
                     break
                 }
 
-                columnLimit = 0
-                currentColumn = (++currentRow * dimension) + col
+                currentColumn = (++currentRow * (dimension+1)) + (col % (dimension+1))
+                columnLimit = 1
             }
 
             if (cell == currentColumn) {
-                subMatrix[iterator] = cell.toDouble()
+                subMatrix[iterator] = array[cell]
                 currentColumn++
                 columnLimit++
                 iterator++
@@ -498,7 +501,6 @@ class MatrixResultMenu @JvmOverloads constructor(
         if (dimension == 1) {
             return 1
         }
-
         var rank = 1
         var row = 0
         var column = 0
@@ -515,34 +517,40 @@ class MatrixResultMenu @JvmOverloads constructor(
                 // Check does new sub matrix can exist
                 var counter = 1
                 var rowBuffer = row
+                var run = false
                 while(counter < dimension) {
                     rowBuffer++
                     val columnBuffer = rowBuffer*dimension
 
-                    if (columnBuffer >= array.size-1) {
-                        return rank
+                    if (columnBuffer > array.size) {
+                        run = true
+                        break
                     }
 
                     counter++
+                }
+
+                if (run) {
+                    break
                 }
             }
 
             // Create new sub matrix for every possibilities of creating it
             if (cell == column) {
-                val subMatrix = subMatrixForRank(array, dimension, row, column)
-                val determinant = determinant(subMatrix, dimension)
+                val subMatrix = subMatrixForRank(array, dimension-1, row, column)
+                val determinant = determinant(subMatrix, dimension-1)
 
                 if (determinant != 0.0) {
-                    return dimension
+                    rank = if (dimension-1 > rank) dimension-1 else rank
                 }
                 else {
-                    rank = checkSubMatricesForRank(subMatrix, dimension-1, dimension)
+                    val buffer = checkSubMatricesForRank(subMatrix, dimension-1, dimension)
+                    rank = if (buffer > rank) buffer else rank
                 }
 
                 column++
+                columnLimit++
             }
-
-            columnLimit++
         }
 
         return rank
