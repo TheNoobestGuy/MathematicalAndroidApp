@@ -1,5 +1,6 @@
 package com.example.mathmaster
 
+import android.app.ActivityOptions
 import android.content.Intent
 import android.os.Bundle
 import android.widget.TextView
@@ -207,7 +208,15 @@ class MultiplyEndActivity : ComponentActivity() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 val intent = Intent(this@MultiplyEndActivity, PracticeActivity()::class.java)
-                startActivity(intent)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                val options = ActivityOptions.makeCustomAnimation(
+                    this@MultiplyEndActivity,
+                    R.anim.slide_in_right,
+                    R.anim.slide_out_left
+                )
+
+                startActivity(intent, options.toBundle())
+                finish()
             }
         })
     }

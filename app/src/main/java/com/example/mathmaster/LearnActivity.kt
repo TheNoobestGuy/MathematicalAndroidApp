@@ -1,5 +1,6 @@
 package com.example.mathmaster
 
+import android.app.ActivityOptions
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -17,7 +18,15 @@ class LearnActivity : ComponentActivity() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 val intent = Intent(this@LearnActivity, MainMenuActivity()::class.java)
-                startActivity(intent)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                val options = ActivityOptions.makeCustomAnimation(
+                    this@LearnActivity,
+                    R.anim.slide_in_right,
+                    R.anim.slide_out_left
+                )
+
+                startActivity(intent, options.toBundle())
+                finish()
             }
         })
     }

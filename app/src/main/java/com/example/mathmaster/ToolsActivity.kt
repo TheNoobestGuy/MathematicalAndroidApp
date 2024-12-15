@@ -1,5 +1,6 @@
 package com.example.mathmaster
 
+import android.app.ActivityOptions
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
@@ -13,7 +14,15 @@ class ToolsActivity : ComponentActivity() {
             button.setBackgroundResource(drawable)
 
             val intent = Intent(this, view::class.java)
-            startActivity(intent)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            val options = ActivityOptions.makeCustomAnimation(
+                this,
+                R.anim.slide_in_right,
+                R.anim.slide_out_left
+            )
+
+            startActivity(intent, options.toBundle())
+            finish()
         }
     }
 
@@ -36,7 +45,15 @@ class ToolsActivity : ComponentActivity() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 val intent = Intent(this@ToolsActivity, MainMenuActivity()::class.java)
-                startActivity(intent)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                val options = ActivityOptions.makeCustomAnimation(
+                    this@ToolsActivity,
+                    R.anim.slide_in_right,
+                    R.anim.slide_out_left
+                )
+
+                startActivity(intent, options.toBundle())
+                finish()
             }
         })
     }

@@ -37,6 +37,7 @@ class MatrixResultMenu @JvmOverloads constructor(
     private lateinit var complementsMatrix: DoubleArray
 
     // Power to
+    private lateinit var matrixBeforePowerTo: DoubleArray
     private lateinit var resultMatrixBuffer: DoubleArray
     private lateinit var resultMatrixBeforeExp: DoubleArray
     private lateinit var resultMatrixAfterExp: DoubleArray
@@ -246,7 +247,7 @@ class MatrixResultMenu @JvmOverloads constructor(
         val determinant = determinant(array, dimension)
 
         if (determinant == 0.0) {
-            Toast.makeText(context, "DET(A) = 0, so there is no inverse matrix!", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "Det(A) = 0, so inverse matrix doesn't exist!", Toast.LENGTH_LONG).show()
             return false
         }
         else {
@@ -281,6 +282,10 @@ class MatrixResultMenu @JvmOverloads constructor(
             matrix.setResultMatrix(transposeMatrix, resultMatrixRows, resultMatrixColumns, false)
             resultMatrix = transposeMatrix.copyOf()
 
+            matrixBeforePowerTo = transposeMatrix.copyOf()
+            resultMatrixBeforeExp = transposeMatrix.copyOf()
+            resultMatrixBuffer = transposeMatrix.copyOf()
+
             Handler(Looper.getMainLooper()).postDelayed({
                 transposeButton.setBackgroundResource(unClickedButtonStyle)
             }, 100)
@@ -297,6 +302,7 @@ class MatrixResultMenu @JvmOverloads constructor(
             resultMatrixRows = backupMatrixRows
             resultMatrixColumns = backupMatrixColumns
 
+            matrixBeforePowerTo = backupMatrix.copyOf()
             resultMatrixBeforeExp = backupMatrix.copyOf()
             resultMatrixBuffer = backupMatrix.copyOf()
 
@@ -369,7 +375,6 @@ class MatrixResultMenu @JvmOverloads constructor(
                         row++
                     }
 
-                    resultMatrixBeforeExp = resultMatrixAfterExp.copyOf()
                     iterator++
                 }
 
@@ -388,11 +393,10 @@ class MatrixResultMenu @JvmOverloads constructor(
         undoPowerButton.setOnClickListener {
             undoPowerButton.setBackgroundResource(clickedButtonStyle)
 
-            matrix.setResultMatrix(resultMatrix, resultMatrixRows, resultMatrixColumns, false)
+            matrix.setResultMatrix(matrixBeforePowerTo, resultMatrixRows, resultMatrixColumns, false)
 
-            resultMatrix = resultMatrix.copyOf()
-            resultMatrixBuffer = resultMatrix.copyOf()
-            resultMatrixBeforeExp = resultMatrix.copyOf()
+            resultMatrixBuffer = backupMatrix.copyOf()
+            resultMatrixBeforeExp = backupMatrix.copyOf()
 
             Handler(Looper.getMainLooper()).postDelayed({
                 undoPowerButton.setBackgroundResource(unClickedButtonStyle)
@@ -435,10 +439,21 @@ class MatrixResultMenu @JvmOverloads constructor(
     fun clickComplementButton() {
         complementButton.setOnClickListener {
             complementButton.setBackgroundResource(clickedButtonStyle)
+            val determinant = determinant(resultMatrix, resultMatrixRows)
 
-            complementsMatrix(resultMatrix, resultMatrixRows)
-            matrix.setResultMatrix(complementsMatrix, resultMatrixRows, resultMatrixColumns, false)
-            resultMatrix = complementsMatrix.copyOf()
+            if (determinant != 0.0) {
+                complementsMatrix(resultMatrix, resultMatrixRows)
+                matrix.setResultMatrix(complementsMatrix, resultMatrixRows, resultMatrixColumns, false)
+                resultMatrix = complementsMatrix.copyOf()
+
+                matrixBeforePowerTo = complementsMatrix.copyOf()
+                resultMatrixBeforeExp = complementsMatrix.copyOf()
+                resultMatrixBuffer = complementsMatrix.copyOf()
+            }
+            else {
+                Toast.makeText(context, "Det(A) = 0, so complements matrix doesn't exist!",
+                    Toast.LENGTH_LONG).show()
+            }
 
             Handler(Looper.getMainLooper()).postDelayed({
                 complementButton.setBackgroundResource(unClickedButtonStyle)
@@ -454,6 +469,10 @@ class MatrixResultMenu @JvmOverloads constructor(
             if (run) {
                 matrix.setResultMatrix(inverseMatrix, resultMatrixRows, resultMatrixColumns,false)
                 resultMatrix = inverseMatrix.copyOf()
+
+                matrixBeforePowerTo = inverseMatrix.copyOf()
+                resultMatrixBeforeExp = inverseMatrix.copyOf()
+                resultMatrixBuffer = inverseMatrix.copyOf()
             }
 
             Handler(Looper.getMainLooper()).postDelayed({
@@ -560,7 +579,7 @@ class MatrixResultMenu @JvmOverloads constructor(
 
             // Create new sub matrix for every possibilities of creating it
             if (cell == column) {
-                if (rank < dimension) {
+                if (rank < dimension-1) {
                     val subMatrix = subMatrixForRank(array, dimension-1, row, column, columns, flag)
                     val determinant = determinant(subMatrix, dimension-1)
 
@@ -611,7 +630,7 @@ class MatrixResultMenu @JvmOverloads constructor(
 
             val rank = findRank(true)
 
-            Toast.makeText(context, "RANK(A) = $rank", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "Rank(A) = $rank", Toast.LENGTH_LONG).show()
 
             Handler(Looper.getMainLooper()).postDelayed({
                 rankButton.setBackgroundResource(unClickedButtonStyle)
@@ -627,10 +646,10 @@ class MatrixResultMenu @JvmOverloads constructor(
 
             if (determinant == 0.0) {
                 val rank = findRank(false)
-                Toast.makeText(context, "Determinant is equal 0! RANK(A) = $rank", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, "Det(A) = 0! But Rank(A) = $rank", Toast.LENGTH_LONG).show()
             }
             else {
-                Toast.makeText(context, "DET(A) = $determinant", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, "Det(A) = $determinant", Toast.LENGTH_LONG).show()
             }
 
             Handler(Looper.getMainLooper()).postDelayed({

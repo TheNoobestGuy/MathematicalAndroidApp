@@ -1,5 +1,6 @@
 package com.example.mathmaster
 
+import android.app.ActivityOptions
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
@@ -331,7 +332,9 @@ class MatrixCalculatorActivity : ComponentActivity() {
                     intent.putExtra("resultMatrixRows", resultMatrixRows)
                     intent.putExtra("resultMatrixColumns", resultMatrixColumns)
 
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                     startActivity(intent)
+                    finish()
                 }
             }, wait)
         }
@@ -340,7 +343,15 @@ class MatrixCalculatorActivity : ComponentActivity() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 val intent = Intent(this@MatrixCalculatorActivity, MatrixCalculatorMenuActivity()::class.java)
-                startActivity(intent)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                val options = ActivityOptions.makeCustomAnimation(
+                    this@MatrixCalculatorActivity,
+                    R.anim.slide_in_right,
+                    R.anim.slide_out_left
+                )
+
+                startActivity(intent, options.toBundle())
+                finish()
             }
         })
     }

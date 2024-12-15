@@ -1,5 +1,6 @@
 package com.example.mathmaster
 
+import android.app.ActivityOptions
 import com.example.mathmaster.customviews.Keyboard
 import android.content.Intent
 import android.os.Bundle
@@ -147,7 +148,9 @@ class MultiplyActivity : ComponentActivity() {
                 intent.putExtra("correctAnswersArray", correctAnswersArray)
                 intent.putExtra("answersArray", answersArray)
 
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 startActivity(intent)
+                finish()
             }
             // Update question counter and change equation also append answer
             else {
@@ -174,7 +177,15 @@ class MultiplyActivity : ComponentActivity() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 val intent = Intent(this@MultiplyActivity, PracticeActivity()::class.java)
-                startActivity(intent)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                val options = ActivityOptions.makeCustomAnimation(
+                    this@MultiplyActivity,
+                    R.anim.slide_in_right,
+                    R.anim.slide_out_left
+                )
+
+                startActivity(intent, options.toBundle())
+                finish()
             }
         })
     }

@@ -1,5 +1,6 @@
 package com.example.mathmaster
 
+import android.app.ActivityOptions
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
@@ -23,7 +24,16 @@ class MatrixCalculatorMenuActivity : ComponentActivity() {
             intent.putExtra("resultMatrix", resultMatrix)
             intent.putExtra("resultMatrixRows", resultMatrixRows)
             intent.putExtra("resultMatrixColumns", resultMatrixColumns)
-            startActivity(intent)
+
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            val options = ActivityOptions.makeCustomAnimation(
+                this,
+                R.anim.slide_in_right,
+                R.anim.slide_out_left
+            )
+
+            startActivity(intent, options.toBundle())
+            finish()
         }
     }
 
@@ -50,7 +60,16 @@ class MatrixCalculatorMenuActivity : ComponentActivity() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 val intent = Intent(this@MatrixCalculatorMenuActivity, ToolsActivity()::class.java)
-                startActivity(intent)
+
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                val options = ActivityOptions.makeCustomAnimation(
+                    this@MatrixCalculatorMenuActivity,
+                    R.anim.slide_in_right,
+                    R.anim.slide_out_left
+                )
+
+                startActivity(intent, options.toBundle())
+                finish()
             }
         })
     }
