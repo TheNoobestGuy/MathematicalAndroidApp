@@ -462,7 +462,7 @@ class MatrixResultMenu @JvmOverloads constructor(
         }
     }
 
-    private fun subMatrixForRank(array: DoubleArray, dimension: Int, row: Int, col: Int): DoubleArray {
+    private fun subMatrixForRank(array: DoubleArray, dimension: Int, row: Int, col: Int, columns: Int, flag: Boolean): DoubleArray {
         val subMatrix = DoubleArray(dimension*dimension)
 
         var iterator = 0
@@ -482,7 +482,12 @@ class MatrixResultMenu @JvmOverloads constructor(
                     break
                 }
 
-                currentColumn = (++currentRow * (dimension+1)) + (col % (dimension+1))
+                currentColumn = if (flag) {
+                    (++currentRow * columns) + (col % columns)
+                } else {
+                    (++currentRow * (dimension+1)) + (col % (dimension+1))
+                }
+
                 columnLimit = 1
             }
 
@@ -497,22 +502,28 @@ class MatrixResultMenu @JvmOverloads constructor(
         return subMatrix
     }
 
-    private fun checkSubMatricesForRank(array: DoubleArray, dimension: Int, columns: Int): Int {
-        if (dimension == 1) {
-            return 1
-        }
-
-        var rank = 1
+    private fun checkSubMatricesForRank(array: DoubleArray, dimension: Int, columns: Int, flag: Boolean): Int {
+        var rank = 0
         var row = 0
         var column = 0
         var columnLimit = 0
-        val dimensionLimit = if (dimension == columns) dimension-1 else dimension
+        val dimensionLimit = if (flag) {
+            dimension-1
+        }
+        else {
+            if (dimension == columns) dimension-1 else dimension
+        }
 
         for (cell in array.indices) {
             // Move column index if reached end of possibilities of creating a new sub arrays
             if ((columnLimit + dimensionLimit) > columns) {
                 row++
-                column = row*dimension
+                column = if (flag) {
+                    row*columns
+                }
+                else {
+                    row*dimension
+                }
                 columnLimit = 0
 
                 // Check does new sub matrix can exist
@@ -521,7 +532,18 @@ class MatrixResultMenu @JvmOverloads constructor(
                 var run = false
                 while(counter < dimension) {
                     rowBuffer++
-                    val columnBuffer = rowBuffer*dimension
+
+                    val columnBuffer = if (flag) {
+                        if (columns == dimension-1) {
+                            rowBuffer*columns
+                        }
+                        else {
+                            rowBuffer*dimension
+                        }
+                    }
+                    else {
+                        rowBuffer*dimension
+                    }
 
                     if (columnBuffer > array.size) {
                         run = true
@@ -538,15 +560,17 @@ class MatrixResultMenu @JvmOverloads constructor(
 
             // Create new sub matrix for every possibilities of creating it
             if (cell == column) {
-                val subMatrix = subMatrixForRank(array, dimension-1, row, column)
-                val determinant = determinant(subMatrix, dimension-1)
+                if (rank < dimension-1) {
+                    val subMatrix = subMatrixForRank(array, dimension-1, row, column, columns, flag)
+                    val determinant = determinant(subMatrix, dimension-1)
 
-                if (determinant != 0.0) {
-                    rank = if (dimension-1 > rank) dimension-1 else rank
-                }
-                else {
-                    val buffer = checkSubMatricesForRank(subMatrix, dimension-1, dimension)
-                    rank = if (buffer > rank) buffer else rank
+                    if (determinant != 0.0) {
+                        rank = if (dimension-1 > rank) dimension-1 else rank
+                    }
+                    else {
+                        val buffer = checkSubMatricesForRank(subMatrix, dimension-1, dimension, false)
+                        rank = if (buffer > rank) buffer else rank
+                    }
                 }
 
                 column++
@@ -557,13 +581,8 @@ class MatrixResultMenu @JvmOverloads constructor(
         return rank
     }
 
-    private fun findRank(): Int {
-        var rank = 1
-
-        if (resultMatrixRows == 1 && resultMatrixColumns == 1) {
-            return rank
-        }
-        else if (resultMatrixRows == resultMatrixColumns) {
+    private fun findRank(flag: Boolean): Int {
+        if (resultMatrixRows == resultMatrixColumns) {
             val determinant = determinant(resultMatrix, resultMatrixRows)
 
             if (determinant != 0.0) {
@@ -572,8 +591,8 @@ class MatrixResultMenu @JvmOverloads constructor(
         }
 
         // Find rank of matrix
-        val dimension = if (resultMatrixRows >= resultMatrixColumns) resultMatrixRows else resultMatrixColumns
-        rank = checkSubMatricesForRank(resultMatrix, dimension, resultMatrixColumns)
+        val dimension = if (resultMatrixRows > resultMatrixColumns) resultMatrixColumns else resultMatrixRows
+        val rank = checkSubMatricesForRank(resultMatrix, dimension+1, resultMatrixColumns, flag)
 
         return rank
     }
@@ -582,7 +601,7 @@ class MatrixResultMenu @JvmOverloads constructor(
         rankButton.setOnClickListener {
             rankButton.setBackgroundResource(clickedButtonStyle)
 
-            val rank = findRank()
+            val rank = findRank(true)
 
             Toast.makeText(context, "RANK(A) = $rank", Toast.LENGTH_LONG).show()
 
@@ -599,7 +618,7 @@ class MatrixResultMenu @JvmOverloads constructor(
             val determinant = determinant(resultMatrix, resultMatrixRows)
 
             if (determinant == 0.0) {
-                val rank = findRank()
+                val rank = findRank(false)
                 Toast.makeText(context, "Determinant is equal 0! RANK(A) = $rank", Toast.LENGTH_LONG).show()
             }
             else {
