@@ -13,6 +13,10 @@ class LearnActivity : ComponentActivity() {
 
         // Style of clicked button
         // val clickedButtonStyle = R.drawable.menuButton_background_clicked
+    }
+
+    override fun onStart() {
+        super.onStart()
 
         // Handle the back press
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {

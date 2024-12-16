@@ -84,6 +84,10 @@ class AdvancedKeyboard @JvmOverloads constructor(
     private var addedDegrees: Boolean = false
     private var radians: Boolean = true
 
+    // Optional variable button
+    private var functionChartMode: Boolean = false
+    private var variableButton: Button
+
     init {
         // Inflate the custom XML layout
         LayoutInflater.from(context).inflate(R.layout.advancedcalculator_layout, this, true)
@@ -165,6 +169,9 @@ class AdvancedKeyboard @JvmOverloads constructor(
         // Options
         degreeButton = findViewById(R.id.Degree)
         changeFunctionsButton = findViewById(R.id.Change)
+
+        // Optional variable button
+        variableButton = findViewById(R.id.Variable)
     }
 
     private fun convertNumber(number: Double, power: Int, divide: Boolean): Double {
@@ -275,7 +282,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
         return addBracketIndex
     }
 
-    private fun transformEquation(equation: String): MutableList<Any> {
+    fun transformEquation(equation: String): MutableList<Any> {
         val transformedEquation: MutableList<Any> = mutableListOf()
 
         // Copy of functions
@@ -355,6 +362,32 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         if (element == ',') {
                             numberBase = outputNumber
                         }
+                    }
+                }
+                if (element == 'x') {
+                    if (transformedEquation.isNotEmpty()) {
+                        if (transformedEquation.last().toString()[0].isDigit()) {
+                            if (!multiplyDivide) {
+                                val buffer = transformedEquation.removeLast()
+                                transformedEquation.add('(')
+                                if (functionIndex >= 0) {
+                                    bracketsInsideFunction[functionIndex].add(')')
+                                }
+                                else {
+                                    openedBrackets.add(')')
+                                }
+                                transformedEquation.add(buffer)
+                            }
+                            transformedEquation.add('×')
+                            transformedEquation.add(element)
+                            multiplyDivide = true
+                        }
+                        else {
+                            transformedEquation.add(element)
+                        }
+                    }
+                    else {
+                        transformedEquation.add(element)
                     }
                 }
 
@@ -965,7 +998,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
         return number * factorial(number-1)
     }
 
-    private fun calculate(equation: MutableList<Any>, index: Int): PairEquation<Double, Int> {
+    fun calculate(equation: MutableList<Any>, index: Int): PairEquation<Double, Int> {
         var equationSign = 'E'
         val result: PairEquation<Double, Int> = PairEquation(0.0, index)
         var iterator: Int = index
@@ -1123,7 +1156,6 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 }
 
                 is Double -> {
-
                     when (equationSign) {
                         '+' -> result.first += equation[iterator] as Double
                         '-' -> result.first -= equation[iterator] as Double
@@ -1303,7 +1335,9 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 }
 
                 if (addedNumber) {
-                    resultOfCalculate(textView, resultTextView)
+                    if (!functionChartMode) {
+                        resultOfCalculate(textView, resultTextView)
+                    }
                 }
 
                 Handler(Looper.getMainLooper()).postDelayed({
@@ -1400,7 +1434,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
                     if (bufferText.last().isDigit() || bufferText.last() == ')' ||
                         bufferText.last() == 'π' || bufferText.last() == 'e'
-                        || bufferText.last() == '°') {
+                        || bufferText.last() == '°' || bufferText.last() == 'x') {
                         if (bufferText.last() == '°') {
                             bufferText = bufferText.dropLast(1)
                         }
@@ -1422,7 +1456,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     }
                 } else {
                     if (textView.text.last().isDigit() || textView.text.last() == ')'
-                        || textView.text.last() == 'π' || textView.text.last() == 'e') {
+                        || textView.text.last() == 'π' || textView.text.last() == 'e'
+                        || textView.text.last() == 'x') {
                         textView.append(powerButton.text.toString())
                     }
                 }
@@ -1565,7 +1600,9 @@ class AdvancedKeyboard @JvmOverloads constructor(
             }
 
             if (appendedFactorial) {
-                resultOfCalculate(textView, resultTextView)
+                if (!functionChartMode) {
+                    resultOfCalculate(textView, resultTextView)
+                }
             }
 
             Handler(Looper.getMainLooper()).postDelayed({
@@ -1652,7 +1689,9 @@ class AdvancedKeyboard @JvmOverloads constructor(
             }
 
             if (appendedPercent) {
-                resultOfCalculate(textView, resultTextView)
+                if (!functionChartMode) {
+                    resultOfCalculate(textView, resultTextView)
+                }
             }
 
             Handler(Looper.getMainLooper()).postDelayed({
@@ -1698,7 +1737,9 @@ class AdvancedKeyboard @JvmOverloads constructor(
             }
 
             if (addedNumber) {
-                resultOfCalculate(textView, resultTextView)
+                if (!functionChartMode) {
+                    resultOfCalculate(textView, resultTextView)
+                }
             }
 
             Handler(Looper.getMainLooper()).postDelayed({
@@ -1744,7 +1785,9 @@ class AdvancedKeyboard @JvmOverloads constructor(
             }
 
             if (addedNumber) {
-                resultOfCalculate(textView, resultTextView)
+                if (!functionChartMode) {
+                    resultOfCalculate(textView, resultTextView)
+                }
             }
 
             Handler(Looper.getMainLooper()).postDelayed({
@@ -1763,7 +1806,10 @@ class AdvancedKeyboard @JvmOverloads constructor(
             commaUsed = false
             addedDegrees = false
             textView.text = ""
-            resultTextView.text = ""
+
+            if (!functionChartMode) {
+                resultTextView.text = ""
+                }
 
             Handler(Looper.getMainLooper()).postDelayed({
                 clearButton.setBackgroundResource(unClickedButtonStyle)
@@ -2036,7 +2082,9 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     resultTextView.text = ""
                 }
 
-                resultOfCalculate(textView, resultTextView)
+                if (!functionChartMode) {
+                    resultOfCalculate(textView, resultTextView)
+                }
             }
 
             Handler(Looper.getMainLooper()).postDelayed({
@@ -2177,6 +2225,48 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
             Handler(Looper.getMainLooper()).postDelayed({
                 changeFunctionsButton.setBackgroundResource(unClickedButtonStyle)
+            }, 100)
+        }
+    }
+
+    fun setFunctionChartMode() {
+        functionChartMode = true
+        variableButton.text = "x"
+    }
+
+    fun variableButtonClick(textView: TextView) {
+        variableButton.setOnClickListener {
+            variableButton.setBackgroundResource(clickedButtonStyle)
+
+            if (textView.text.isNotEmpty()) {
+                if (specialFunctionDeep > 0) {
+                    var functionEnd = getCurrentFunctionEnd(textView)
+
+                    val bufferText = textView.text.dropLast(functionEnd)
+
+                    if (bufferText.last() != ')' && bufferText.last() != ',') {
+                        textView.text = bufferText
+                        val text = variableButton.text.toString()
+                        textView.append(text)
+
+                        while (functionEnd > 0) {
+                            textView.append(")")
+                            functionEnd--
+                        }
+
+                        updateFunctionsLength(text.length)
+                    }
+                } else {
+                    if (textView.text.last() != ')') {
+                        textView.append(variableButton.text.toString())
+                    }
+                }
+            } else {
+                textView.append(variableButton.text.toString())
+            }
+
+            Handler(Looper.getMainLooper()).postDelayed({
+                variableButton.setBackgroundResource(unClickedButtonStyle)
             }, 100)
         }
     }

@@ -123,6 +123,15 @@
 
         <!-- Advance calculator -->
         <activity
+            android:name=".FunctionChartActivity"
+            android:exported="true"
+            android:label="Math Master"
+            android:theme="@style/Theme.MathMaster"
+            android:screenOrientation="portrait">
+        </activity>
+
+        <!-- Advance calculator -->
+        <activity
             android:name=".AdvancedCalculatorActivity"
             android:exported="true"
             android:label="Math Master"

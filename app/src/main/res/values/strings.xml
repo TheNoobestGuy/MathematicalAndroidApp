@@ -89,6 +89,9 @@
     <string name="PowerTo3" translatable="false">Power to 3</string>
     <string name="Undo" translatable="false">Undo</string>
 
+    // Function chart
+    <string name="FunctionChart" translatable="false">Function chart</string>
+
     // Statistics
     <string name="StatisticsOverview" translatable="false">Statistics Overview</string>
     <string name="TotalQuestions" translatable="false">Total questions</string>

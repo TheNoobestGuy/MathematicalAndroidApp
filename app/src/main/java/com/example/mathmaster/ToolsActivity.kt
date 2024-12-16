@@ -33,6 +33,7 @@ class ToolsActivity : ComponentActivity() {
         // Menu buttons
         val matrixCalcButton: Button = findViewById(R.id.MatrixCalculator)
         val advancedCalcButton: Button = findViewById(R.id.AdvancedCalculator)
+        val functionChartButton: Button = findViewById(R.id.FunctionChart)
 
         // Style of clicked button
         val clickedButtonStyle = R.drawable.menubutton_background_clicked
@@ -40,6 +41,7 @@ class ToolsActivity : ComponentActivity() {
         // On click functions
         clickFunction(matrixCalcButton, clickedButtonStyle, MatrixCalculatorMenuActivity())
         clickFunction(advancedCalcButton, clickedButtonStyle, AdvancedCalculatorActivity())
+        clickFunction(functionChartButton, clickedButtonStyle, FunctionChartActivity())
 
         // Handle the back press
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {

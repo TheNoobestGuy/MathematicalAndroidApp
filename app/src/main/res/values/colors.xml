@@ -13,4 +13,6 @@
     <color name="Black">#000000</color>
     <color name="DarkGrey">#2B2828</color>
     <color name="LightGrey">#4D4747</color>
+    <color name="VeryLightGrey">#978787</color>
+    <color name="LimeGreen">#32CD32</color>
 </resources>

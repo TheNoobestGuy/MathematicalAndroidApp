@@ -14,6 +14,7 @@ class PracticeActivity : ComponentActivity() {
             button.setBackgroundResource(drawable)
 
             val intent = Intent(this, view::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             val options = ActivityOptions.makeCustomAnimation(
                 this,
                 R.anim.slide_in_right,
