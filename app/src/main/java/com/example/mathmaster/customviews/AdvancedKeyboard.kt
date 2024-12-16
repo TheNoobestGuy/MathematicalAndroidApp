@@ -570,11 +570,11 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 // Recognize functions
                 if (whatFunction != 'a') {
                     when (element) {
-                        's' -> if (whatFunction != 'c') whatFunction = element
+                        's' -> if (whatFunction != 'c' && whatFunction != 'o') whatFunction = element
                         'c' -> whatFunction = element
                         't' -> whatFunction = element
                         'l' -> whatFunction = element
-                        'a' -> whatFunction = element
+                        'a' -> if (whatFunction != 't')whatFunction = element
                     }
 
                     if (whatFunction == 'l') {

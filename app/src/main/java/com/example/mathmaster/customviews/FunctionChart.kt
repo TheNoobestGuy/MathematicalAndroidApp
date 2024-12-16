@@ -6,6 +6,7 @@ import android.graphics.Paint
 import android.util.AttributeSet
 import android.view.View
 import com.example.mathmaster.R
+import kotlin.math.abs
 
 class FunctionChart @JvmOverloads constructor(
     context: Context,
@@ -70,7 +71,10 @@ class FunctionChart @JvmOverloads constructor(
         for (i in 0 until points.size - 1) {
             val (x1, y1) = points[i]
             val (x2, y2) = points[i + 1]
-            canvas.drawLine(x1, y1, x2, y2, paint)
+
+            if (abs(y1 - y2) < height-1) {
+                canvas.drawLine(x1, y1, x2, y2, paint)
+            }
         }
     }
 
