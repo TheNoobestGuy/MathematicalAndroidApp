@@ -482,42 +482,16 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 // Handle subtract and add
                 if (element == '+' || element == '-') {
                     if (functionIndex >= 0) {
-                        if (powerTo) {
-                            if (powerToLevel > 0) {
-                                if (lastChar != '(' && lastChar != '-' && lastChar != '+') {
-                                    var counter = 0
-                                    while (bracketsInsideFunction[functionIndex].isNotEmpty()
-                                        && counter < powerToBrackets[powerToLevel]) {
-                                        transformedEquation.add(bracketsInsideFunction[functionIndex].removeLast())
-                                        counter++
-                                    }
-                                }
-                            }
-                        }
-                        else {
-                            if (lastChar != '(' && lastChar != '-' && lastChar != '+') {
-                                while (bracketsInsideFunction[functionIndex].isNotEmpty()) {
-                                    transformedEquation.add(bracketsInsideFunction[functionIndex].removeLast())
-                                }
+                        if (lastChar != '(' && lastChar != '-' && lastChar != '+') {
+                            if (bracketsInsideFunction[functionIndex].isNotEmpty()) {
+                                transformedEquation.add(bracketsInsideFunction[functionIndex].removeLast())
                             }
                         }
                     }
                     else {
-                        if (powerTo && powerToLevel > 0) {
-                            if (lastChar != '(' && lastChar != '-' && lastChar != '+') {
-                                var counter = 0
-                                while (openedBrackets.isNotEmpty()
-                                    && counter < powerToBrackets[powerToLevel]) {
-                                    transformedEquation.add(openedBrackets.removeLast())
-                                    counter++
-                                }
-                            }
-                        }
-                        else {
-                            if (lastChar != '(' && lastChar != '-' && lastChar != '+') {
-                                while (openedBrackets.isNotEmpty()) {
-                                    transformedEquation.add(openedBrackets.removeLast())
-                                }
+                        if (lastChar != '(' && lastChar != '-' && lastChar != '+') {
+                            if (openedBrackets.isNotEmpty()) {
+                                transformedEquation.add(openedBrackets.removeLast())
                             }
                         }
                     }
@@ -1292,7 +1266,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         val bufferText = textView.text.dropLast(functionEnd)
                         if (bufferText.last() != ')' && bufferText.last() != 'π'
                             && bufferText.last() != '!' && bufferText.last() != 'e'
-                            && bufferText.last() != '%') {
+                            && bufferText.last() != '%' && bufferText.last() != 'x') {
                             textView.text = bufferText
 
                             if (textView.text.last() == '°') {
@@ -1323,7 +1297,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     } else {
                         if (textView.text.last() != ')' && textView.text.last() != 'π'
                             && textView.text.last() != '!' && textView.text.last() != 'e'
-                            && textView.text.last() != '%') {
+                            && textView.text.last() != '%'  && textView.text.last() != 'x') {
                             textView.append(i.toString())
                             addedNumber = true
                         }
@@ -1361,7 +1335,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         if (bufferText.last().isDigit() || bufferText.last() == '!'
                             || bufferText.last() == ')' || bufferText.last() == 'π'
                             || bufferText.last() == 'e' || bufferText.last() == '('
-                            || bufferText.last() == '°' || bufferText.last() == '%') {
+                            || bufferText.last() == '°' || bufferText.last() == '%'
+                            || bufferText.last() == 'x') {
 
                             var run = true
                             if (bufferText.last() == '(') {
@@ -1394,7 +1369,9 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
                     } else if (textView.text.last().isDigit() || textView.text.last() == ')'
                         || textView.text.last() == 'π' || textView.text.last() == 'e'
-                        || textView.text.last() == '!' || textView.text.last() == '%') {
+                        || textView.text.last() == '!' || textView.text.last() == '%'
+                        || textView.text.last() == 'x') {
+
                         textView.append(basicCalcButtons[i].text)
                         commaUsed = false
                         addedDegrees = false
@@ -1623,7 +1600,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
                     if (bufferText.last().isDigit() || bufferText.last() == ')' ||
                         bufferText.last() == 'π' || bufferText.last() == 'e'
-                        || bufferText.last() == '°') {
+                        || bufferText.last() == '°' || bufferText.last() == 'x') {
                         if (bufferText.last() == '°') {
                             bufferText = bufferText.dropLast(1)
                         }
@@ -1647,7 +1624,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     }
                 } else {
                     if (textView.text.last().isDigit() || textView.text.last() == ')'
-                        || textView.text.last() == 'π' || textView.text.last() == 'e') {
+                        || textView.text.last() == 'π' || textView.text.last() == 'e'
+                        || textView.text.last() == 'x') {
                         textView.append("^(-")
                         bracketsCounter++
                     }
@@ -1712,7 +1690,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
                     val bufferText = textView.text.dropLast(functionEnd)
 
-                    if (bufferText.last() != ')' && bufferText.last() != ',') {
+                    if (bufferText.last() != ')' && bufferText.last() != ','
+                        && bufferText.last() != 'π' && bufferText.last() != 'e') {
                         textView.text = bufferText
                         val text = numberPIButton.text.toString()
                         textView.append(text)
@@ -1726,7 +1705,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         addedNumber = true
                     }
                 } else {
-                    if (textView.text.last() != ')') {
+                    if (textView.text.last() != ')' && textView.text.last() != ','
+                        && textView.text.last() != 'π' && textView.text.last() != 'e') {
                         textView.append(numberPIButton.text.toString())
                         addedNumber = true
                     }
@@ -1760,7 +1740,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
                     val bufferText = textView.text.dropLast(functionEnd)
 
-                    if (bufferText.last() != ')' && bufferText.last() != ',') {
+                    if (bufferText.last() != ')' && bufferText.last() != ','
+                        && bufferText.last() != 'π' && bufferText.last() != 'e') {
                         textView.text = bufferText
                         val text = numberEulerButton.text.toString()
                         textView.append(text)
@@ -1774,7 +1755,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         addedNumber = true
                     }
                 } else {
-                    if (textView.text.last() != ')') {
+                    if (textView.text.last() != ')' && textView.text.last() != ','
+                        && textView.text.last() != 'π' && textView.text.last() != 'e') {
                         textView.append(numberEulerButton.text.toString())
                         addedNumber = true
                     }
@@ -2244,7 +2226,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
                     val bufferText = textView.text.dropLast(functionEnd)
 
-                    if (bufferText.last() != ')' && bufferText.last() != ',') {
+                    if (bufferText.last() != ')' && bufferText.last() != ','
+                        && bufferText.last() != 'x') {
                         textView.text = bufferText
                         val text = variableButton.text.toString()
                         textView.append(text)
@@ -2257,7 +2240,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         updateFunctionsLength(text.length)
                     }
                 } else {
-                    if (textView.text.last() != ')') {
+                    if (textView.text.last() != ')' && textView.text.last() != ','
+                        && textView.text.last() != 'x') {
                         textView.append(variableButton.text.toString())
                     }
                 }

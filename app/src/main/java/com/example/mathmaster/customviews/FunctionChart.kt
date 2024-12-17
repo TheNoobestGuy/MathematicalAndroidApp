@@ -6,7 +6,6 @@ import android.graphics.Paint
 import android.util.AttributeSet
 import android.view.View
 import com.example.mathmaster.R
-import kotlin.math.abs
 
 class FunctionChart @JvmOverloads constructor(
     context: Context,
@@ -35,7 +34,7 @@ class FunctionChart @JvmOverloads constructor(
         // Draw coordinate system
         paint.color = gridColor
         paint.strokeWidth = 5f
-        gridSpacing = width/10f
+        gridSpacing = width/20f
         var iterator = 0f
         while (iterator <= width) {
             canvas.drawLine(iterator, 0f, iterator, height.toFloat(), paint)
@@ -53,29 +52,23 @@ class FunctionChart @JvmOverloads constructor(
         canvas.drawLine(0f, height/2f, width.toFloat(), height/2f, paint)
         canvas.drawLine(width/2f, 0f,width/2f, height.toFloat(), paint)
 
+        // Draw a function
+        paint.color = pointsColor
+        paint.strokeWidth = 8f
+        for (i in 0 until points.size - 1) {
+            val (x1, y1) = points[i]
+            val (x2, y2) = points[i + 1]
+
+            canvas.drawLine(x1, y1, x2, y2, paint)
+        }
+
         // Draw a frame
+        paint.color = axisColor
         paint.strokeWidth = 10f
         canvas.drawLine(0f, 0f, width.toFloat(), 0f, paint)
         canvas.drawLine(0f, height.toFloat(), width.toFloat(), height.toFloat(), paint)
         canvas.drawLine(0f, 0f, 0f, height.toFloat(), paint)
         canvas.drawLine(width.toFloat(),  0f, width.toFloat(),  height.toFloat(), paint)
-
-        // Draw points
-        paint.color = pointsColor
-        paint.strokeWidth = 8f
-        for (point in points) {
-            canvas.drawPoint(point.first, point.second, paint)
-        }
-
-        // Connect points with lines
-        for (i in 0 until points.size - 1) {
-            val (x1, y1) = points[i]
-            val (x2, y2) = points[i + 1]
-
-            if (abs(y1 - y2) < height-1) {
-                canvas.drawLine(x1, y1, x2, y2, paint)
-            }
-        }
     }
 
     private fun substituteVariable(equation: MutableList<Any>, variable: Double): MutableList<Any> {
@@ -111,7 +104,6 @@ class FunctionChart @JvmOverloads constructor(
         paint.strokeWidth = 200f
 
         val equation = calculator.transformEquation(input)
-        //println(equation)
         // Draw function
         var x = -(width/(gridSpacing))/2f
         var iterator = 0f
@@ -119,10 +111,11 @@ class FunctionChart @JvmOverloads constructor(
             val equationAfterSubstitution = substituteVariable(equation, x.toDouble())
             val bufferX = width/2f + (x * gridSpacing)
             val y = calculator.calculate(equationAfterSubstitution, 0)
+
             y.first = (height/2f) - (y.first*(gridSpacing))
             points.add(Pair(bufferX, y.first.toFloat()))
 
-            x += 0.3f
+            x = ((x*10)+1)/10f
             if (noDecimalPoint(x)) {
                 iterator += gridSpacing
             }

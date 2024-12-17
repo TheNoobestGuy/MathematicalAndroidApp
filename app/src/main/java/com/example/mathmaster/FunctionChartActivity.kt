@@ -59,9 +59,8 @@ class FunctionChartActivity : ComponentActivity() {
         slideButton.setOnClickListener {
             slideButton.setBackgroundResource(clickedButtonStyle)
 
-            functionChart.drawAFunction(equation.text.toString(), keyboard)
-
             Handler(Looper.getMainLooper()).postDelayed({
+                functionChart.drawAFunction(equation.text.toString(), keyboard)
                 slideButton.setBackgroundResource(unClickedButtonStyle)
             },100)
         }
