@@ -2,10 +2,13 @@ package com.example.mathmaster.customviews
 
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.DashPathEffect
 import android.graphics.Paint
 import android.util.AttributeSet
 import android.view.View
 import com.example.mathmaster.R
+import kotlin.math.round
+import kotlin.math.abs
 
 class FunctionChart @JvmOverloads constructor(
     context: Context,
@@ -19,7 +22,7 @@ class FunctionChart @JvmOverloads constructor(
     private var gridSpacing: Float = 0f
     private val gridColor = context.getColor(R.color.VeryLightGrey)
     private val axisColor = context.getColor(R.color.Black)
-    private val pointsColor = context.getColor(R.color.LimeGreen)
+    private val linesColor = context.getColor(R.color.LimeGreen)
 
     init {
         paint.isAntiAlias = true
@@ -33,7 +36,7 @@ class FunctionChart @JvmOverloads constructor(
 
         // Draw coordinate system
         paint.color = gridColor
-        paint.strokeWidth = 5f
+        paint.strokeWidth = 3f
         gridSpacing = width/20f
         var iterator = 0f
         while (iterator <= width) {
@@ -53,13 +56,27 @@ class FunctionChart @JvmOverloads constructor(
         canvas.drawLine(width/2f, 0f,width/2f, height.toFloat(), paint)
 
         // Draw a function
-        paint.color = pointsColor
+        paint.color = linesColor
         paint.strokeWidth = 8f
         for (i in 0 until points.size - 1) {
             val (x1, y1) = points[i]
             val (x2, y2) = points[i + 1]
 
-            canvas.drawLine(x1, y1, x2, y2, paint)
+            if (abs(y1-y2) >= height) {
+                // Draw asymptote
+                paint.strokeWidth = 3f
+                paint.color = context.getColor(R.color.LightGrey)
+                paint.pathEffect = DashPathEffect(floatArrayOf(20f, 10f), 0f)
+                canvas.drawLine(x1, y1, x2, y2, paint)
+
+                // Reset paint
+                paint.pathEffect = null
+                paint.color = linesColor
+                paint.strokeWidth = 8f
+            }
+            else {
+                canvas.drawLine(x1, y1, x2, y2, paint)
+            }
         }
 
         // Draw a frame
@@ -104,6 +121,7 @@ class FunctionChart @JvmOverloads constructor(
         paint.strokeWidth = 200f
 
         val equation = calculator.transformEquation(input)
+        println(equation)
         // Draw function
         var x = -(width/(gridSpacing))/2f
         var iterator = 0f
@@ -115,7 +133,7 @@ class FunctionChart @JvmOverloads constructor(
             y.first = (height/2f) - (y.first*(gridSpacing))
             points.add(Pair(bufferX, y.first.toFloat()))
 
-            x = ((x*10)+1)/10f
+            x = round(x*100+1)/100
             if (noDecimalPoint(x)) {
                 iterator += gridSpacing
             }

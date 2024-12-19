@@ -209,130 +209,57 @@ class AdvancedKeyboard @JvmOverloads constructor(
         return outputNumber
     }
 
-    private fun findNewBracketIndex(transformedEquation: MutableList<Any>,
-                                    specialFunctionsCopy: MutableList<Function<Int>>,
-                                    functionIndex: Int, iterator: Int): Int {
+    private fun findNewBracketIndex(transformedEquation: MutableList<Any>): Int {
         var openBrackets = 0
         var closeBrackets = 0
-        var indexBuffer = 0
-        var index = 0
-        var iteratorBuffer = iterator
+
         val range = transformedEquation.size - 1 downTo 0
 
         for (i in range) {
-            iteratorBuffer--
             if (transformedEquation[i] == ')') {
                 closeBrackets++
             }
             else if (transformedEquation[i] == '(') {
                 openBrackets++
-
-                if (functionIndex >= 0) {
-                    // Find current function
-                    var bufferFunction = Function(0, 0, 0, 0)
-                    for (func in specialFunctionsCopy) {
-                        if (func.deep == functionIndex+1) {
-                            bufferFunction = func
-                            break
-                        }
-                    }
-
-                    if (iteratorBuffer == bufferFunction.start) {
-                        index = i
-                        openBrackets = closeBrackets
-                        break
-                    }
-                }
-
-                if (i >= 1) {
-                    if (openBrackets == closeBrackets) {
-                        if (transformedEquation[i-1].toString()[0].isLetter()) {
-                            openBrackets--
-                        }
-                    }
-                }
-            }
-            else if (transformedEquation[i] == '√') {
-                openBrackets++
-            }
-            else if (indexBuffer == 0 &&
-                (transformedEquation[i] == '+' || transformedEquation[i] == '-')) {
-                indexBuffer = i
             }
 
             if (closeBrackets == openBrackets) {
-                index = i
-                break
+                return i
             }
-        }
-        val addBracketIndex = if (closeBrackets != openBrackets) {
-            if (indexBuffer == 0) 0 else ++indexBuffer
-        } else if (index >= 1) {
-            if (transformedEquation[index-1] == '(') {
-                index
-            } else if (transformedEquation[index-1].toString()[0].isLetter()) {
-                --index
-            } else {
-                index
-            }
-        } else {
-            0
         }
 
-        return addBracketIndex
+        return 0
     }
 
     fun transformEquation(equation: String): MutableList<Any> {
         val transformedEquation: MutableList<Any> = mutableListOf()
 
-        // Copy of functions
-        val specialFunctionsCopy: MutableList<Function<Int>> = mutableListOf()
-        for (func in specialFunctions) {
-            val copyOfFunction = Function(func.start, func.end, func.deep, 0)
-            specialFunctionsCopy.add(copyOfFunction)
-        }
-
         // Equation variables
         var intConverter = 0
+        var whatFunction = '0'
         var lastChar = '?'
+
+        var commaInUse = false
         var numberBase = 0.0
         val numBuffer: MutableList<Double> = mutableListOf()
 
         // Equation validation
         var multiplyDivide = false
-
-        val powerToBrackets: MutableList<Int> = mutableListOf()
-        powerToBrackets.add(0)
-        var powerTo = false
-        var powerToLevel = 0
-
         var inRoot = false
 
-        var addBracketIndex = -1
+        // Brackets
         val bracketsInput: MutableList<Char> = mutableListOf()
-        val insideFunctionBracketsInput: MutableList<MutableList<Char>> = mutableListOf()
-        val openedBrackets: MutableList<Char> = mutableListOf()
-        val bracketsInsideFunction: MutableList<MutableList<Char>> = mutableListOf()
 
-        // Functions
-        var iterator = 0
-        var functionIndex = -1
-        var commaInUse = true
-        var whatFunction = '0'
+        var addBracketIndex = 0
+        val powerToOpenedBrackets: MutableList<Int> = mutableListOf()
+        val additionalOpenedBrackets: MutableList<MutableList<Char>> = mutableListOf()
+        additionalOpenedBrackets.add(mutableListOf())
 
         equation.forEach { element ->
             if (element.isDigit()) {
                 // Add digit to buffer
                 numBuffer.add((element.code - 48).toDouble())
                 intConverter++
-
-                if (powerTo && powerToLevel < 0) {
-                    val buffer = powerToBrackets[0]
-                    powerTo = false
-                    powerToBrackets.clear()
-                    powerToLevel = 0
-                    powerToBrackets.add(buffer)
-                }
 
                 // Decimal number
                 if (lastChar == ',') {
@@ -344,15 +271,12 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     if (!commaInUse) {
                         commaInUse = true
                     }
+
                     transformedEquation.add(decimalNumber)
+                    numBuffer.clear()
                 }
             }
             else {
-                // Clear buffers of constant numbers that has been added in number handler
-                if (lastChar == ',') {
-                    numBuffer.clear()
-                }
-
                 // Append number that is in buffer
                 if (numBuffer.isNotEmpty() && whatFunction == '0') {
                     if (lastChar != ',') {
@@ -364,184 +288,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         }
                     }
                 }
-                if (element == 'x') {
-                    if (transformedEquation.isNotEmpty()) {
-                        if (transformedEquation.last().toString()[0].isDigit()) {
-                            if (!multiplyDivide) {
-                                val buffer = transformedEquation.removeLast()
-                                transformedEquation.add('(')
-                                if (functionIndex >= 0) {
-                                    bracketsInsideFunction[functionIndex].add(')')
-                                }
-                                else {
-                                    openedBrackets.add(')')
-                                }
-                                transformedEquation.add(buffer)
-                            }
-                            transformedEquation.add('×')
-                            transformedEquation.add(element)
-                            multiplyDivide = true
-                        }
-                        else {
-                            transformedEquation.add(element)
-                        }
-                    }
-                    else {
-                        transformedEquation.add(element)
-                    }
-                }
 
-                // Root
-                if (element == '√') {
-                    if (functionIndex >= 0) {
-                        if (inRoot && transformedEquation.last().toString()[0].isDigit()) {
-                            if (bracketsInsideFunction[functionIndex].isNotEmpty()) {
-                                transformedEquation.add(bracketsInsideFunction[functionIndex].removeLast())
-
-                                if (powerTo && powerToLevel > 0) {
-                                    powerToBrackets[powerToLevel]--
-                                }
-                            }
-                            transformedEquation.add('×')
-                            multiplyDivide = true
-                        }
-                        else if (transformedEquation.last().toString()[0].isDigit()) {
-                            val buffer =  transformedEquation.removeLast()
-
-                            transformedEquation.add('(')
-                            bracketsInsideFunction[functionIndex].add(')')
-                            transformedEquation.add(buffer)
-
-                            if (powerTo && powerToLevel > 0) {
-                                powerToBrackets[powerToLevel]++
-                            }
-
-                            transformedEquation.add('×')
-                            multiplyDivide = true
-                        }
-                    } else {
-                        if (inRoot) {
-                            if (openedBrackets.isNotEmpty()) {
-                                transformedEquation.add(openedBrackets.removeLast())
-                                if (powerTo && powerToLevel > 0) {
-                                    powerToBrackets[powerToLevel]--
-                                }
-                            }
-
-                            transformedEquation.add('×')
-                            multiplyDivide = true
-                        }
-                        else if (transformedEquation.isNotEmpty()) {
-                            if (transformedEquation.last().toString()[0].isDigit()) {
-                                val buffer =  transformedEquation.removeLast()
-
-                                transformedEquation.add('(')
-                                openedBrackets.add(')')
-                                transformedEquation.add(buffer)
-
-                                if (powerTo && powerToLevel > 0) {
-                                    powerToBrackets[powerToLevel]++
-                                }
-
-                                transformedEquation.add('×')
-                                multiplyDivide = true
-                            }
-                        }
-                    }
-
-                    transformedEquation.add(element)
-
-                    if (functionIndex >= 0) {
-                        bracketsInsideFunction[functionIndex].add(')')
-                    }
-                    else {
-                        openedBrackets.add(')')
-                    }
-                    if (powerTo) {
-                        powerToBrackets[powerToLevel]++
-                    }
-
-                    if (!multiplyDivide) {
-                        addBracketIndex = findNewBracketIndex(transformedEquation,
-                        specialFunctionsCopy, functionIndex, iterator)
-
-                        transformedEquation.add(addBracketIndex, '(')
-
-                        if (functionIndex >= 0) {
-                            bracketsInsideFunction[functionIndex].add(')')
-                        }
-                        else {
-                            openedBrackets.add(')')
-                        }
-                    }
-
-                    inRoot = true
-                    multiplyDivide = true
-                }
-
-                // Handle subtract and add
-                if (element == '+' || element == '-') {
-                    if (functionIndex >= 0) {
-                        if (lastChar != '(' && lastChar != '-' && lastChar != '+') {
-                            if (bracketsInsideFunction[functionIndex].isNotEmpty()) {
-                                transformedEquation.add(bracketsInsideFunction[functionIndex].removeLast())
-                            }
-                        }
-                    }
-                    else {
-                        if (lastChar != '(' && lastChar != '-' && lastChar != '+') {
-                            if (openedBrackets.isNotEmpty()) {
-                                transformedEquation.add(openedBrackets.removeLast())
-                            }
-                        }
-                    }
-                }
-
-                // Preparing brackets for multiplication and division
-                if (element == '×' || element == '/') {
-                    if ((inRoot || lastChar == '^' || powerTo) && !multiplyDivide) {
-                        if (functionIndex >= 0) {
-                            if (powerTo && powerToLevel > 0) {
-                                var counter = 0
-                                while (bracketsInsideFunction[functionIndex].isNotEmpty()
-                                    && counter < powerToBrackets[powerToLevel]) {
-                                    transformedEquation.add(bracketsInsideFunction[functionIndex].removeLast())
-                                    powerToBrackets[powerToLevel]--
-                                    counter++
-                                }
-                            }
-                            else {
-                                while (bracketsInsideFunction[functionIndex].isNotEmpty()) {
-                                    transformedEquation.add(bracketsInsideFunction[functionIndex].removeLast())
-                                }
-                            }
-                        } else {
-                            if (powerTo && powerToLevel > 0) {
-                                var counter = 0
-                                while (openedBrackets.isNotEmpty()
-                                    && counter < powerToBrackets[powerToLevel]) {
-                                    transformedEquation.add(openedBrackets.removeLast())
-                                    powerToBrackets[powerToLevel]--
-                                    counter++
-                                }
-                            }
-                            else {
-                                while (openedBrackets.isNotEmpty()) {
-                                    transformedEquation.add(openedBrackets.removeLast())
-                                }
-                            }
-                        }
-
-                        inRoot = false
-                    }
-
-                    if (transformedEquation.isNotEmpty()) {
-                        addBracketIndex = findNewBracketIndex(transformedEquation,
-                            specialFunctionsCopy, functionIndex, iterator)
-                    }
-                }
-
-                // Recognize functions
+                // Recognize function
                 if (whatFunction != 'a') {
                     when (element) {
                         's' -> if (whatFunction != 'c' && whatFunction != 'o') whatFunction = element
@@ -566,14 +314,13 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     }
                 }
 
-                // Append function symbol and handle brackets
-                if (whatFunction != '0' && element == '(') {
+                // Handle functions and root
+                if (whatFunction != '0' && element == '(' || element == '√') {
                     var addMultiplication = false
 
                     // Append multiplication if before number is other function or constants
                     if (lastChar == 'π' || lastChar == 'e') {
                         addMultiplication = true
-                        lastChar = '0'
                     }
                     else if (transformedEquation.isNotEmpty() && numBuffer.isEmpty()) {
                         if (transformedEquation.last() != '×' && transformedEquation.last() != '/'
@@ -585,26 +332,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
                     // Append number that is before function as multiplication
                     if (numBuffer.isNotEmpty()) {
-                        val outputNumber: Double = transformedEquation.removeLast() as Double
-                        if (!multiplyDivide) {
-                            transformedEquation.add('(')
-                        }
-                        transformedEquation.add(outputNumber)
-
-                        if (!multiplyDivide) {
-                            if(functionIndex >= 0) {
-                                bracketsInsideFunction[functionIndex].add(')')
-                            }
-                            else {
-                                openedBrackets.add(')')
-                            }
-                        }
-
                         addMultiplication = true
                     }
-
-                    functionIndex++
-                    bracketsInsideFunction.add(mutableListOf())
 
                     // Act as it is multiplication when some number is before function
                     if (lastChar == ',') {
@@ -612,245 +341,120 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     }
 
                     if (addMultiplication) {
-                        if(!multiplyDivide && lastChar != '^' && !powerTo) {
-                            addBracketIndex = findNewBracketIndex(transformedEquation,
-                                specialFunctionsCopy, functionIndex, iterator)
+                        if(!multiplyDivide && lastChar != '^') {
+                            addBracketIndex = findNewBracketIndex(transformedEquation)
+                            transformedEquation.add(addBracketIndex, '(')
+                            additionalOpenedBrackets.last().add(')')
+                        }
+                        else if (lastChar == '^') {
+                            transformedEquation.add(additionalOpenedBrackets.last().removeLast())
                         }
 
-                        if (powerTo) {
-                            if (lastChar != '^') {
-                                if (!multiplyDivide) {
-                                    if (functionIndex-1 >= 0) {
-                                        if (bracketsInsideFunction[functionIndex-1].isNotEmpty()) {
-                                            transformedEquation.add(bracketsInsideFunction[functionIndex-1].removeLast())
-                                        }
-                                    }
-                                }
-
-                                transformedEquation.add('×')
-                                multiplyDivide = true
-                            }
+                        if (inRoot) {
+                            transformedEquation.add(additionalOpenedBrackets.last().removeLast())
                         }
-                        else {
-                            if (lastChar != '^') {
-                                if (!multiplyDivide) {
-                                    if (functionIndex - 1 >= 0) {
-                                        if (bracketsInsideFunction[functionIndex - 1].isNotEmpty()) {
-                                            transformedEquation.add(bracketsInsideFunction[functionIndex - 1].removeLast())
-                                        }
-                                    }
-                                    else {
-                                        var counter = 0
-                                        while (openedBrackets.isNotEmpty() &&
-                                            counter < powerToBrackets[powerToLevel]) {
-                                            transformedEquation.add(openedBrackets.removeLast())
-                                            powerToBrackets[powerToLevel]--
-                                            counter++
-                                        }
-                                        if (powerToBrackets.isEmpty()) {
-                                            powerToBrackets.add(0)
-                                        }
-                                    }
-                                }
-                            }
 
-                            transformedEquation.add('×')
-                            multiplyDivide = true
-                        }
+                        transformedEquation.add('×')
+                        multiplyDivide = true
                     }
 
-                    transformedEquation.add(whatFunction)
-                    whatFunction = '0'
-
-                    insideFunctionBracketsInput.add(mutableListOf())
-                    insideFunctionBracketsInput[functionIndex].add(')')
-
-                    if (powerTo && powerToLevel > 0) {
-                        powerToBrackets.add(0)
-                        powerToLevel++
+                    if (element == '√') {
+                        transformedEquation.add(element)
+                        inRoot = true
                     }
                     else {
-                        if (powerTo) {
-                            val buffer = powerToBrackets[0]
-                            powerTo = false
-                            powerToBrackets.clear()
-                            powerToLevel = 0
-                            powerToBrackets.add(buffer)
-                        }
+                        transformedEquation.add(whatFunction)
+                        whatFunction = '0'
                     }
                 }
 
-                // Brackets handling
-                else if (element == '(') {
-                    if (powerTo) {
-                        powerToBrackets.add(0)
-                        powerToLevel++
-                    }
-
-                    if (functionIndex >= 0) {
-                        insideFunctionBracketsInput[functionIndex].add(')')
-                    }
-                    else {
+                // Handle operations
+                when (element) {
+                    '(' -> {
+                        additionalOpenedBrackets.add(mutableListOf())
                         bracketsInput.add(')')
+                        transformedEquation.add(element)
                     }
-                    multiplyDivide = false
-                }
-                else if (element == ')') {
-                    if (functionIndex < 0) {
+                    ')' -> {
+                        while (additionalOpenedBrackets.last().isNotEmpty()) {
+                            transformedEquation.add(additionalOpenedBrackets.last().removeLast())
+                        }
+                        additionalOpenedBrackets.removeLast()
+
                         bracketsInput.removeLast()
-                    }
-                    else {
-                        insideFunctionBracketsInput[functionIndex].removeLast()
-                    }
+                        transformedEquation.add(element)
 
-                    if (powerTo) {
-                        var counter = 0
-                        while (counter < powerToBrackets[powerToLevel]) {
-                            if (functionIndex >= 0) {
-                                if (bracketsInsideFunction[functionIndex].isNotEmpty()) {
-                                    transformedEquation.add(')')
-                                    bracketsInsideFunction[functionIndex].removeLast()
-                                    powerToBrackets[powerToLevel]--
-                                }
-                            }
-                            else {
-                                if (openedBrackets.isNotEmpty()) {
-                                    transformedEquation.add(')')
-                                    openedBrackets.removeLast()
-                                    powerToBrackets[powerToLevel]--
-                                }
-                            }
-                            counter++
-                        }
-
-                        powerToLevel--
-                        powerToBrackets.removeLast()
-
-                        if (powerToLevel < 0) {
-                            powerTo = false
-                            powerToBrackets.clear()
-                            powerToLevel = 0
-                            powerToBrackets.add(0)
-                        }
-                    }
-
-                    if (functionIndex >= 0) {
-                        // Find current function
-                        var bufferFunction = Function(0, 0, 0, 0)
-                        for (func in specialFunctionsCopy) {
-                            if (func.deep == functionIndex+1) {
-                                bufferFunction = func
-                                break
+                        if (powerToOpenedBrackets.isNotEmpty()) {
+                            if (powerToOpenedBrackets.last() == additionalOpenedBrackets.size-1) {
+                                transformedEquation.add(additionalOpenedBrackets.last().removeLast())
+                                powerToOpenedBrackets.removeLast()
                             }
                         }
-
-                        if (iterator == bufferFunction.end) {
-                            while(bracketsInsideFunction[functionIndex].isNotEmpty()) {
-                                transformedEquation.add(bracketsInsideFunction[functionIndex].removeLast())
-                            }
-
-                            while(insideFunctionBracketsInput[functionIndex].isNotEmpty()) {
-                                transformedEquation.add(insideFunctionBracketsInput[functionIndex].removeLast())
-                            }
-
-                            insideFunctionBracketsInput.removeLast()
-                            bracketsInsideFunction.removeLast()
-                            specialFunctionsCopy.remove(bufferFunction)
-                            functionIndex--
+                    }
+                    '+', '-' -> {
+                        while (additionalOpenedBrackets.last().isNotEmpty()) {
+                            transformedEquation.add(additionalOpenedBrackets.last().removeLast())
                         }
-                    }
-                }
 
-                // Pi and Euler number
-                if (element == 'π' || element == 'e') {
-                    val num = if (element == 'π') PI else Math.E
-
-                    if (transformedEquation.isEmpty()) {
-                        transformedEquation.add(num)
+                        transformedEquation.add(element)
+                        multiplyDivide = false
+                        inRoot = false
                     }
-                    else if ((lastChar == '+' || lastChar == '-' || lastChar == '/' || lastChar == '×'
-                        || lastChar == '^') && !transformedEquation.last().toString()[0].isDigit()) {
-                        if (numBuffer.isEmpty()) {
-                            transformedEquation.add(num)
+                    '×', '/' -> {
+                        if (!multiplyDivide && lastChar != '^') {
+                            addBracketIndex = findNewBracketIndex(transformedEquation)
+
+                            transformedEquation.add(addBracketIndex, '(')
+                            additionalOpenedBrackets.last().add(')')
                         }
-                        else {
-                            transformedEquation.add('×')
-                            transformedEquation.add(num)
-                            multiplyDivide = true
-                        }
+
+                        transformedEquation.add(element)
+
+                        multiplyDivide = true
+                        inRoot = false
                     }
-                    else {
-                        if (numBuffer.isEmpty() && !transformedEquation.last().toString()[0].isDigit()) {
-                            transformedEquation.add(num)
-                        }
-                        else {
-                            val bufferNum: Double
-                            if (transformedEquation.last().toString()[0].isDigit()) {
-                                bufferNum = transformedEquation.last() as Double
-                                transformedEquation.removeLast()
-
-                                transformedEquation.add('(')
-                                if (functionIndex >= 0) {
-                                    bracketsInsideFunction[functionIndex].add(')')
-                                }
-                                else {
-                                    openedBrackets.add(')')
-                                }
-                                if (powerTo) {
-                                    powerToBrackets[powerToLevel]++
-                                }
-
-                                transformedEquation.add(bufferNum)
-                            }
-                            transformedEquation.add('×')
-                            transformedEquation.add(num)
-                            multiplyDivide = true
-                        }
-                    }
-                }
-
-                // Handle power to
-                if (element == '^') {
-                    if (transformedEquation.isNotEmpty()) {
-                        addBracketIndex = findNewBracketIndex(transformedEquation,
-                            specialFunctionsCopy, functionIndex, iterator)
-                    }
-
-                    transformedEquation.add(addBracketIndex, '(')
-                    transformedEquation.add('^')
-
-                    if (functionIndex >= 0) {
-                        bracketsInsideFunction[functionIndex].add(')')
-                    }
-                    else {
-                        openedBrackets.add(')')
-                    }
-                    if (powerTo && powerToLevel > 0) {
-                        powerToBrackets[powerToLevel]++
-                    }
-
-                    if (powerToLevel <= 0) {
-                        powerTo = true
-                        powerToBrackets[powerToLevel] = 1
-                    }
-
-                    multiplyDivide = false
-                }
-
-                // Factorial and percent
-                if (element == '!' || element == '%' || element == '°') {
-                    if (transformedEquation.last() == ')') {
-                        addBracketIndex = findNewBracketIndex(transformedEquation,
-                            specialFunctionsCopy, functionIndex, iterator)
+                    '^' -> {
+                        addBracketIndex = findNewBracketIndex(transformedEquation)
 
                         transformedEquation.add(addBracketIndex, '(')
-                        transformedEquation.add(addBracketIndex, '(')
+                        transformedEquation.add('^')
+                        additionalOpenedBrackets.last().add(')')
+
+                        powerToOpenedBrackets.add(additionalOpenedBrackets.size-1)
+                        inRoot = false
+                    }
+                    'π', 'e', 'x' -> {
+                        if (transformedEquation.isNotEmpty()) {
+                            if (transformedEquation.last() != '×' && transformedEquation.last() != '/'
+                                && transformedEquation.last() != '+' && transformedEquation.last() != '-') {
+                                if (!multiplyDivide) {
+                                    addBracketIndex = findNewBracketIndex(transformedEquation)
+                                    transformedEquation.add(addBracketIndex, '(')
+                                    additionalOpenedBrackets.last().add(')')
+
+                                    transformedEquation.add('×')
+                                    multiplyDivide = true
+                                }
+                            }
+                        }
+
+                        if (element == 'π' || element == 'e') {
+                            val constant = if (element == 'π') PI else Math.E
+                            transformedEquation.add(constant)
+                        }
+                        else {
+                            transformedEquation.add(element)
+                        }
+                    }
+                    '!', '%', '°' -> {
+                        addBracketIndex = findNewBracketIndex(transformedEquation)
+
+                        for (i in 0 until 1) {
+                            transformedEquation.add(addBracketIndex, '(')
+                        }
+
                         transformedEquation.add(')')
-                        when (element) {
-                            '!' -> transformedEquation.add('!')
-                            '%' -> transformedEquation.add('%')
-                            '°' -> transformedEquation.add('°')
-                        }
+                        transformedEquation.add(element)
 
                         if (lastChar == '√' && element == '°') {
                             transformedEquation.removeLast()
@@ -860,106 +464,35 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         else {
                             transformedEquation.add(')')
                         }
-                    }
-                    else {
-                        var index = 0
-                        if (transformedEquation.size-1 >= 0) {
-                            index = transformedEquation.size-1
-                        }
-                        if (lastChar != '^') {
-                            transformedEquation.add(index, '(')
-                        }
-                        transformedEquation.add(index, '(')
-                        transformedEquation.add(')')
-                        when (element) {
-                            '!' -> transformedEquation.add('!')
-                            '%' -> transformedEquation.add('%')
-                            '°' -> transformedEquation.add('°')
-                        }
-                        if (lastChar != '^') {
-                            if (lastChar == '√' && element == '°') {
-                                transformedEquation.removeLast()
-                                transformedEquation.add(')')
-                                transformedEquation.add(')')
-                                transformedEquation.add('°')
-                            }
-                            else {
-                                transformedEquation.add(')')
-                            }
-                        }
-                    }
-                }
-
-                // Append operators and get last char
-                when (element) {
-                    '+', '-', '(', ')' -> {
-                        transformedEquation.add(element)
-                        lastChar = element
-                        inRoot = false
-                        multiplyDivide = false
-                    }
-                    '×', '/' -> {
-                        if (!multiplyDivide) {
-                            transformedEquation.add(addBracketIndex, '(')
-                            if (functionIndex >= 0) {
-                                bracketsInsideFunction[functionIndex].add(')')
-                            }
-                            else {
-                                openedBrackets.add(')')
-                            }
-                            if (powerTo) {
-                                powerToBrackets[powerToLevel]++
-                            }
-                        }
-                        if (inRoot) {
-                            if (functionIndex >= 0) {
-                                bracketsInsideFunction[functionIndex].add(')')
-                            }
-                            else {
-                                openedBrackets.add(')')
-                            }
-                            if (powerTo) {
-                                powerToBrackets[powerToLevel]++
-                            }
-                        }
-                        transformedEquation.add(element)
-
-                        multiplyDivide = true
-                        lastChar = element
-                        inRoot = false
-                    }
-                    '^' -> {
-                        lastChar = element
-                        inRoot = false
-                        multiplyDivide = false
-                    }
-                    ',', '√', 'π', 'e' -> lastChar = element
-                    '!', '%', '°' -> {
                         inRoot = false
                     }
                 }
 
                 commaInUse = false
-                addBracketIndex = -1
                 intConverter = 0
+
+                lastChar = element
                 if (whatFunction == '0') {
                     numBuffer.clear()
                 }
             }
-            iterator++
         }
-        // Add everything that lasts in buffers
-        if (numBuffer.isNotEmpty() && lastChar != ',') {
+        // Add number that lasts in buffer
+        if (numBuffer.isNotEmpty()) {
             val outputNumber: Double = calculateNumber(numBuffer, intConverter, false)
             transformedEquation.add(outputNumber)
         }
 
-        while (openedBrackets.isNotEmpty()) {
-            transformedEquation.add(openedBrackets.removeLast())
+        // Add all the brackets that lasts in buffer
+        while(bracketsInput.isNotEmpty()) {
+            transformedEquation.add(bracketsInput.removeLast())
         }
 
-        while (bracketsInput.isNotEmpty()) {
-            transformedEquation.add(bracketsInput.removeLast())
+        while(additionalOpenedBrackets.isNotEmpty()) {
+            while(additionalOpenedBrackets.last().isNotEmpty()) {
+                transformedEquation.add(additionalOpenedBrackets.last().removeLast())
+            }
+            additionalOpenedBrackets.removeLast()
         }
 
         return transformedEquation
@@ -1156,6 +689,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
     private fun resultOfCalculate(textView: TextView, resultTextView: TextView) {
         // Calculation
         val equation = transformEquation(textView.text.toString())
+        println(equation)
         val resultOfCalculations = calculate(equation, 0)
 
         if (checkIsItDouble(resultOfCalculations.first)) {
