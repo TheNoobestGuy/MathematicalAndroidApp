@@ -223,7 +223,9 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 openBrackets++
             }
             else if (transformedEquation[i].toString()[0].isLetter()) {
-                openBrackets++
+                if (transformedEquation[i] != 'x') {
+                    openBrackets++
+                }
             }
 
             if (closeBrackets == openBrackets) {
@@ -453,7 +455,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     'π', 'e', 'x' -> {
                         if (transformedEquation.isNotEmpty()) {
                             if (transformedEquation.last() != '×' && transformedEquation.last() != '/'
-                                && transformedEquation.last() != '+' && transformedEquation.last() != '-') {
+                                && transformedEquation.last() != '+' && transformedEquation.last() != '-'
+                                && transformedEquation.last() != '(') {
                                 if (!multiplyDivide) {
                                     addBracketIndex = findNewBracketIndex(transformedEquation)
                                     transformedEquation.add(addBracketIndex, '(')
@@ -871,7 +874,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 if (textView.text.last().isDigit() || textView.text.last() == '+'
                     || textView.text.last() == '-' || textView.text.last() == '×'
                     || textView.text.last() == '/' || textView.text.last() == 'π'
-                    || textView.text.last() == '(' || textView.text.last() == 'e') {
+                    || textView.text.last() == '(' || textView.text.last() == 'e'
+                    || textView.text.last() == 'x') {
                     textView.append("√")
                 }
             }
@@ -890,7 +894,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
             factorialButton.setBackgroundResource(clickedButtonStyle)
             var appendedFactorial = false
             if (textView.text.isNotEmpty()) {
-                if (textView.text.last().isDigit() || textView.text.last() == ')') {
+                if (textView.text.last().isDigit() || textView.text.last() == ')'
+                    || textView.text.last() == 'x') {
                     textView.append("!")
                     appendedFactorial = true
                 }
@@ -933,7 +938,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
             var appendedPercent = false
             if (textView.text.isNotEmpty()) {
-                if (textView.text.last().isDigit() || textView.text.last() == ')') {
+                if (textView.text.last().isDigit() || textView.text.last() == ')'
+                    || textView.text.last() == 'x') {
                     textView.append("%")
                     appendedPercent = true
                 }
@@ -959,7 +965,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
             if (textView.text.isNotEmpty()) {
                 if (textView.text.last() != ')' && textView.text.last() != ','
-                    && textView.text.last() != 'π' && textView.text.last() != 'e') {
+                    && textView.text.last() != 'π' && textView.text.last() != 'e'
+                    && textView.text.last() != 'x') {
                     textView.append(numberPIButton.text.toString())
                     addedNumber = true
                 }
@@ -988,7 +995,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
             if (textView.text.isNotEmpty()) {
                 if (textView.text.last() != ')' && textView.text.last() != ','
-                    && textView.text.last() != 'π' && textView.text.last() != 'e') {
+                    && textView.text.last() != 'π' && textView.text.last() != 'e'
+                    && textView.text.last() != 'x') {
                     textView.append(numberEulerButton.text.toString())
                     addedNumber = true
                 }
@@ -1058,7 +1066,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 if (textView.text.last().isDigit() || textView.text.last() == ')'
                     || textView.text.last() == '!' || textView.text.last() == 'π'
                     || textView.text.last() == 'e' || textView.text.last() == '°'
-                    || textView.text.last() == '%') {
+                    || textView.text.last() == '%' || textView.text.last() == 'x') {
                     val text = closeBracketButton.text.toString()
                     textView.append(text)
                     bracketsCounter--
