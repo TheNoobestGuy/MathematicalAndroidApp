@@ -187,23 +187,22 @@ class AdvancedKeyboard @JvmOverloads constructor(
     }
 
     private fun calculateNumber(list: MutableList<Double>, length: Int, divide: Boolean): Double {
-        var tempLength= length
+        var tempLength = length
         var outputNumber = 0.0
 
         if (divide) {
-            val range = length - 1 downTo 0
-            tempLength++
+            val range = list.size-1 downTo 0
             for (i in range) {
-                outputNumber += convertNumber(list[i], tempLength, true)
+                outputNumber += convertNumber(list[i], tempLength+1, true)
                 tempLength--
             }
+            tempLength++
         } else {
             list.forEach { num ->
                 outputNumber += convertNumber(num, tempLength, false)
                 tempLength--
             }
         }
-
         return outputNumber
     }
 
@@ -218,6 +217,12 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 closeBrackets++
             }
             else if (transformedEquation[i] == '(') {
+                openBrackets++
+            }
+            else if (transformedEquation[i] == '√') {
+                openBrackets++
+            }
+            else if (transformedEquation[i].toString()[0].isLetter()) {
                 openBrackets++
             }
 
@@ -261,17 +266,17 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
                 // Decimal number
                 if (lastChar == ',') {
-                    val outputNumber: Double = calculateNumber(numBuffer, intConverter, true)
-                    transformedEquation.removeLast()
-
-                    val decimalNumber: Double = numberBase + outputNumber
+                    val decimalNumber: Double = calculateNumber(numBuffer, intConverter, true)
+                    val outputNumber: Double = numberBase + decimalNumber
 
                     if (!commaInUse) {
                         commaInUse = true
                     }
+                    else {
+                        transformedEquation.removeLast()
+                    }
 
-                    transformedEquation.add(decimalNumber)
-                    numBuffer.clear()
+                    transformedEquation.add(outputNumber)
                 }
             }
             else {
@@ -279,10 +284,13 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 if (numBuffer.isNotEmpty() && whatFunction == '0') {
                     if (lastChar != ',') {
                         val outputNumber: Double = calculateNumber(numBuffer, intConverter, false)
-                        transformedEquation.add(outputNumber)
 
                         if (element == ',') {
                             numberBase = outputNumber
+                            numBuffer.clear()
+                        }
+                        else {
+                            transformedEquation.add(outputNumber)
                         }
                     }
                 }
@@ -340,12 +348,14 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
                     if (addMultiplication) {
                         if (inRoot) {
-                            transformedEquation.add(additionalOpenedBrackets.last().removeLast())
+                            if (additionalOpenedBrackets.last().isNotEmpty()) {
+                                transformedEquation.add(additionalOpenedBrackets.last().removeLast())
+                            }
                         }
 
                         if(!multiplyDivide) {
                             addBracketIndex = findNewBracketIndex(transformedEquation)
-                            if (transformedEquation[addBracketIndex].toString()[0].isLetter()) {
+                            if (addBracketIndex > 0 && transformedEquation[addBracketIndex-1].toString()[0].isLetter()) {
                                 transformedEquation.add(--addBracketIndex, '(')
                             }
                             else {
@@ -367,6 +377,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     else {
                         transformedEquation.add(whatFunction)
                         whatFunction = '0'
+                        inRoot = false
                     }
                 }
 
@@ -419,9 +430,20 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         inRoot = false
                     }
                     '^' -> {
+                        if (inRoot) {
+                            if (additionalOpenedBrackets.last().isNotEmpty()) {
+                                transformedEquation.add(additionalOpenedBrackets.last().removeLast())
+                            }
+                        }
+
                         addBracketIndex = findNewBracketIndex(transformedEquation)
 
-                        transformedEquation.add(addBracketIndex, '(')
+                        if (addBracketIndex > 0 && transformedEquation[addBracketIndex-1].toString()[0].isLetter()) {
+                            transformedEquation.add(--addBracketIndex, '(')
+                        }
+                        else {
+                            transformedEquation.add(addBracketIndex, '(')
+                        }
                         transformedEquation.add('^')
                         additionalOpenedBrackets.last().add(')')
 
@@ -483,7 +505,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
             }
         }
         // Add number that lasts in buffer
-        if (numBuffer.isNotEmpty()) {
+        if (numBuffer.isNotEmpty() && lastChar != ',') {
             val outputNumber: Double = calculateNumber(numBuffer, intConverter, false)
             transformedEquation.add(outputNumber)
         }
@@ -694,10 +716,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
     private fun resultOfCalculate(textView: TextView, resultTextView: TextView) {
         // Calculation
         val equation = transformEquation(textView.text.toString())
-        println(equation)
         val resultOfCalculations = calculate(equation, 0)
-
-        if (checkIsItDouble(resultOfCalculations.first)) {
+        if (checkIsItDouble(round(resultOfCalculations.first*10000)/10000)) {
             if (resultOfCalculations.first.isNaN()) {
                 resultTextView.text = context.getString(R.string.Error)
             }
@@ -1075,6 +1095,9 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     }
                 }
                 else {
+                    if (textView.text.last() == ',') {
+                        commaUsed = false
+                    }
                     textView.text = textView.text.dropLast(1)
                 }
             }
