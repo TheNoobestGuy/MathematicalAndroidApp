@@ -357,7 +357,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
                         if(!multiplyDivide) {
                             addBracketIndex = findNewBracketIndex(transformedEquation)
-                            if (addBracketIndex > 0 && transformedEquation[addBracketIndex-1].toString()[0].isLetter()) {
+                            if (addBracketIndex > 0 && (transformedEquation[addBracketIndex-1].toString()[0].isLetter()
+                                        || transformedEquation[addBracketIndex-1].toString() == "√")) {
                                 transformedEquation.add(--addBracketIndex, '(')
                             }
                             else {
@@ -418,7 +419,13 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     '×', '/' -> {
                         if (!multiplyDivide && lastChar != '^') {
                             addBracketIndex = findNewBracketIndex(transformedEquation)
-                            transformedEquation.add(addBracketIndex, '(')
+                            if (addBracketIndex > 0 && (transformedEquation[addBracketIndex-1].toString()[0].isLetter()
+                                || transformedEquation[addBracketIndex-1].toString() == "√")) {
+                                transformedEquation.add(--addBracketIndex, '(')
+                            }
+                            else {
+                                transformedEquation.add(addBracketIndex, '(')
+                            }
                             additionalOpenedBrackets.last().add(')')
                         }
 
@@ -440,7 +447,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
                         addBracketIndex = findNewBracketIndex(transformedEquation)
 
-                        if (addBracketIndex > 0 && transformedEquation[addBracketIndex-1].toString()[0].isLetter()) {
+                        if (addBracketIndex > 0 && (transformedEquation[addBracketIndex-1].toString()[0].isLetter()
+                                    || transformedEquation[addBracketIndex-1].toString() == "√")) {
                             transformedEquation.add(--addBracketIndex, '(')
                         }
                         else {
@@ -459,7 +467,13 @@ class AdvancedKeyboard @JvmOverloads constructor(
                                 && transformedEquation.last() != '(') {
                                 if (!multiplyDivide) {
                                     addBracketIndex = findNewBracketIndex(transformedEquation)
-                                    transformedEquation.add(addBracketIndex, '(')
+                                    if (addBracketIndex > 0 && (transformedEquation[addBracketIndex-1].toString()[0].isLetter()
+                                                || transformedEquation[addBracketIndex-1].toString() == "√")) {
+                                        transformedEquation.add(--addBracketIndex, '(')
+                                    }
+                                    else {
+                                        transformedEquation.add(addBracketIndex, '(')
+                                    }
                                     additionalOpenedBrackets.last().add(')')
 
                                     transformedEquation.add('×')
@@ -480,7 +494,13 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         addBracketIndex = findNewBracketIndex(transformedEquation)
 
                         for (i in 0 until 1) {
-                            transformedEquation.add(addBracketIndex, '(')
+                            if (addBracketIndex > 0 && (transformedEquation[addBracketIndex-1].toString()[0].isLetter()
+                                        || transformedEquation[addBracketIndex-1].toString() == "√")) {
+                                transformedEquation.add(--addBracketIndex, '(')
+                            }
+                            else {
+                                transformedEquation.add(addBracketIndex, '(')
+                            }
                         }
 
                         transformedEquation.add(')')
@@ -719,7 +739,9 @@ class AdvancedKeyboard @JvmOverloads constructor(
     private fun resultOfCalculate(textView: TextView, resultTextView: TextView) {
         // Calculation
         val equation = transformEquation(textView.text.toString())
+        println(equation)
         val resultOfCalculations = calculate(equation, 0)
+        println(resultOfCalculations.first)
         if (checkIsItDouble(round(resultOfCalculations.first*10000)/10000)) {
             if (resultOfCalculations.first.isNaN()) {
                 resultTextView.text = context.getString(R.string.Error)
