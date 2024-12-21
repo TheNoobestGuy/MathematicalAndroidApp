@@ -55,7 +55,27 @@ class FunctionChart @JvmOverloads constructor(
         canvas.drawLine(0f, height/2f, width.toFloat(), height/2f, paint)
         canvas.drawLine(width/2f, 0f,width/2f, height.toFloat(), paint)
 
+        // Draw labels
+        paint.textSize = 20f
+        paint.style = Paint.Style.FILL
+        iterator = gridSpacing
+        var xAxisLabels = -((width/(gridSpacing))/2).toInt() + 1
+        while (iterator <= width) {
+            canvas.drawText(xAxisLabels.toString(), iterator+5f, height/2f+20f, paint)
+            iterator += gridSpacing
+            xAxisLabels++
+        }
+
+        iterator = gridSpacing
+        var yAxisLabels: Int = ((height/(gridSpacing))/2).toInt()
+        while (iterator <= height) {
+            canvas.drawText(yAxisLabels.toString(), width/2f+5f, iterator+20f, paint)
+            iterator += gridSpacing
+            yAxisLabels--
+        }
+
         // Draw a function
+        paint.style = Paint.Style.STROKE
         paint.color = linesColor
         paint.strokeWidth = 8f
         for (i in 0 until points.size - 1) {

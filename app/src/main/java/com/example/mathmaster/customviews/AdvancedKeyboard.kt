@@ -464,7 +464,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         if (transformedEquation.isNotEmpty()) {
                             if (transformedEquation.last() != '×' && transformedEquation.last() != '/'
                                 && transformedEquation.last() != '+' && transformedEquation.last() != '-'
-                                && transformedEquation.last() != '(') {
+                                && transformedEquation.last() != '(' && transformedEquation.last() != '√') {
                                 if (!multiplyDivide) {
                                     addBracketIndex = findNewBracketIndex(transformedEquation)
                                     if (addBracketIndex > 0 && (transformedEquation[addBracketIndex-1].toString()[0].isLetter()
@@ -739,9 +739,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
     private fun resultOfCalculate(textView: TextView, resultTextView: TextView) {
         // Calculation
         val equation = transformEquation(textView.text.toString())
-        println(equation)
         val resultOfCalculations = calculate(equation, 0)
-        println(resultOfCalculations.first)
+
         if (checkIsItDouble(round(resultOfCalculations.first*10000)/10000)) {
             if (resultOfCalculations.first.isNaN()) {
                 resultTextView.text = context.getString(R.string.Error)
