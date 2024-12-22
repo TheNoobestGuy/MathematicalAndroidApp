@@ -9,29 +9,41 @@
         android:id="@+id/FunctionChart"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginBottom="12dp"
-        app:layout_constraintBottom_toTopOf="@+id/SlideButton"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintDimensionRatio="1:1"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHeight_percent="0.4"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <Button
         android:id="@+id/SlideButton"
         style="@style/MenuButtonStyle"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginBottom="10dp"
-        android:text="^"
-        app:layout_constraintBottom_toTopOf="@+id/EquationText" />
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:text="↓"
+        app:layout_constraintBottom_toTopOf="@+id/EquationText"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintWidth_percent="0.95" />
 
     <TextView
         android:id="@+id/EquationText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:layout_marginBottom="10dp"
+        android:gravity="center"
         android:text=""
-        app:layout_constraintBottom_toTopOf="@+id/Keyboard" />
+        android:textSize="15sp"
+        android:maxLength="90"
+        app:layout_constraintBottom_toTopOf="@+id/Keyboard"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_percent="0.07"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintWidth_percent="0.95" />
 
     <com.example.mathmaster.customviews.AdvancedKeyboard
         android:id="@+id/Keyboard"

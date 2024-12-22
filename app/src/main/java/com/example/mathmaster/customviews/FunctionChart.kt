@@ -23,6 +23,7 @@ class FunctionChart @JvmOverloads constructor(
     private val gridColor = context.getColor(R.color.VeryLightGrey)
     private val axisColor = context.getColor(R.color.Black)
     private val linesColor = context.getColor(R.color.LimeGreen)
+    private val dashEffect = DashPathEffect(floatArrayOf(20f, 10f), 0f)
 
     init {
         paint.isAntiAlias = true
@@ -67,7 +68,7 @@ class FunctionChart @JvmOverloads constructor(
         }
 
         iterator = gridSpacing
-        var yAxisLabels: Int = ((height/(gridSpacing))/2).toInt()
+        var yAxisLabels: Int = ((height/(gridSpacing))/2).toInt()-1
         while (iterator <= height) {
             canvas.drawText(yAxisLabels.toString(), width/2f+5f, iterator+20f, paint)
             iterator += gridSpacing
@@ -86,7 +87,7 @@ class FunctionChart @JvmOverloads constructor(
                 // Draw asymptote
                 paint.strokeWidth = 3f
                 paint.color = context.getColor(R.color.LightGrey)
-                paint.pathEffect = DashPathEffect(floatArrayOf(20f, 10f), 0f)
+                paint.pathEffect = dashEffect
                 canvas.drawLine(x1, y1, x2, y2, paint)
 
                 // Reset paint
@@ -141,21 +142,23 @@ class FunctionChart @JvmOverloads constructor(
         paint.strokeWidth = 200f
 
         val equation = calculator.transformEquation(input)
-        println(equation)
+
         // Draw function
-        var x = -(width/(gridSpacing))/2f
-        var iterator = 0f
-        while (iterator <= width) {
-            val equationAfterSubstitution = substituteVariable(equation, x.toDouble())
-            val bufferX = width/2f + (x * gridSpacing)
-            val y = calculator.calculate(equationAfterSubstitution, 0)
+        if (equation.isNotEmpty()) {
+            var x = -(width/(gridSpacing))/2f
+            var iterator = 0f
+            while (iterator <= width) {
+                val equationAfterSubstitution = substituteVariable(equation, x.toDouble())
+                val bufferX = width/2f + (x * gridSpacing)
+                val y = calculator.calculate(equationAfterSubstitution, 0)
 
-            y.first = (height/2f) - (y.first*(gridSpacing))
-            points.add(Pair(bufferX, y.first.toFloat()))
+                y.first = (height/2f) - (y.first*(gridSpacing))
+                points.add(Pair(bufferX, y.first.toFloat()))
 
-            x = round(x*100+1)/100
-            if (noDecimalPoint(x)) {
-                iterator += gridSpacing
+                x = round(x*100+1)/100
+                if (noDecimalPoint(x)) {
+                    iterator += gridSpacing
+                }
             }
         }
 

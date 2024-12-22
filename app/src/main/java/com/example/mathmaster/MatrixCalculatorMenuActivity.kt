@@ -64,8 +64,8 @@ class MatrixCalculatorMenuActivity : ComponentActivity() {
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 val options = ActivityOptions.makeCustomAnimation(
                     this@MatrixCalculatorMenuActivity,
-                    R.anim.slide_in_right,
-                    R.anim.slide_out_left
+                    R.anim.slide_in_left,
+                    R.anim.slide_out_right
                 )
 
                 startActivity(intent, options.toBundle())

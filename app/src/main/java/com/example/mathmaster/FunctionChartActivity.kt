@@ -1,5 +1,7 @@
 package com.example.mathmaster
 
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
 import android.app.ActivityOptions
 import android.content.Intent
 import android.os.Bundle
@@ -14,12 +16,19 @@ import com.example.mathmaster.customviews.FunctionChart
 
 class FunctionChartActivity : ComponentActivity() {
 
+    private var keyboardIsVisible: Boolean = true
+    private var screenHeight: Float = 0f
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.functionchart_activity)
 
+        // Screen height
+        screenHeight = resources.displayMetrics.heightPixels.toFloat()
+
         // Chart
         val functionChart: FunctionChart = findViewById(R.id.FunctionChart)
+        functionChart.translationY = -screenHeight+functionChart.y
 
         // Show chart button
         val slideButton: Button = findViewById(R.id.SlideButton)
@@ -59,8 +68,42 @@ class FunctionChartActivity : ComponentActivity() {
         slideButton.setOnClickListener {
             slideButton.setBackgroundResource(clickedButtonStyle)
 
+            // Draw a function
+            functionChart.drawAFunction(equation.text.toString(), keyboard)
+
+            // Change button text
+            if (slideButton.text == "↑") {
+                slideButton.text = "↓"
+            }
+            else {
+                slideButton.text = "↑"
+            }
+
+            // Start proper animation
+            val animatorSet = AnimatorSet()
+            if (keyboardIsVisible) {
+                val slideDownChart = ObjectAnimator.ofFloat(functionChart, "translationY", 0f)
+                val slideDownButton = ObjectAnimator.ofFloat(slideButton, "translationY", screenHeight-slideButton.y-slideButton.height-20f)
+                val slideDownEquation = ObjectAnimator.ofFloat(equation, "translationY", screenHeight-equation.y)
+                val slideDownKeyboard = ObjectAnimator.ofFloat(keyboard, "translationY", screenHeight-keyboard.y)
+
+                animatorSet.playTogether(slideDownChart, slideDownButton, slideDownEquation, slideDownKeyboard)
+                animatorSet.duration = 800
+                animatorSet.start()
+            } else {
+                val slideUpChart = ObjectAnimator.ofFloat(functionChart, "translationY", -screenHeight+functionChart.y)
+                val slideUpButton = ObjectAnimator.ofFloat(slideButton, "translationY", 0f)
+                val slideUpEquation = ObjectAnimator.ofFloat(equation, "translationY",0f)
+                val slideUpKeyboard = ObjectAnimator.ofFloat(keyboard, "translationY", 0f)
+
+                animatorSet.playTogether(slideUpChart, slideUpButton, slideUpEquation, slideUpKeyboard)
+                animatorSet.duration = 800
+                animatorSet.start()
+            }
+
+            keyboardIsVisible = !keyboardIsVisible
+
             Handler(Looper.getMainLooper()).postDelayed({
-                functionChart.drawAFunction(equation.text.toString(), keyboard)
                 slideButton.setBackgroundResource(unClickedButtonStyle)
             },100)
         }
@@ -76,8 +119,8 @@ class FunctionChartActivity : ComponentActivity() {
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 val options = ActivityOptions.makeCustomAnimation(
                     this@FunctionChartActivity,
-                    R.anim.slide_in_right,
-                    R.anim.slide_out_left
+                    R.anim.slide_in_left,
+                    R.anim.slide_out_right
                 )
 
                 startActivity(intent, options.toBundle())

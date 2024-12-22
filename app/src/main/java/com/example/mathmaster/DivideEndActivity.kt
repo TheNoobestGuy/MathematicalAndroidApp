@@ -1,5 +1,6 @@
 package com.example.mathmaster
 
+import android.app.ActivityOptions
 import android.content.Intent
 import android.os.Bundle
 import android.widget.TextView
@@ -203,7 +204,13 @@ class DivideEndActivity : ComponentActivity() {
             override fun handleOnBackPressed() {
                 val intent = Intent(this@DivideEndActivity, PracticeActivity()::class.java)
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                startActivity(intent)
+                val options = ActivityOptions.makeCustomAnimation(
+                    this@DivideEndActivity,
+                    R.anim.slide_in_left,
+                    R.anim.slide_out_right
+                )
+
+                startActivity(intent, options.toBundle())
                 finish()
             }
         })
