@@ -67,16 +67,15 @@ class FunctionChartActivity : ComponentActivity() {
         val unClickedButtonStyle = R.drawable.menubutton_background
         slideButton.setOnClickListener {
             slideButton.setBackgroundResource(clickedButtonStyle)
-
-            // Draw a function
-            functionChart.drawAFunction(equation.text.toString(), keyboard)
-
             // Change button text
             if (slideButton.text == "↑") {
                 slideButton.text = "↓"
             }
             else {
                 slideButton.text = "↑"
+
+                // Draw a function
+                functionChart.drawAFunction(equation.text.toString(), keyboard)
             }
 
             // Start proper animation

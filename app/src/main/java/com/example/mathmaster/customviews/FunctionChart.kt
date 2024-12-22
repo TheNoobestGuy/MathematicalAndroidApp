@@ -76,31 +76,37 @@ class FunctionChart @JvmOverloads constructor(
         }
 
         // Draw a function
+        val asymptotes: MutableList<Float> = mutableListOf()
         paint.style = Paint.Style.STROKE
         paint.color = linesColor
         paint.strokeWidth = 8f
+        var asymptote = false
         for (i in 0 until points.size - 1) {
             val (x1, y1) = points[i]
             val (x2, y2) = points[i + 1]
 
             if (abs(y1-y2) >= height) {
-                // Draw asymptote
-                paint.strokeWidth = 3f
-                paint.color = context.getColor(R.color.LightGrey)
-                paint.pathEffect = dashEffect
-                canvas.drawLine(x1, y1, x2, y2, paint)
-
-                // Reset paint
-                paint.pathEffect = null
-                paint.color = linesColor
-                paint.strokeWidth = 8f
+                if (!asymptote) {
+                    asymptotes.add(x1)
+                    asymptote = true
+                }
             }
             else {
                 canvas.drawLine(x1, y1, x2, y2, paint)
+                asymptote = false
             }
         }
 
+        // Draw asymptotes
+        paint.strokeWidth = 4f
+        paint.color = context.getColor(R.color.LightGrey)
+        paint.pathEffect = dashEffect
+        for (a in asymptotes) {
+            canvas.drawLine(a, 0f, a, height.toFloat(), paint)
+        }
+
         // Draw a frame
+        paint.pathEffect = null
         paint.color = axisColor
         paint.strokeWidth = 10f
         canvas.drawLine(0f, 0f, width.toFloat(), 0f, paint)

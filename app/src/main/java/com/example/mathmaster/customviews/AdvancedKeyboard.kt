@@ -1134,9 +1134,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
             var addedNumber = false
 
             if (textView.text.isNotEmpty()) {
-                if (textView.text.last() != ')' && textView.text.last() != ','
-                    && textView.text.last() != 'π' && textView.text.last() != 'e'
-                    && textView.text.last() != '°') {
+                if (textView.text.last() != ',' && textView.text.last() != 'π'
+                    && textView.text.last() != 'e' && textView.text.last() != '°') {
                     textView.append(numberPIButton.text.toString())
                     addedNumber = true
                 }
@@ -1164,9 +1163,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
             var addedNumber = false
 
             if (textView.text.isNotEmpty()) {
-                if (textView.text.last() != ')' && textView.text.last() != ','
-                    && textView.text.last() != 'π' && textView.text.last() != 'e'
-                    && textView.text.last() != '°') {
+                if (textView.text.last() != ',' && textView.text.last() != 'π'
+                    && textView.text.last() != 'e' && textView.text.last() != '°') {
                     textView.append(numberEulerButton.text.toString())
                     addedNumber = true
                 }
@@ -1215,7 +1213,9 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
             if (textView.text.isNotEmpty()) {
                 if (textView.text.last() != ')' && textView.text.last() != '!'
-                    && !textView.text.last().isDigit()) {
+                    && !textView.text.last().isDigit() && textView.text.last() != 'π'
+                    &&  textView.text.last() != 'e' &&  textView.text.last() != '°'
+                    &&  textView.text.last() != '%' &&  textView.text.last() != 'x') {
                     val text = openBracketButton.text.toString()
                     textView.append(text)
                     bracketsCounter++
@@ -1478,8 +1478,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
             variableButton.setBackgroundResource(clickedButtonStyle)
 
             if (textView.text.isNotEmpty()) {
-                if (textView.text.last() != ')' && textView.text.last() != ','
-                    && textView.text.last() != 'x') {
+                if (textView.text.last() != ',' && textView.text.last() != 'x') {
                     textView.append(variableButton.text.toString())
                 }
             } else {
