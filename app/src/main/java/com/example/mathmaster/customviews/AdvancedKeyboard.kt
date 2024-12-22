@@ -256,8 +256,9 @@ class AdvancedKeyboard @JvmOverloads constructor(
         return 0
     }
 
-    fun transformEquation(equation: String): MutableList<Any> {
+    fun transformEquation(input: String): MutableList<Any> {
         val transformedEquation: MutableList<Any> = mutableListOf()
+        var equation = input
 
         // Equation variables
         var intConverter = 0
@@ -282,6 +283,22 @@ class AdvancedKeyboard @JvmOverloads constructor(
         val additionalOpenedBrackets: MutableList<MutableList<Char>> = mutableListOf()
         additionalOpenedBrackets.add(mutableListOf())
 
+        // Delete last redundant bracket or function for further transform
+        if (equation.last() == '(') {
+            while (equation.isNotEmpty()) {
+                if (equation.last() == '+' || equation.last() == '-'
+                    || equation.last() == '×' || equation.last() == '/'
+                    || equation.last() == ')') {
+                    break
+                }
+                equation = equation.dropLast(1)
+            }
+            if (equation.isNotEmpty()) {
+                equation = equation.dropLast(1)
+            }
+        }
+
+        // Transfrom equation for calculations
         equation.forEach { element ->
             if (element.isDigit()) {
                 // Add digit to buffer
@@ -305,7 +322,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
             }
             else {
                 // Append number that is in buffer
-                if (numBuffer.isNotEmpty() && whatFunction == '0') {
+                if (numBuffer.isNotEmpty()) {
                     if (lastChar != '.') {
                         val outputNumber: Double = calculateNumber(numBuffer, intConverter, false)
 
@@ -571,9 +588,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 intConverter = 0
 
                 lastChar = element
-                if (whatFunction == '0') {
-                    numBuffer.clear()
-                }
+                numBuffer.clear()
             }
         }
         // Add number that lasts in buffer
@@ -824,43 +839,139 @@ class AdvancedKeyboard @JvmOverloads constructor(
         enterButton.setOnClickListener {
             enterButton.setBackgroundResource(clickedButtonStyle)
 
-            // Update history text view
-            val equation = transformEquation(textView.text.toString())
-            var textBuffer = ""
-            for (element in equation) {
-                if (element.toString()[0].isLetter()) {
-                    when (element) {
-                        's' -> textBuffer += "sin"
-                        'c' -> textBuffer += "cos"
-                        't' -> textBuffer += "tan"
-                        'g' -> textBuffer += "lg"
-                        'n' -> textBuffer += "ln"
-                        'i' -> textBuffer += "arcsin"
-                        'o' -> textBuffer += "arccos"
-                        'a' -> textBuffer += "arctan"
+            // Create modified string for history text view
+            if (resultTextView.text.isNotEmpty()) {
+                var textBuffer = ""
+                var omitBracket = 0
+                val equation = transformEquation(textView.text.toString())
+                for (element in equation) {
+                    if (element.toString()[0].isLetter()) {
+                        if (textBuffer.isNotEmpty()) {
+                            if (textBuffer.last() == '×') {
+                                textBuffer = textBuffer.dropLast(1)
+                            }
+                        }
+
+                        when (element) {
+                            's' -> textBuffer += "sin"
+                            'c' -> textBuffer += "cos"
+                            't' -> textBuffer += "tan"
+                            'g' -> textBuffer += "lg"
+                            'n' -> textBuffer += "ln"
+                            'i' -> textBuffer += "arcsin"
+                            'o' -> textBuffer += "arccos"
+                            'a' -> textBuffer += "arctan"
+                        }
+                    }
+                    else if (element.toString()[0].isDigit()) {
+                        var constant = false
+
+                        if (element == Math.PI) {
+                            if (textBuffer.isNotEmpty()) {
+                                if (textBuffer.last() == '×') {
+                                    textBuffer = textBuffer.dropLast(1)
+                                }
+                            }
+                            textBuffer += 'π'
+                            constant = true
+                        }
+                        else if (element == Math.E) {
+                            if (textBuffer.isNotEmpty()) {
+                                if (textBuffer.last() == '×') {
+                                    textBuffer = textBuffer.dropLast(1)
+                                }
+                            }
+                            textBuffer += 'e'
+                            constant = true
+                        }
+
+                        if (!constant) {
+                            textBuffer += if (checkIsItDouble(element as Double)) {
+                                element.toFloat().toString()
+                            } else {
+                                element.toFloat().toInt().toString()
+                            }
+                        }
+                    }
+                    else if (element == '%' || element == '!' || element == '°') {
+                        val range = textBuffer.length-1 downTo  0
+                        var bracketsCounter = 0
+                        var index = 0
+                        for (i in range) {
+                            if (textBuffer[i] == ')') {
+                                bracketsCounter++
+                            }
+                            else if (textBuffer[i] == '(') {
+                                bracketsCounter--
+                            }
+
+                            if (bracketsCounter == 0) {
+                                index = i-1
+                                break
+                            }
+                        }
+
+                        textBuffer = textBuffer.removeRange(index, index+2)
+                        textBuffer = textBuffer.dropLast(1)
+                        textBuffer += element.toString()
+                        omitBracket++
+                    }
+                    else {
+                        if (element == '√') {
+                            omitBracket++
+                        }
+                        if (element == ')') {
+                            if (omitBracket == 0) {
+                                textBuffer += element.toString()
+                            }
+                            else {
+                                omitBracket--
+                            }
+                        }
+                        else {
+                            textBuffer += element.toString()
+                        }
                     }
                 }
-                else if (element.toString()[0].isDigit()) {
-                    textBuffer += if (checkIsItDouble(element as Double)) {
-                        element.toFloat().toString()
-                    } else {
-                        element.toFloat().toInt().toString()
+
+                // Delete first and last bracket if possible
+                var bracketsCounter = 0
+                var deleteBracket = 0
+                for (i in textBuffer.indices) {
+                    if (i == 0 && textBuffer[i] != '(') {
+                        break
+                    }
+                    if (textBuffer[i] == '(') {
+                        bracketsCounter++
+                    }
+                    else if (textBuffer[i] == ')') {
+                        deleteBracket = i
+                        bracketsCounter--
+                    }
+
+                    if (bracketsCounter == 0) {
+                        break
                     }
                 }
-                else {
-                    textBuffer += element.toString()
+
+                if (deleteBracket == textBuffer.length-1) {
+                    textBuffer = textBuffer.substring(1)
+                    textBuffer = textBuffer.dropLast(1)
                 }
+
+                // Update history text view with created string
+                historyTextView.append("\n")
+                historyTextView.append("\n")
+                historyTextView.append(textBuffer)
+                historyTextView.append("\n")
+                historyTextView.append(resultTextView.text)
             }
-            historyTextView.append("\n")
-            historyTextView.append("\n")
-            historyTextView.append(textBuffer)
-            historyTextView.append("\n")
-            historyTextView.append(resultTextView.text)
 
             // Update input and result text views
             if (resultTextView.text.isNotEmpty()) {
                 textView.text = resultTextView.text.substring(2)
             }
+
             resultTextView.text = ""
 
             Handler(Looper.getMainLooper()).postDelayed({
@@ -1375,14 +1486,15 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     }
                     textView.text = textView.text.dropLast(1)
                 }
-
-                if (textView.text.isEmpty()) {
-                    resultTextView.text = ""
-                }
             }
 
             if (!functionChartMode) {
-                resultOfCalculate(textView, resultTextView)
+                if (textView.text.isNotEmpty()) {
+                    resultOfCalculate(textView, resultTextView)
+                }
+                else {
+                    resultTextView.text = ""
+                }
             }
 
             Handler(Looper.getMainLooper()).postDelayed({
