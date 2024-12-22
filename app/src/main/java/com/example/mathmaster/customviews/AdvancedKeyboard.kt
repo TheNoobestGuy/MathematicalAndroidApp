@@ -12,6 +12,8 @@ import kotlin.math.*
 import com.example.mathmaster.R
 
 data class PairEquation<Double, Int> (var first: Double, var second: Int)
+data class TripleOperators<Boolean, Int> (var occurrence: Int, var degrees: Boolean,
+                                               var level: Int)
 
 class AdvancedKeyboard @JvmOverloads constructor(
     context: Context,
@@ -74,12 +76,18 @@ class AdvancedKeyboard @JvmOverloads constructor(
     private val openBracketButton: Button
     private val closeBracketButton: Button
 
+    private var bracketsLevel: ArrayDeque<Boolean> = ArrayDeque()
+    private var functionEnds: ArrayDeque<Int> = ArrayDeque()
+    private var functionLevel: Int  = 0
+
+    private var operatorsOccurrence: ArrayDeque<TripleOperators<Boolean, Int>> = ArrayDeque()
+    private var degreesInUse: Boolean = false
+    private var addDegree: Boolean = false
+
     // Options
     private val degreeButton: Button
     private val changeFunctionsButton: Button
     private var secondFunctions: Boolean = false
-
-    private var addedDegrees: Boolean = false
     private var radians: Boolean = true
 
     // Optional variable button
@@ -218,13 +226,23 @@ class AdvancedKeyboard @JvmOverloads constructor(
             }
             else if (transformedEquation[i] == '(') {
                 openBrackets++
+
+                if (closeBrackets == openBrackets) {
+                    if (i > 0) {
+                        if (transformedEquation[i-1].toString()[0].isLetter()) {
+                            if (transformedEquation[i] != 'x') {
+                                return i - 1
+                            }
+                        }
+                    }
+                }
             }
             else if (transformedEquation[i] == '√') {
                 openBrackets++
-            }
-            else if (transformedEquation[i].toString()[0].isLetter()) {
-                if (transformedEquation[i] != 'x') {
-                    openBrackets++
+                if (closeBrackets == openBrackets) {
+                    if (i > 0) {
+                        return i - 1
+                    }
                 }
             }
 
@@ -250,6 +268,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
         // Equation validation
         var multiplyDivide = false
+        var inDegree = false
+        var addDegree = false
         var inRoot = false
 
         // Brackets
@@ -355,16 +375,29 @@ class AdvancedKeyboard @JvmOverloads constructor(
                             }
                         }
 
-                        if(!multiplyDivide) {
-                            addBracketIndex = findNewBracketIndex(transformedEquation)
-                            if (addBracketIndex > 0 && (transformedEquation[addBracketIndex-1].toString()[0].isLetter()
-                                        || transformedEquation[addBracketIndex-1].toString() == "√")) {
-                                transformedEquation.add(--addBracketIndex, '(')
-                            }
-                            else {
-                                transformedEquation.add(addBracketIndex, '(')
+                        if (powerToOpenedBrackets.isNotEmpty()) {
+                            while (powerToOpenedBrackets.isNotEmpty() &&
+                                powerToOpenedBrackets.last() >= additionalOpenedBrackets.size - 1
+                            ) {
+                                while (additionalOpenedBrackets.last().isNotEmpty()) {
+                                    transformedEquation.add(
+                                        additionalOpenedBrackets.last().removeLast()
+                                    )
+                                }
+                                powerToOpenedBrackets.removeLast()
                             }
 
+                            if (powerToOpenedBrackets.isEmpty() && addDegree) {
+                                transformedEquation.add(')')
+                                transformedEquation.add('°')
+                                transformedEquation.add(')')
+                                addDegree = false
+                            }
+                        }
+
+                        if(!multiplyDivide) {
+                            addBracketIndex = findNewBracketIndex(transformedEquation)
+                            transformedEquation.add(addBracketIndex, '(')
                             additionalOpenedBrackets.last().add(')')
                         }
 
@@ -392,51 +425,85 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         transformedEquation.add(element)
                     }
                     ')' -> {
+                        if (powerToOpenedBrackets.isNotEmpty()) {
+                            if (powerToOpenedBrackets.last() == additionalOpenedBrackets.size-1) {
+                                powerToOpenedBrackets.removeLast()
+                            }
+                        }
+
                         while (additionalOpenedBrackets.last().isNotEmpty()) {
                             transformedEquation.add(additionalOpenedBrackets.last().removeLast())
                         }
                         additionalOpenedBrackets.removeLast()
 
+                        if (powerToOpenedBrackets.isEmpty() && addDegree) {
+                            transformedEquation.add(')')
+                            transformedEquation.add('°')
+                            transformedEquation.add(')')
+                            addDegree = false
+                        }
+
                         bracketsInput.removeLast()
                         transformedEquation.add(element)
-
-                        if (powerToOpenedBrackets.isNotEmpty()) {
-                            if (powerToOpenedBrackets.last() == additionalOpenedBrackets.size-1) {
-                                transformedEquation.add(additionalOpenedBrackets.last().removeLast())
-                                powerToOpenedBrackets.removeLast()
-                            }
-                        }
                     }
                     '+', '-' -> {
                         while (additionalOpenedBrackets.last().isNotEmpty()) {
                             transformedEquation.add(additionalOpenedBrackets.last().removeLast())
                         }
 
+                        if (powerToOpenedBrackets.isNotEmpty()) {
+                            while (powerToOpenedBrackets.isNotEmpty() &&
+                                powerToOpenedBrackets.last() >= additionalOpenedBrackets.size - 1
+                            ) {
+                                powerToOpenedBrackets.removeLast()
+                            }
+
+                            if (powerToOpenedBrackets.isEmpty() && addDegree) {
+                                transformedEquation.add(')')
+                                transformedEquation.add('°')
+                                transformedEquation.add(')')
+                                addDegree = false
+                            }
+                        }
+
                         transformedEquation.add(element)
                         multiplyDivide = false
                         inRoot = false
+                        inDegree = false
                     }
                     '×', '/' -> {
-                        if (!multiplyDivide && lastChar != '^') {
-                            addBracketIndex = findNewBracketIndex(transformedEquation)
-                            if (addBracketIndex > 0 && (transformedEquation[addBracketIndex-1].toString()[0].isLetter()
-                                || transformedEquation[addBracketIndex-1].toString() == "√")) {
-                                transformedEquation.add(--addBracketIndex, '(')
-                            }
-                            else {
-                                transformedEquation.add(addBracketIndex, '(')
-                            }
-                            additionalOpenedBrackets.last().add(')')
-                        }
-
                         if (inRoot) {
                             transformedEquation.add(additionalOpenedBrackets.last().removeLast())
+                        }
+
+                        if (powerToOpenedBrackets.isNotEmpty()) {
+                            while (powerToOpenedBrackets.isNotEmpty() &&
+                                powerToOpenedBrackets.last() >= additionalOpenedBrackets.size-1) {
+                                while (additionalOpenedBrackets.last().isNotEmpty()) {
+                                    transformedEquation.add(additionalOpenedBrackets.last().removeLast())
+                                }
+                                powerToOpenedBrackets.removeLast()
+                            }
+
+                            if (powerToOpenedBrackets.isEmpty() && addDegree) {
+                                transformedEquation.add(')')
+                                transformedEquation.add('°')
+                                transformedEquation.add(')')
+                                addDegree = false
+                            }
+                        }
+
+                        if (!multiplyDivide) {
+                            addBracketIndex = findNewBracketIndex(transformedEquation)
+                            transformedEquation.add(addBracketIndex, '(')
+                            additionalOpenedBrackets.last().add(')')
                         }
 
                         transformedEquation.add(element)
 
                         multiplyDivide = true
                         inRoot = false
+                        inDegree = false
                     }
                     '^' -> {
                         if (inRoot) {
@@ -445,20 +512,21 @@ class AdvancedKeyboard @JvmOverloads constructor(
                             }
                         }
 
-                        addBracketIndex = findNewBracketIndex(transformedEquation)
+                        if (inDegree) {
+                            for (i in 0 until 3) {
+                                transformedEquation.removeLast()
+                            }
+                            addDegree = true
+                        }
 
-                        if (addBracketIndex > 0 && (transformedEquation[addBracketIndex-1].toString()[0].isLetter()
-                                    || transformedEquation[addBracketIndex-1].toString() == "√")) {
-                            transformedEquation.add(--addBracketIndex, '(')
-                        }
-                        else {
-                            transformedEquation.add(addBracketIndex, '(')
-                        }
+                        addBracketIndex = findNewBracketIndex(transformedEquation)
+                        transformedEquation.add(addBracketIndex, '(')
                         transformedEquation.add('^')
                         additionalOpenedBrackets.last().add(')')
 
                         powerToOpenedBrackets.add(additionalOpenedBrackets.size-1)
                         inRoot = false
+                        inDegree = false
                     }
                     'π', 'e', 'x' -> {
                         if (transformedEquation.isNotEmpty()) {
@@ -467,13 +535,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                                 && transformedEquation.last() != '(' && transformedEquation.last() != '√') {
                                 if (!multiplyDivide) {
                                     addBracketIndex = findNewBracketIndex(transformedEquation)
-                                    if (addBracketIndex > 0 && (transformedEquation[addBracketIndex-1].toString()[0].isLetter()
-                                                || transformedEquation[addBracketIndex-1].toString() == "√")) {
-                                        transformedEquation.add(--addBracketIndex, '(')
-                                    }
-                                    else {
-                                        transformedEquation.add(addBracketIndex, '(')
-                                    }
+                                    transformedEquation.add(addBracketIndex, '(')
                                     additionalOpenedBrackets.last().add(')')
 
                                     transformedEquation.add('×')
@@ -489,31 +551,29 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         else {
                             transformedEquation.add(element)
                         }
+                        inDegree = false
                     }
                     '!', '%', '°' -> {
+                        if (inRoot) {
+                            if (additionalOpenedBrackets.last().isNotEmpty()) {
+                                transformedEquation.add(additionalOpenedBrackets.last().removeLast())
+                            }
+                        }
+
                         addBracketIndex = findNewBracketIndex(transformedEquation)
 
-                        for (i in 0 until 1) {
-                            if (addBracketIndex > 0 && (transformedEquation[addBracketIndex-1].toString()[0].isLetter()
-                                        || transformedEquation[addBracketIndex-1].toString() == "√")) {
-                                transformedEquation.add(--addBracketIndex, '(')
-                            }
-                            else {
-                                transformedEquation.add(addBracketIndex, '(')
-                            }
+                        for (i in 0 until 2) {
+                            transformedEquation.add(addBracketIndex, '(')
                         }
 
                         transformedEquation.add(')')
                         transformedEquation.add(element)
+                        transformedEquation.add(')')
 
-                        if (lastChar == '√' && element == '°') {
-                            transformedEquation.removeLast()
-                            transformedEquation.add(')')
-                            transformedEquation.add('°')
+                        if (element == '°') {
+                            inDegree = true
                         }
-                        else {
-                            transformedEquation.add(')')
-                        }
+
                         inRoot = false
                     }
                 }
@@ -531,6 +591,13 @@ class AdvancedKeyboard @JvmOverloads constructor(
         if (numBuffer.isNotEmpty() && lastChar != ',') {
             val outputNumber: Double = calculateNumber(numBuffer, intConverter, false)
             transformedEquation.add(outputNumber)
+        }
+
+        // Add degree if lasts
+        if (addDegree) {
+            transformedEquation.add(')')
+            transformedEquation.add('°')
+            transformedEquation.add(')')
         }
 
         // Add all the brackets that lasts in buffer
@@ -781,7 +848,40 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     if (textView.text.last() != ')' && textView.text.last() != 'π'
                         && textView.text.last() != '!' && textView.text.last() != 'e'
                         && textView.text.last() != '%'  && textView.text.last() != 'x') {
-                        textView.append(i.toString())
+                        if (textView.text.last() == '°') {
+                            textView.text = textView.text.dropLast(1)
+                        }
+                        if (!radians && functionLevel > 0) {
+                            if (operatorsOccurrence.isNotEmpty()) {
+                                if (operatorsOccurrence.last().level == functionLevel) {
+                                    if (operatorsOccurrence.last().degrees) {
+                                        textView.append(i.toString())
+                                        textView.append("°")
+                                        degreesInUse = true
+                                    }
+                                    else {
+                                        textView.append(i.toString())
+                                    }
+                                }
+                                else if (bracketsLevel.last()) {
+                                    textView.append(i.toString())
+                                    textView.append("°")
+                                    degreesInUse = true
+                                }
+                                else {
+                                    textView.append(i.toString())
+                                }
+                            }
+                            else {
+                                textView.append(i.toString())
+                                textView.append("°")
+                                degreesInUse = true
+                            }
+                        }
+                        else {
+                            textView.append(i.toString())
+                        }
+
                         addedNumber = true
                     }
                 } else {
@@ -814,15 +914,38 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         || textView.text.last() == 'x') {
 
                         textView.append(basicCalcButtons[i].text)
+
+                        if (!radians && functionLevel > 0) {
+                            var degreesAvailable = true
+                            if (basicCalcButtons[i].text != "-" && basicCalcButtons[i].text != "+") {
+                                degreesAvailable = false
+                            }
+
+                            if (bracketsLevel.last()) {
+                                operatorsOccurrence.addLast(
+                                    TripleOperators(textView.text.length-1, degreesAvailable, functionLevel))
+                                addDegree = true
+                            }
+                        }
+
                         commaUsed = false
-                        addedDegrees = false
                     }
                     else if (textView.text.last() == '(') {
                         if (basicCalcButtons[i].text == "-") {
                             textView.append(basicCalcButtons[i].text)
                         }
                         commaUsed = false
-                        addedDegrees = false
+                    }
+                    else if (textView.text.last() == '°') {
+                        val operator = basicCalcButtons[i].text
+                        textView.append(operator)
+
+                        if (operator == "×" || operator == "/") {
+                            operatorsOccurrence.addLast(
+                                TripleOperators(textView.text.length-1, false, functionLevel))
+                        }
+
+                        commaUsed = false
                     }
                 }
                 else {
@@ -830,7 +953,6 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         textView.append(basicCalcButtons[i].text)
                     }
                     commaUsed = false
-                    addedDegrees = false
                 }
 
                 Handler(Looper.getMainLooper()).postDelayed({
@@ -847,8 +969,16 @@ class AdvancedKeyboard @JvmOverloads constructor(
             if (textView.text.isNotEmpty()) {
                 if (textView.text.last().isDigit() || textView.text.last() == ')'
                     || textView.text.last() == 'π' || textView.text.last() == 'e'
-                    || textView.text.last() == 'x') {
+                    || textView.text.last() == 'x' || textView.text.last() == '°') {
                     textView.append(powerButton.text.toString())
+
+                    if (!radians && functionLevel > 0) {
+                        if (bracketsLevel.last()) {
+                            operatorsOccurrence.addLast(
+                                TripleOperators(textView.text.length-1, false, functionLevel))
+                            addDegree = true
+                        }
+                    }
                 }
             }
 
@@ -898,6 +1028,14 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     || textView.text.last() == '(' || textView.text.last() == 'e'
                     || textView.text.last() == 'x') {
                     textView.append("√")
+
+                    if (!radians && functionLevel > 0) {
+                        if (bracketsLevel.last()) {
+                            operatorsOccurrence.addLast(
+                                TripleOperators(textView.text.length-1, false, functionLevel))
+                            addDegree = true
+                        }
+                    }
                 }
             }
             else {
@@ -916,7 +1054,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
             var appendedFactorial = false
             if (textView.text.isNotEmpty()) {
                 if (textView.text.last().isDigit() || textView.text.last() == ')'
-                    || textView.text.last() == 'x') {
+                    || textView.text.last() == 'x' || textView.text.last() == '°') {
                     textView.append("!")
                     appendedFactorial = true
                 }
@@ -944,6 +1082,14 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     || textView.text.last() == 'x') {
                     textView.append("^(-")
                     bracketsCounter++
+
+                    if (!radians && functionLevel > 0) {
+                        if (bracketsLevel.last()) {
+                            operatorsOccurrence.addLast(
+                                TripleOperators(textView.text.length-3, false, functionLevel))
+                            addDegree = true
+                        }
+                    }
                 }
             }
 
@@ -987,7 +1133,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
             if (textView.text.isNotEmpty()) {
                 if (textView.text.last() != ')' && textView.text.last() != ','
                     && textView.text.last() != 'π' && textView.text.last() != 'e'
-                    && textView.text.last() != 'x') {
+                    && textView.text.last() != '°') {
                     textView.append(numberPIButton.text.toString())
                     addedNumber = true
                 }
@@ -1017,7 +1163,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
             if (textView.text.isNotEmpty()) {
                 if (textView.text.last() != ')' && textView.text.last() != ','
                     && textView.text.last() != 'π' && textView.text.last() != 'e'
-                    && textView.text.last() != 'x') {
+                    && textView.text.last() != '°') {
                     textView.append(numberEulerButton.text.toString())
                     addedNumber = true
                 }
@@ -1043,8 +1189,11 @@ class AdvancedKeyboard @JvmOverloads constructor(
             clearButton.setBackgroundResource(clickedButtonStyle)
 
             bracketsCounter = 0
+            operatorsOccurrence.clear()
+            bracketsLevel.clear()
+            functionLevel = 0
+            functionEnds.clear()
             commaUsed = false
-            addedDegrees = false
             textView.text = ""
 
             if (!functionChartMode) {
@@ -1067,10 +1216,12 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     val text = openBracketButton.text.toString()
                     textView.append(text)
                     bracketsCounter++
+                    bracketsLevel.addLast(false)
                 }
             } else {
                 textView.append(openBracketButton.text)
                 bracketsCounter++
+                bracketsLevel.addLast(false)
             }
 
             Handler(Looper.getMainLooper()).postDelayed({
@@ -1091,6 +1242,16 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     val text = closeBracketButton.text.toString()
                     textView.append(text)
                     bracketsCounter--
+
+                    if (bracketsLevel.last()) {
+                        functionEnds.addLast(textView.text.length-1)
+                        functionLevel--
+
+                        if (functionLevel == 0) {
+                            degreesInUse = false
+                        }
+                    }
+                    bracketsLevel.removeLast()
                 }
             }
 
@@ -1114,7 +1275,6 @@ class AdvancedKeyboard @JvmOverloads constructor(
                             while (textView.text.isNotEmpty() && textView.text.last().isLetter()) {
                                 textView.text = textView.text.dropLast(1)
                             }
-
                             deleted = true
                             break
                         }
@@ -1122,16 +1282,62 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     if (!deleted) {
                         textView.text = textView.text.dropLast(1)
                     }
+                    bracketsCounter--
+
+                    if (bracketsLevel.last()) {
+                        functionLevel--
+                    }
+                    bracketsLevel.removeLast()
+                }
+                else if (textView.text.last() == ')') {
+                    if (functionEnds.isNotEmpty()) {
+                        if (textView.text.length-1 == functionEnds.last()) {
+                            bracketsLevel.addLast(true)
+                            functionLevel++
+                            functionEnds.removeLast()
+                            if (degreesInUse) {
+                                addDegree = true
+                            }
+                        }
+                        else {
+                            bracketsLevel.addLast(false)
+                        }
+                    }
+                    else {
+                        bracketsLevel.addLast(false)
+                    }
+
+                    textView.text = textView.text.dropLast(1)
+                    bracketsCounter++
+                }
+                else if (textView.text.last() == '°') {
+                    textView.text = textView.text.dropLast(1)
+
+                    if (textView.text.last().isDigit()) {
+                        textView.text = textView.text.dropLast(1)
+
+                        if (textView.text.last().isDigit()) {
+                            textView.append("°")
+                        }
+                    }
+                }
+                else if (textView.text.last() == ',') {
+                    commaUsed = false
+                    textView.text = textView.text.dropLast(1)
                 }
                 else {
-                    if (textView.text.last() == ',') {
-                        commaUsed = false
+                    if(operatorsOccurrence.isNotEmpty()) {
+                        if (textView.text.length-1 == operatorsOccurrence.last().occurrence) {
+                            addDegree = operatorsOccurrence.last().degrees
+                            operatorsOccurrence.removeLast()
+                        }
                     }
                     textView.text = textView.text.dropLast(1)
                 }
-            }
-            else {
-                resultTextView.text = ""
+
+                if (textView.text.isEmpty()) {
+                    resultTextView.text = ""
+                }
             }
 
             if (!functionChartMode) {
@@ -1156,6 +1362,13 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         functionsBeginnings.add(textView.text.length-1)
                         bracketsCounter++
                         commaUsed = false
+                        functionLevel++
+                        bracketsLevel.addLast(true)
+
+                        if (!radians) {
+                            degreesInUse = true
+                            addDegree = true
+                        }
                     }
                 }
                 else {
@@ -1164,6 +1377,13 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     functionsBeginnings.add(textView.text.length-1)
                     bracketsCounter++
                     commaUsed = false
+                    functionLevel++
+                    bracketsLevel.addLast(true)
+
+                    if (!radians) {
+                        degreesInUse = true
+                        addDegree = true
+                    }
                 }
 
                 Handler(Looper.getMainLooper()).postDelayed({
@@ -1184,6 +1404,9 @@ class AdvancedKeyboard @JvmOverloads constructor(
             else if (!secondFunctions) {
                 degreeButton.text = context.getString(R.string.DegreeCalc)
                 radians = false
+                if (!degreesInUse) {
+                    addDegree = true
+                }
             }
 
             Handler(Looper.getMainLooper()).postDelayed({
