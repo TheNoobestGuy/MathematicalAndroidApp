@@ -206,7 +206,7 @@ class AddSubtractEndActivity : ComponentActivity() {
         correctAnswersValue.text = correctAnswersCounter.toString()
         incorrectAnswersValue.text = incorrectAnswersCounter.toString()
 
-        // Handle the back press
+        // Handle the back button press
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 val intent = Intent(this@AddSubtractEndActivity, PracticeActivity()::class.java)

@@ -16,6 +16,7 @@ class AdvancedCalculatorActivity : ComponentActivity() {
 
         // Get equation
         val equation: TextView = findViewById(R.id.EquationBar)
+        val history: TextView = findViewById(R.id.History)
         val result: TextView = findViewById(R.id.ResultBar)
 
         // Get GUI
@@ -28,7 +29,7 @@ class AdvancedCalculatorActivity : ComponentActivity() {
         keyboard.openBracketButtonClick(equation)
         keyboard.closeBracketButtonClick(equation)
         keyboard.powerButtonClick(equation)
-        keyboard.commaButtonClick(equation)
+        keyboard.dotButtonClick(equation)
         keyboard.rootButtonClick(equation)
         keyboard.factorialButtonClick(equation, result)
         keyboard.numberPIButtonClick(equation, result)
@@ -36,13 +37,13 @@ class AdvancedCalculatorActivity : ComponentActivity() {
         keyboard.percentButtonClick(equation, result)
         keyboard.fractionButtonClick(equation)
 
-        keyboard.enterButtonClick()
+        keyboard.enterButtonClick(equation, result, history)
         keyboard.deleteButtonClick(equation,result)
-        keyboard.clearButtonClick(equation, result)
+        keyboard.clearButtonClick(equation, result, history)
         keyboard.degreeButtonClick()
         keyboard.changeFunctionsButtonClick()
 
-        // Handle the back press
+        // Handle the back button press
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 val intent = Intent(this@AdvancedCalculatorActivity, ToolsActivity()::class.java)

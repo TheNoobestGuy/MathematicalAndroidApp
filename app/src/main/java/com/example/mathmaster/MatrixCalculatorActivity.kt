@@ -339,7 +339,7 @@ class MatrixCalculatorActivity : ComponentActivity() {
             }, wait)
         }
 
-        // Handle the back press
+        // Handle the back button press
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 val intent = Intent(this@MatrixCalculatorActivity, MatrixCalculatorMenuActivity()::class.java)

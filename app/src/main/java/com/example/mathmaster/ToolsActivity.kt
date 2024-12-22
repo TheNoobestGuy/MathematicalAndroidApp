@@ -43,7 +43,7 @@ class ToolsActivity : ComponentActivity() {
         clickFunction(advancedCalcButton, clickedButtonStyle, AdvancedCalculatorActivity())
         clickFunction(functionChartButton, clickedButtonStyle, FunctionChartActivity())
 
-        // Handle the back press
+        // Handle the back button press
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 val intent = Intent(this@ToolsActivity, MainMenuActivity()::class.java)

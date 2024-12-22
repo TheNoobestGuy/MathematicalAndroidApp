@@ -33,7 +33,7 @@ class StatisticsActivity : ComponentActivity() {
         // Style of clicked button
         val clickedButtonStyle = R.drawable.menubutton_background_clicked
 
-        // Handle the back press
+        // Handle the back button press
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 val intent = Intent(this@StatisticsActivity, MainMenuActivity()::class.java)

@@ -41,7 +41,7 @@ class ChallengeActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
 
-        // Handle the back press
+        // Handle the back button press
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 val intent = Intent(this@ChallengeActivity, MainMenuActivity()::class.java)

@@ -204,7 +204,7 @@ class MultiplyEndActivity : ComponentActivity() {
         correctAnswersValue.text = correctAnswersCounter.toString()
         incorrectAnswersValue.text = incorrectAnswersCounter.toString()
 
-        // Handle the back press
+        // Handle the back button press
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 val intent = Intent(this@MultiplyEndActivity, PracticeActivity()::class.java)

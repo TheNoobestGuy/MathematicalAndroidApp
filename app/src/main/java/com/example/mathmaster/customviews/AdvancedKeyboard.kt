@@ -7,6 +7,7 @@ import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.widget.LinearLayout
 import android.widget.Button
+import android.widget.GridLayout
 import android.widget.TextView
 import kotlin.math.*
 import com.example.mathmaster.R
@@ -52,7 +53,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
     // Special calculator buttons
     private val powerButton: Button
-    private val commaButton: Button
+    private val dotButton: Button
     private val percentButton: Button
     private val factorialButton: Button
     private val fractionButton: Button
@@ -60,7 +61,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
     private val numberEulerButton: Button
     private val rootButton: Button
 
-    private var commaUsed: Boolean = false
+    private var dotUsed: Boolean = false
 
     // Functions of calculator
     private var functionsBeginnings: MutableList<Int> = mutableListOf()
@@ -146,7 +147,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
         // Special operations buttons
         powerButton = findViewById(R.id.PowerTo)
-        commaButton = findViewById(R.id.Comma)
+        dotButton = findViewById(R.id.Dot)
         percentButton = findViewById(R.id.Procent)
         factorialButton = findViewById(R.id.Factorial)
         fractionButton = findViewById(R.id.Fraction)
@@ -288,7 +289,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 intConverter++
 
                 // Decimal number
-                if (lastChar == ',') {
+                if (lastChar == '.') {
                     val decimalNumber: Double = calculateNumber(numBuffer, intConverter, true)
                     val outputNumber: Double = numberBase + decimalNumber
 
@@ -305,10 +306,10 @@ class AdvancedKeyboard @JvmOverloads constructor(
             else {
                 // Append number that is in buffer
                 if (numBuffer.isNotEmpty() && whatFunction == '0') {
-                    if (lastChar != ',') {
+                    if (lastChar != '.') {
                         val outputNumber: Double = calculateNumber(numBuffer, intConverter, false)
 
-                        if (element == ',') {
+                        if (element == '.') {
                             numberBase = outputNumber
                             numBuffer.clear()
                         }
@@ -320,18 +321,19 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
                 // Recognize function
                 if (whatFunction != 'a') {
-                    when (element) {
-                        's' -> if (whatFunction != 'c' && whatFunction != 'o') whatFunction = element
-                        'c' -> whatFunction = element
-                        't' -> whatFunction = element
-                        'l' -> whatFunction = element
-                        'a' -> if (whatFunction != 't')whatFunction = element
-                    }
-
                     if (whatFunction == 'l') {
                         when (element) {
                             'g' -> whatFunction = element
                             'n' -> whatFunction = element
+                        }
+                    }
+                    else {
+                        when (element) {
+                            's' -> if (whatFunction != 'c' && whatFunction != 'o') whatFunction = element
+                            'c' -> whatFunction = element
+                            't' -> whatFunction = element
+                            'l' -> whatFunction = element
+                            'a' -> if (whatFunction != 't')whatFunction = element
                         }
                     }
                 }
@@ -343,87 +345,73 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     }
                 }
 
-                // Handle functions and root
-                if (whatFunction != '0' && element == '(' || element == '√') {
-                    var addMultiplication = false
-
-                    // Append multiplication if before number is other function or constants
-                    if (lastChar == 'π' || lastChar == 'e') {
-                        addMultiplication = true
-                    }
-                    else if (transformedEquation.isNotEmpty() && numBuffer.isEmpty()) {
-                        if (transformedEquation.last() != '×' && transformedEquation.last() != '/'
-                            && transformedEquation.last() != '+' && transformedEquation.last() != '-'
-                            && transformedEquation.last() != '(') {
-                            addMultiplication = true
-                        }
-                    }
-
-                    // Append number that is before function as multiplication
-                    if (numBuffer.isNotEmpty()) {
-                        addMultiplication = true
-                    }
-
-                    // Act as it is multiplication when some number is before function
-                    if (lastChar == ',') {
-                        addMultiplication = true
-                    }
-
-                    if (addMultiplication) {
-                        if (inRoot) {
-                            if (additionalOpenedBrackets.last().isNotEmpty()) {
-                                transformedEquation.add(additionalOpenedBrackets.last().removeLast())
-                            }
-                        }
-
-                        if (powerToOpenedBrackets.isNotEmpty()) {
-                            while (powerToOpenedBrackets.isNotEmpty() &&
-                                powerToOpenedBrackets.last() >= additionalOpenedBrackets.size - 1
-                            ) {
-                                while (additionalOpenedBrackets.last().isNotEmpty()) {
-                                    transformedEquation.add(
-                                        additionalOpenedBrackets.last().removeLast()
-                                    )
-                                }
-                                powerToOpenedBrackets.removeLast()
-                            }
-
-                            if (powerToOpenedBrackets.isEmpty() && addDegree) {
-                                transformedEquation.add(')')
-                                transformedEquation.add('°')
-                                transformedEquation.add(')')
-                                addDegree = false
-                            }
-                        }
-
-                        if(!multiplyDivide) {
-                            addBracketIndex = findNewBracketIndex(transformedEquation)
-                            transformedEquation.add(addBracketIndex, '(')
-                            additionalOpenedBrackets.last().add(')')
-                        }
-
-                        transformedEquation.add('×')
-                        multiplyDivide = true
-                    }
-
-                    if (element == '√') {
-                        transformedEquation.add(element)
-                        additionalOpenedBrackets.last().add(')')
-                        inRoot = true
-                    }
-                    else {
-                        transformedEquation.add(whatFunction)
-                        whatFunction = '0'
-                        inRoot = false
-                    }
-                }
-
                 // Handle operations
                 when (element) {
-                    '(' -> {
-                        additionalOpenedBrackets.add(mutableListOf())
-                        bracketsInput.add(')')
-                        transformedEquation.add(element)
+                    '(', '√'-> {
+                        var addMultiplication = false
+
+                        // Append multiplication if before number is other function or constants
+                        if (transformedEquation.isNotEmpty()) {
+                            if (transformedEquation.last() != '×' && transformedEquation.last() != '/'
+                                && transformedEquation.last() != '+' && transformedEquation.last() != '-'
+                                && transformedEquation.last() != '(' && transformedEquation.last() != '√') {
+                                addMultiplication = true
+                            }
+                        }
+
+                        if (addMultiplication) {
+                            if (inRoot) {
+                                if (additionalOpenedBrackets.last().isNotEmpty()) {
+                                    transformedEquation.add(additionalOpenedBrackets.last().removeLast())
+                                }
+                            }
+
+                            if (powerToOpenedBrackets.isNotEmpty()) {
+                                while (powerToOpenedBrackets.isNotEmpty() &&
+                                    powerToOpenedBrackets.last() >= additionalOpenedBrackets.size - 1
+                                ) {
+                                    while (additionalOpenedBrackets.last().isNotEmpty()) {
+                                        transformedEquation.add(
+                                            additionalOpenedBrackets.last().removeLast()
+                                        )
+                                    }
+                                    powerToOpenedBrackets.removeLast()
+                                }
+
+                                if (powerToOpenedBrackets.isEmpty() && addDegree) {
+                                    transformedEquation.add(')')
+                                    transformedEquation.add('°')
+                                    transformedEquation.add(')')
+                                    addDegree = false
+                                }
+                            }
+
+                            if(!multiplyDivide) {
+                                addBracketIndex = findNewBracketIndex(transformedEquation)
+                                transformedEquation.add(addBracketIndex, '(')
+                                additionalOpenedBrackets.last().add(')')
+                            }
+
+                            transformedEquation.add('×')
+                            multiplyDivide = true
+                        }
+
+                        if (element == '√') {
+                            transformedEquation.add(element)
+                            additionalOpenedBrackets.last().add(')')
+                            inRoot = true
+                        }
+                        else {
+                            if (whatFunction != '0') {
+                                transformedEquation.add(whatFunction)
+                                whatFunction = '0'
+                                inRoot = false
+                            }
+
+                            additionalOpenedBrackets.add(mutableListOf())
+                            bracketsInput.add(')')
+                            transformedEquation.add(element)
+                        }
                     }
                     ')' -> {
                         if (powerToOpenedBrackets.isNotEmpty()) {
@@ -589,7 +577,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
             }
         }
         // Add number that lasts in buffer
-        if (numBuffer.isNotEmpty() && lastChar != ',') {
+        if (numBuffer.isNotEmpty() && lastChar != '.') {
             val outputNumber: Double = calculateNumber(numBuffer, intConverter, false)
             transformedEquation.add(outputNumber)
         }
@@ -805,6 +793,10 @@ class AdvancedKeyboard @JvmOverloads constructor(
     }
 
     private fun resultOfCalculate(textView: TextView, resultTextView: TextView) {
+        if (clearButton.text == "AC") {
+            clearButton.text = "C"
+        }
+
         // Calculation
         val equation = transformEquation(textView.text.toString())
         val resultOfCalculations = calculate(equation, 0)
@@ -814,23 +806,62 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 resultTextView.text = context.getString(R.string.Error)
             }
             else {
-                resultTextView.append("= ")
-                resultTextView.text = resultOfCalculations.first.toFloat().toString()
+                val text = "= " + resultOfCalculations.first.toFloat().toString()
+                resultTextView.text = text
             }
         } else {
             if (resultOfCalculations.first.isNaN()) {
                 resultTextView.text = context.getString(R.string.Error)
             }
             else {
-                resultTextView.append("= ")
-                resultTextView.text = resultOfCalculations.first.toInt().toString()
+                val text = "= " + resultOfCalculations.first.toInt().toString()
+                resultTextView.text = text
             }
         }
     }
 
-    fun enterButtonClick() {
+    fun enterButtonClick(textView: TextView, resultTextView: TextView, historyTextView: TextView) {
         enterButton.setOnClickListener {
             enterButton.setBackgroundResource(clickedButtonStyle)
+
+            // Update history text view
+            val equation = transformEquation(textView.text.toString())
+            var textBuffer = ""
+            for (element in equation) {
+                if (element.toString()[0].isLetter()) {
+                    when (element) {
+                        's' -> textBuffer += "sin"
+                        'c' -> textBuffer += "cos"
+                        't' -> textBuffer += "tan"
+                        'g' -> textBuffer += "lg"
+                        'n' -> textBuffer += "ln"
+                        'i' -> textBuffer += "arcsin"
+                        'o' -> textBuffer += "arccos"
+                        'a' -> textBuffer += "arctan"
+                    }
+                }
+                else if (element.toString()[0].isDigit()) {
+                    textBuffer += if (checkIsItDouble(element as Double)) {
+                        element.toFloat().toString()
+                    } else {
+                        element.toFloat().toInt().toString()
+                    }
+                }
+                else {
+                    textBuffer += element.toString()
+                }
+            }
+            historyTextView.append("\n")
+            historyTextView.append("\n")
+            historyTextView.append(textBuffer)
+            historyTextView.append("\n")
+            historyTextView.append(resultTextView.text)
+
+            // Update input and result text views
+            if (resultTextView.text.isNotEmpty()) {
+                textView.text = resultTextView.text.substring(2)
+            }
+            resultTextView.text = ""
 
             Handler(Looper.getMainLooper()).postDelayed({
                 enterButton.setBackgroundResource(unClickedButtonStyle)
@@ -927,13 +958,13 @@ class AdvancedKeyboard @JvmOverloads constructor(
                             }
                         }
 
-                        commaUsed = false
+                        dotUsed = false
                     }
                     else if (textView.text.last() == '(') {
                         if (basicCalcButtons[i].text == "-") {
                             textView.append(basicCalcButtons[i].text)
                         }
-                        commaUsed = false
+                        dotUsed = false
                     }
                     else if (textView.text.last() == '°') {
                         val operator = basicCalcButtons[i].text
@@ -945,14 +976,14 @@ class AdvancedKeyboard @JvmOverloads constructor(
                                     functionLevel, functionIndex))
                         }
 
-                        commaUsed = false
+                        dotUsed = false
                     }
                 }
                 else {
                     if (basicCalcButtons[i].text == "-") {
                         textView.append(basicCalcButtons[i].text)
                     }
-                    commaUsed = false
+                    dotUsed = false
                 }
 
                 Handler(Looper.getMainLooper()).postDelayed({
@@ -989,31 +1020,31 @@ class AdvancedKeyboard @JvmOverloads constructor(
         }
     }
 
-    fun commaButtonClick(textView: TextView) {
-        commaButton.setOnClickListener {
-            commaButton.setBackgroundResource(clickedButtonStyle)
+    fun dotButtonClick(textView: TextView) {
+        dotButton.setOnClickListener {
+            dotButton.setBackgroundResource(clickedButtonStyle)
 
-            if (!commaUsed) {
+            if (!dotUsed) {
                 if (textView.text.isNotEmpty()) {
                     if (textView.text.last().isDigit() || textView.text.last() == '°') {
                         if (textView.text.last() == '°') {
                             textView.text = textView.text.dropLast(1)
                         }
 
-                        val text = commaButton.text
+                        val text = dotButton.text
                         textView.append(text)
 
                         if (!radians) {
                             textView.append("°")
                         }
 
-                        commaUsed = true
+                        dotUsed = true
                     }
                 }
             }
 
             Handler(Looper.getMainLooper()).postDelayed({
-                commaButton.setBackgroundResource(unClickedButtonStyle)
+                dotButton.setBackgroundResource(unClickedButtonStyle)
             }, 100)
         }
     }
@@ -1134,7 +1165,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
             var addedNumber = false
 
             if (textView.text.isNotEmpty()) {
-                if (textView.text.last() != ',' && textView.text.last() != 'π'
+                if (textView.text.last() != '.' && textView.text.last() != 'π'
                     && textView.text.last() != 'e' && textView.text.last() != '°') {
                     textView.append(numberPIButton.text.toString())
                     addedNumber = true
@@ -1163,7 +1194,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
             var addedNumber = false
 
             if (textView.text.isNotEmpty()) {
-                if (textView.text.last() != ',' && textView.text.last() != 'π'
+                if (textView.text.last() != '.' && textView.text.last() != 'π'
                     && textView.text.last() != 'e' && textView.text.last() != '°') {
                     textView.append(numberEulerButton.text.toString())
                     addedNumber = true
@@ -1185,7 +1216,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
         }
     }
 
-    fun clearButtonClick(textView: TextView, resultTextView: TextView) {
+    fun clearButtonClick(textView: TextView, resultTextView: TextView, historyTextView: TextView) {
         clearButton.setOnClickListener {
             clearButton.setBackgroundResource(clickedButtonStyle)
 
@@ -1194,12 +1225,17 @@ class AdvancedKeyboard @JvmOverloads constructor(
             bracketsLevel.clear()
             functionLevel = 0
             functionEnds.clear()
-            commaUsed = false
+            dotUsed = false
             textView.text = ""
 
             if (!functionChartMode) {
-                resultTextView.text = ""
+                if (clearButton.text == "AC") {
+                    historyTextView.text = ""
                 }
+
+                clearButton.text = "AC"
+                resultTextView.text = ""
+            }
 
             Handler(Looper.getMainLooper()).postDelayed({
                 clearButton.setBackgroundResource(unClickedButtonStyle)
@@ -1212,10 +1248,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
             openBracketButton.setBackgroundResource(clickedButtonStyle)
 
             if (textView.text.isNotEmpty()) {
-                if (textView.text.last() != ')' && textView.text.last() != '!'
-                    && !textView.text.last().isDigit() && textView.text.last() != 'π'
-                    &&  textView.text.last() != 'e' &&  textView.text.last() != '°'
-                    &&  textView.text.last() != '%' &&  textView.text.last() != 'x') {
+                if (textView.text.last() != '°') {
                     val text = openBracketButton.text.toString()
                     textView.append(text)
                     bracketsCounter++
@@ -1329,8 +1362,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         }
                     }
                 }
-                else if (textView.text.last() == ',') {
-                    commaUsed = false
+                else if (textView.text.last() == '.') {
+                    dotUsed = false
                     textView.text = textView.text.dropLast(1)
                 }
                 else {
@@ -1364,7 +1397,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 button.setBackgroundResource(clickedButtonStyle)
 
                 if (textView.text.isNotEmpty()) {
-                    if (textView.text.last() != ',') {
+                    if (textView.text.last() != '.') {
                         if (functionLevel == 0) {
                             functionIndex++
                         }
@@ -1373,7 +1406,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         textView.append(text)
                         functionsBeginnings.add(textView.text.length-1)
                         bracketsCounter++
-                        commaUsed = false
+                        dotUsed = false
                         functionLevel++
                         bracketsLevel.addLast(true)
 
@@ -1392,7 +1425,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     textView.append(text)
                     functionsBeginnings.add(textView.text.length-1)
                     bracketsCounter++
-                    commaUsed = false
+                    dotUsed = false
                     functionLevel++
                     bracketsLevel.addLast(true)
 
@@ -1471,6 +1504,17 @@ class AdvancedKeyboard @JvmOverloads constructor(
     fun setFunctionChartMode() {
         functionChartMode = true
         variableButton.text = "x"
+        enterButton.text = ""
+
+        var params = enterButton.layoutParams as GridLayout.LayoutParams
+        params.rowSpec = GridLayout.spec(6, 1f)
+        params.columnSpec = GridLayout.spec(0, 1f)
+        enterButton.layoutParams = params
+
+        params = variableButton.layoutParams as GridLayout.LayoutParams
+        params.rowSpec = GridLayout.spec(6, 1f)
+        params.columnSpec = GridLayout.spec(4, 1f)
+        variableButton.layoutParams = params
     }
 
     fun variableButtonClick(textView: TextView) {
@@ -1478,7 +1522,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
             variableButton.setBackgroundResource(clickedButtonStyle)
 
             if (textView.text.isNotEmpty()) {
-                if (textView.text.last() != ',' && textView.text.last() != 'x') {
+                if (textView.text.last() != '.' && textView.text.last() != 'x') {
                     textView.append(variableButton.text.toString())
                 }
             } else {

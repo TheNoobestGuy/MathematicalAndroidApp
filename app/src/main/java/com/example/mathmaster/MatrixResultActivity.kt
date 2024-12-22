@@ -133,7 +133,7 @@ class MatrixResultActivity : ComponentActivity() {
         clickFunction(matrixMenu.getSubtractButton(), clickedButtonStyle, MatrixCalculatorActivity(),
             "-", resultMatrix, resultMatrixRows, resultMatrixColumns)
 
-        // Handle the back press
+        // Handle the back button press
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 val intent = Intent(this@MatrixResultActivity, MatrixCalculatorMenuActivity()::class.java)

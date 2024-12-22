@@ -47,7 +47,7 @@ class FunctionChartActivity : ComponentActivity() {
         keyboard.openBracketButtonClick(equation)
         keyboard.closeBracketButtonClick(equation)
         keyboard.powerButtonClick(equation)
-        keyboard.commaButtonClick(equation)
+        keyboard.dotButtonClick(equation)
         keyboard.rootButtonClick(equation)
         keyboard.factorialButtonClick(equation, blank)
         keyboard.numberPIButtonClick(equation, blank)
@@ -56,9 +56,8 @@ class FunctionChartActivity : ComponentActivity() {
         keyboard.fractionButtonClick(equation)
         keyboard.variableButtonClick(equation)
 
-        keyboard.enterButtonClick()
         keyboard.deleteButtonClick(equation, blank)
-        keyboard.clearButtonClick(equation, blank)
+        keyboard.clearButtonClick(equation, blank, blank)
         keyboard.degreeButtonClick()
         keyboard.changeFunctionsButtonClick()
 
@@ -111,7 +110,7 @@ class FunctionChartActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
 
-        // Handle the back press
+        // Handle the back button press
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 val intent = Intent(this@FunctionChartActivity, ToolsActivity()::class.java)
