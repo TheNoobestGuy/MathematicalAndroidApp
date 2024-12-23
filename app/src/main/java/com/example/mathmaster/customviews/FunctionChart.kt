@@ -6,6 +6,7 @@ import android.graphics.DashPathEffect
 import android.graphics.Paint
 import android.util.AttributeSet
 import android.view.View
+import android.widget.TextView
 import com.example.mathmaster.R
 import kotlin.math.round
 import kotlin.math.abs
@@ -18,6 +19,8 @@ class FunctionChart @JvmOverloads constructor(
 
     private val paint = Paint()
     private var points: MutableList<Pair<Float, Float>> = mutableListOf()
+    private var asymptotes: MutableList<Float> = mutableListOf()
+    private var zeroPlaces: MutableList<Float> = mutableListOf()
 
     private var gridSpacing: Float = 0f
     private val gridColor = context.getColor(R.color.VeryLightGrey)
@@ -76,7 +79,6 @@ class FunctionChart @JvmOverloads constructor(
         }
 
         // Draw a function
-        val asymptotes: MutableList<Float> = mutableListOf()
         paint.style = Paint.Style.STROKE
         paint.color = linesColor
         paint.strokeWidth = 8f
@@ -141,7 +143,34 @@ class FunctionChart @JvmOverloads constructor(
         return number % 1 == 0f
     }
 
+    fun updateInformation(zeroPlacesTextView: TextView, asymptotesTextView: TextView) {
+        zeroPlacesTextView.text = context.getString(R.string.ZeroPlaces)
+        asymptotesTextView.text = context.getString(R.string.Asymptotes)
+
+        var added = false
+        for (place in zeroPlaces) {
+            val text = " $place,"
+            zeroPlacesTextView.append(text)
+            added = true
+        }
+        if (added) {
+            zeroPlacesTextView.text = zeroPlacesTextView.text.dropLast(1)
+        }
+
+        added = false
+        for (asymptote in asymptotes) {
+            val text = " $asymptote,"
+            asymptotesTextView.append(text)
+            added = true
+        }
+        if (added) {
+            asymptotesTextView.text = asymptotesTextView.text.dropLast(1)
+        }
+    }
+
     fun drawAFunction(input: String, calculator: AdvancedKeyboard) {
+        zeroPlaces.clear()
+        asymptotes.clear()
         points.clear()
 
         paint.color = axisColor
@@ -154,10 +183,17 @@ class FunctionChart @JvmOverloads constructor(
             var x = -(width/(gridSpacing))/2f
             var iterator = 0f
             while (iterator <= width) {
+                // Find Y value for X
                 val equationAfterSubstitution = substituteVariable(equation, x.toDouble())
                 val bufferX = width/2f + (x * gridSpacing)
                 val y = calculator.calculate(equationAfterSubstitution, 0)
 
+                // Check is it a zero place
+                if (y.first == 0.0) {
+                    zeroPlaces.add(x)
+                }
+
+                // Append point
                 y.first = (height/2f) - (y.first*(gridSpacing))
                 points.add(Pair(bufferX, y.first.toFloat()))
 

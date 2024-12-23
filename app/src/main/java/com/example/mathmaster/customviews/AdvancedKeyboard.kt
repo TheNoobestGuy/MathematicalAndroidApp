@@ -284,21 +284,23 @@ class AdvancedKeyboard @JvmOverloads constructor(
         additionalOpenedBrackets.add(mutableListOf())
 
         // Delete last redundant bracket or function for further transform
-        if (equation.last() == '(') {
-            while (equation.isNotEmpty()) {
-                if (equation.last() == '+' || equation.last() == '-'
-                    || equation.last() == '×' || equation.last() == '/'
-                    || equation.last() == ')') {
-                    break
+        if (equation.isNotEmpty()) {
+            if (equation.last() == '(') {
+                while (equation.isNotEmpty()) {
+                    if (equation.last() == '+' || equation.last() == '-'
+                        || equation.last() == '×' || equation.last() == '/'
+                        || equation.last() == ')') {
+                        break
+                    }
+                    equation = equation.dropLast(1)
                 }
-                equation = equation.dropLast(1)
-            }
-            if (equation.isNotEmpty()) {
-                equation = equation.dropLast(1)
+                if (equation.isNotEmpty()) {
+                    equation = equation.dropLast(1)
+                }
             }
         }
 
-        // Transfrom equation for calculations
+        // Transform equation for calculations
         equation.forEach { element ->
             if (element.isDigit()) {
                 // Add digit to buffer
@@ -841,122 +843,20 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
             // Create modified string for history text view
             if (resultTextView.text.isNotEmpty()) {
-                var textBuffer = ""
-                var omitBracket = 0
-                val equation = transformEquation(textView.text.toString())
-                for (element in equation) {
-                    if (element.toString()[0].isLetter()) {
-                        if (textBuffer.isNotEmpty()) {
-                            if (textBuffer.last() == '×') {
-                                textBuffer = textBuffer.dropLast(1)
-                            }
-                        }
-
-                        when (element) {
-                            's' -> textBuffer += "sin"
-                            'c' -> textBuffer += "cos"
-                            't' -> textBuffer += "tan"
-                            'g' -> textBuffer += "lg"
-                            'n' -> textBuffer += "ln"
-                            'i' -> textBuffer += "arcsin"
-                            'o' -> textBuffer += "arccos"
-                            'a' -> textBuffer += "arctan"
-                        }
+                var textBuffer = textView.text.toString()
+                var counter = 0
+                for (char in textBuffer) {
+                    if (char == '(') {
+                        counter++
                     }
-                    else if (element.toString()[0].isDigit()) {
-                        var constant = false
-
-                        if (element == Math.PI) {
-                            if (textBuffer.isNotEmpty()) {
-                                if (textBuffer.last() == '×') {
-                                    textBuffer = textBuffer.dropLast(1)
-                                }
-                            }
-                            textBuffer += 'π'
-                            constant = true
-                        }
-                        else if (element == Math.E) {
-                            if (textBuffer.isNotEmpty()) {
-                                if (textBuffer.last() == '×') {
-                                    textBuffer = textBuffer.dropLast(1)
-                                }
-                            }
-                            textBuffer += 'e'
-                            constant = true
-                        }
-
-                        if (!constant) {
-                            textBuffer += if (checkIsItDouble(element as Double)) {
-                                element.toFloat().toString()
-                            } else {
-                                element.toFloat().toInt().toString()
-                            }
-                        }
-                    }
-                    else if (element == '%' || element == '!' || element == '°') {
-                        val range = textBuffer.length-1 downTo  0
-                        var bracketsCounter = 0
-                        var index = 0
-                        for (i in range) {
-                            if (textBuffer[i] == ')') {
-                                bracketsCounter++
-                            }
-                            else if (textBuffer[i] == '(') {
-                                bracketsCounter--
-                            }
-
-                            if (bracketsCounter == 0) {
-                                index = i-1
-                                break
-                            }
-                        }
-
-                        textBuffer = textBuffer.removeRange(index, index+2)
-                        textBuffer = textBuffer.dropLast(1)
-                        textBuffer += element.toString()
-                        omitBracket++
-                    }
-                    else {
-                        if (element == '√') {
-                            omitBracket++
-                        }
-                        if (element == ')') {
-                            if (omitBracket == 0) {
-                                textBuffer += element.toString()
-                            }
-                            else {
-                                omitBracket--
-                            }
-                        }
-                        else {
-                            textBuffer += element.toString()
-                        }
+                    else if (char == ')') {
+                        counter--
                     }
                 }
 
-                // Delete first and last bracket if possible
-                var bracketsCounter = 0
-                var deleteBracket = 0
-                for (i in textBuffer.indices) {
-                    if (i == 0 && textBuffer[i] != '(') {
-                        break
-                    }
-                    if (textBuffer[i] == '(') {
-                        bracketsCounter++
-                    }
-                    else if (textBuffer[i] == ')') {
-                        deleteBracket = i
-                        bracketsCounter--
-                    }
-
-                    if (bracketsCounter == 0) {
-                        break
-                    }
-                }
-
-                if (deleteBracket == textBuffer.length-1) {
-                    textBuffer = textBuffer.substring(1)
-                    textBuffer = textBuffer.dropLast(1)
+                while (counter > 0) {
+                    textBuffer += ')'
+                    counter--
                 }
 
                 // Update history text view with created string
@@ -1344,7 +1244,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     historyTextView.text = ""
                 }
 
-                clearButton.text = "AC"
+                clearButton.text = context.getString(R.string.AC)
                 resultTextView.text = ""
             }
 

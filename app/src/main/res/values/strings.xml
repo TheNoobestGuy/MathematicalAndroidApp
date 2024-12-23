@@ -68,7 +68,7 @@
 
     <string name="Clear" translatable="false">C</string>
     <string name="Error" translatable="false">ERROR</string>
-
+    <string name="AC" translatable="false">AC</string>
 
     // Matrix calculator
     <string name="RowPlus" translatable="false">Row+</string>
@@ -91,6 +91,9 @@
 
     // Function chart
     <string name="FunctionChart" translatable="false">Function chart</string>
+    <string name="Information" translatable="false">Information</string>
+    <string name="Asymptotes" translatable="false">Asymptotes:</string>
+    <string name="ZeroPlaces" translatable="false">Zero places:</string>
 
     // Statistics
     <string name="StatisticsOverview" translatable="false">Statistics Overview</string>

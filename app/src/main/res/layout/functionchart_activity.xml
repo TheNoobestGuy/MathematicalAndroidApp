@@ -9,12 +9,64 @@
         android:id="@+id/FunctionChart"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toBottomOf="@+id/Blank"
         app:layout_constraintDimensionRatio="1:1"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHeight_percent="0.4"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.3" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/Information"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@drawable/menubutton_background"
+        android:orientation="vertical"
+        android:layout_marginTop="16dp"
+        app:layout_constraintWidth_percent="0.75"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/FunctionChart">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintWidth_percent="0.9">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/Information"
+                android:textColor="@color/White"
+                android:gravity="center"/>
+
+            <TextView
+                android:id="@+id/ZeroPlaces"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/ZeroPlaces"
+                android:layout_marginTop="8dp"
+                android:textColor="@color/White"/>
+
+            <TextView
+                android:id="@+id/Asymptotes"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/Asymptotes"
+                android:layout_marginTop="8dp"
+                android:textColor="@color/White"
+                android:layout_marginBottom="8dp"/>
+
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <Button
         android:id="@+id/SlideButton"
@@ -22,9 +74,9 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginBottom="10dp"
+        android:text="↓"
         android:textSize="20sp"
         android:textStyle="bold"
-        android:text="↓"
         app:layout_constraintBottom_toTopOf="@+id/EquationText"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -36,9 +88,9 @@
         android:layout_height="0dp"
         android:layout_marginBottom="10dp"
         android:gravity="center"
+        android:maxLength="90"
         android:text=""
         android:textSize="15sp"
-        android:maxLength="90"
         app:layout_constraintBottom_toTopOf="@+id/Keyboard"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHeight_percent="0.07"
@@ -62,6 +114,6 @@
         android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"/>
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
