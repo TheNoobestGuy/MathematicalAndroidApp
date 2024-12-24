@@ -19,7 +19,7 @@ class FunctionChart @JvmOverloads constructor(
 
     private val paint = Paint()
     private var points: MutableList<Pair<Float, Float>> = mutableListOf()
-    private var asymptotes: MutableList<Float> = mutableListOf()
+    private var asymptotes: MutableList<Pair<Float, Float>> = mutableListOf()
     private var zeroPlaces: MutableList<Float> = mutableListOf()
 
     private var gridSpacing: Float = 0f
@@ -82,20 +82,12 @@ class FunctionChart @JvmOverloads constructor(
         paint.style = Paint.Style.STROKE
         paint.color = linesColor
         paint.strokeWidth = 8f
-        var asymptote = false
         for (i in 0 until points.size - 1) {
             val (x1, y1) = points[i]
             val (x2, y2) = points[i + 1]
 
-            if (abs(y1-y2) >= height) {
-                if (!asymptote) {
-                    asymptotes.add(x1)
-                    asymptote = true
-                }
-            }
-            else {
+            if (!(abs(y1-y2) >= height)) {
                 canvas.drawLine(x1, y1, x2, y2, paint)
-                asymptote = false
             }
         }
 
@@ -103,8 +95,8 @@ class FunctionChart @JvmOverloads constructor(
         paint.strokeWidth = 4f
         paint.color = context.getColor(R.color.LightGrey)
         paint.pathEffect = dashEffect
-        for (a in asymptotes) {
-            canvas.drawLine(a, 0f, a, height.toFloat(), paint)
+        for (asymptote in asymptotes) {
+            canvas.drawLine(asymptote.first, 0f, asymptote.first, height.toFloat(), paint)
         }
 
         // Draw a frame
@@ -159,7 +151,7 @@ class FunctionChart @JvmOverloads constructor(
 
         added = false
         for (asymptote in asymptotes) {
-            val text = " $asymptote,"
+            val text = " ${asymptote.second},"
             asymptotesTextView.append(text)
             added = true
         }
@@ -179,6 +171,8 @@ class FunctionChart @JvmOverloads constructor(
         val equation = calculator.transformEquation(input)
 
         // Draw function
+        var lastPoint = 0.0
+        var addedAsymptote = false
         if (equation.isNotEmpty()) {
             var x = -(width/(gridSpacing))/2f
             var iterator = 0f
@@ -193,10 +187,24 @@ class FunctionChart @JvmOverloads constructor(
                     zeroPlaces.add(x)
                 }
 
-                // Append point
                 y.first = (height/2f) - (y.first*(gridSpacing))
-                points.add(Pair(bufferX, y.first.toFloat()))
 
+                // Check is it asymptote
+                if (abs(lastPoint-y.first) >= height) {
+                    if ((lastPoint > 0 && y.first < 0) || (lastPoint < 0 && y.first > 0)) {
+                        if (!addedAsymptote) {
+                            asymptotes.add(Pair(bufferX, x))
+                            points.add(Pair(bufferX, y.first.toFloat()))
+                            addedAsymptote = true
+                        }
+                    }
+                }
+                else {
+                    points.add(Pair(bufferX, y.first.toFloat()))
+                    addedAsymptote = false
+                }
+
+                lastPoint = y.first
                 x = round(x*100+1)/100
                 if (noDecimalPoint(x)) {
                     iterator += gridSpacing
