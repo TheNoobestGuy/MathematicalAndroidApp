@@ -136,8 +136,13 @@ class FunctionChart @JvmOverloads constructor(
     }
 
     fun updateInformation(zeroPlacesTextView: TextView, asymptotesTextView: TextView) {
-        zeroPlacesTextView.text = context.getString(R.string.ZeroPlaces)
-        asymptotesTextView.text = context.getString(R.string.Asymptotes)
+        // Zero places
+        if (zeroPlaces.size == 1) {
+            zeroPlacesTextView.text = context.getString(R.string.ZeroPlace)
+        }
+        else {
+            zeroPlacesTextView.text = context.getString(R.string.ZeroPlaces)
+        }
 
         var added = false
         for (place in zeroPlaces) {
@@ -148,6 +153,18 @@ class FunctionChart @JvmOverloads constructor(
         if (added) {
             zeroPlacesTextView.text = zeroPlacesTextView.text.dropLast(1)
         }
+        else {
+            val text = " ${context.getString(R.string.Lack)}"
+            zeroPlacesTextView.append(text)
+        }
+
+        // Asymptotes
+        if (asymptotes.size == 1) {
+            asymptotesTextView.text = context.getString(R.string.Asymptote)
+        }
+        else {
+            asymptotesTextView.text = context.getString(R.string.Asymptotes)
+        }
 
         added = false
         for (asymptote in asymptotes) {
@@ -157,6 +174,10 @@ class FunctionChart @JvmOverloads constructor(
         }
         if (added) {
             asymptotesTextView.text = asymptotesTextView.text.dropLast(1)
+        }
+        else {
+            val text = " ${context.getString(R.string.Lack)}"
+            asymptotesTextView.append(text)
         }
     }
 
@@ -171,10 +192,13 @@ class FunctionChart @JvmOverloads constructor(
         val equation = calculator.transformEquation(input)
 
         // Draw function
+        val xAxis = (height/2f).toDouble()
+        val xAxisStart = -(width/(gridSpacing))/2f
+        val xAxisEnd = (width/(gridSpacing))/2f
         var lastPoint = 0.0
         var addedAsymptote = false
         if (equation.isNotEmpty()) {
-            var x = -(width/(gridSpacing))/2f
+            var x = xAxisStart
             var iterator = 0f
             while (iterator <= width) {
                 // Find Y value for X
@@ -182,16 +206,11 @@ class FunctionChart @JvmOverloads constructor(
                 val bufferX = width/2f + (x * gridSpacing)
                 val y = calculator.calculate(equationAfterSubstitution, 0)
 
-                // Check is it a zero place
-                if (y.first == 0.0) {
-                    zeroPlaces.add(x)
-                }
-
                 y.first = (height/2f) - (y.first*(gridSpacing))
 
                 // Check is it asymptote
                 if (abs(lastPoint-y.first) >= height) {
-                    if ((lastPoint > 0 && y.first < 0) || (lastPoint < 0 && y.first > 0)) {
+                    if ((lastPoint > xAxis && y.first < xAxis) || (lastPoint < xAxis && y.first > xAxis)) {
                         if (!addedAsymptote) {
                             asymptotes.add(Pair(bufferX, x))
                             points.add(Pair(bufferX, y.first.toFloat()))
@@ -199,9 +218,29 @@ class FunctionChart @JvmOverloads constructor(
                         }
                     }
                 }
+                else if (lastPoint.isNaN() || lastPoint.isInfinite()) {
+                    if (y.first.isInfinite()) {
+                        asymptotes.add(Pair(bufferX, x))
+                        points.add(Pair(bufferX, y.first.toFloat()))
+                        addedAsymptote = true
+                    }
+                }
                 else {
                     points.add(Pair(bufferX, y.first.toFloat()))
                     addedAsymptote = false
+                }
+
+                // Check is it a zero place
+                if (y.first == xAxis) {
+                    zeroPlaces.add(x)
+                }
+                else if (!addedAsymptote) {
+                    if ((lastPoint > xAxis && y.first < xAxis) || (lastPoint < xAxis && y.first > xAxis)) {
+                        val zeroPlace = round((x-0.05f)*100)/100
+                        if (zeroPlace > xAxisStart && zeroPlace < xAxisEnd) {
+                            zeroPlaces.add(zeroPlace)
+                        }
+                    }
                 }
 
                 lastPoint = y.first

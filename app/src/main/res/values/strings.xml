@@ -93,7 +93,10 @@
     <string name="FunctionChart" translatable="false">Function chart</string>
     <string name="Information" translatable="false">Information</string>
     <string name="Asymptotes" translatable="false">Asymptotes:</string>
+    <string name="Asymptote" translatable="false">Asymptote:</string>
     <string name="ZeroPlaces" translatable="false">Zero places:</string>
+    <string name="ZeroPlace" translatable="false">Zero place:</string>
+    <string name="Lack" translatable="false">Lack</string>
 
     // Statistics
     <string name="StatisticsOverview" translatable="false">Statistics Overview</string>
