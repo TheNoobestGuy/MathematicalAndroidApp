@@ -212,7 +212,12 @@ class FunctionChart @JvmOverloads constructor(
                 if (abs(lastPoint-y.first) >= height) {
                     if ((lastPoint > xAxis && y.first < xAxis) || (lastPoint < xAxis && y.first > xAxis)) {
                         if (!addedAsymptote) {
-                            asymptotes.add(Pair(bufferX, x))
+                            var xValue = x
+                            if (x < 0) {
+                                xValue = round(x*100+1)/100f
+                            }
+
+                            asymptotes.add(Pair(bufferX, xValue))
                             points.add(Pair(bufferX, y.first.toFloat()))
                             addedAsymptote = true
                         }
@@ -223,6 +228,10 @@ class FunctionChart @JvmOverloads constructor(
                         asymptotes.add(Pair(bufferX, x))
                         points.add(Pair(bufferX, y.first.toFloat()))
                         addedAsymptote = true
+                    }
+                    else {
+                        points.add(Pair(bufferX, y.first.toFloat()))
+                        addedAsymptote = false
                     }
                 }
                 else {
@@ -236,9 +245,13 @@ class FunctionChart @JvmOverloads constructor(
                 }
                 else if (!addedAsymptote) {
                     if ((lastPoint > xAxis && y.first < xAxis) || (lastPoint < xAxis && y.first > xAxis)) {
-                        val zeroPlace = round((x-0.05f)*100)/100
-                        if (zeroPlace > xAxisStart && zeroPlace < xAxisEnd) {
-                            zeroPlaces.add(zeroPlace)
+                        if (x > xAxisStart && x < xAxisEnd) {
+                            if (x < 0) {
+                                zeroPlaces.add(x)
+                            }
+                            else {
+                                zeroPlaces.add(round(x*100-1)/100)
+                            }
                         }
                     }
                 }
