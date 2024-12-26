@@ -192,12 +192,14 @@ class FunctionChart @JvmOverloads constructor(
         val equation = calculator.transformEquation(input)
 
         // Draw function
-        val xAxis = (height/2f).toDouble()
-        val xAxisStart = -(width/(gridSpacing))/2f
-        val xAxisEnd = (width/(gridSpacing))/2f
-        var lastPoint = 0.0
-        var addedAsymptote = false
         if (equation.isNotEmpty()) {
+            val xAxis = (height/2f).toDouble()
+            val xAxisStart = -(width/(gridSpacing))/2f
+            val xAxisEnd = (width/(gridSpacing))/2f
+            var lastPoint = 0.0
+            var addedAsymptote = false
+
+            var firstRun = true
             var x = xAxisStart
             var iterator = 0f
             while (iterator <= width) {
@@ -206,24 +208,23 @@ class FunctionChart @JvmOverloads constructor(
                 val bufferX = width/2f + (x * gridSpacing)
                 val y = calculator.calculate(equationAfterSubstitution, 0)
 
-                y.first = (height/2f) - (y.first*(gridSpacing))
+                y.first = round((xAxis - (y.first*(gridSpacing)))*100)/100
 
                 // Check is it asymptote
-                if (abs(lastPoint-y.first) >= height) {
+                if (abs(lastPoint-y.first) >= height && !firstRun) {
                     if ((lastPoint > xAxis && y.first < xAxis) || (lastPoint < xAxis && y.first > xAxis)) {
                         if (!addedAsymptote) {
                             var xValue = x
                             if (x < 0) {
                                 xValue = round(x*100+1)/100f
                             }
-
                             asymptotes.add(Pair(bufferX, xValue))
                             points.add(Pair(bufferX, y.first.toFloat()))
                             addedAsymptote = true
                         }
                     }
                 }
-                else if (lastPoint.isNaN() || lastPoint.isInfinite()) {
+                else if (lastPoint.isNaN() || lastPoint.isInfinite() && !firstRun) {
                     if (y.first.isInfinite()) {
                         asymptotes.add(Pair(bufferX, x))
                         points.add(Pair(bufferX, y.first.toFloat()))
@@ -243,14 +244,14 @@ class FunctionChart @JvmOverloads constructor(
                 if (y.first == xAxis) {
                     zeroPlaces.add(x)
                 }
-                else if (!addedAsymptote) {
+                else if (!addedAsymptote && !firstRun) {
                     if ((lastPoint > xAxis && y.first < xAxis) || (lastPoint < xAxis && y.first > xAxis)) {
                         if (x > xAxisStart && x < xAxisEnd) {
                             if (x < 0) {
                                 zeroPlaces.add(x)
                             }
                             else {
-                                zeroPlaces.add(round(x*100-1)/100)
+                                zeroPlaces.add(round(x*100-1)/100f)
                             }
                         }
                     }
@@ -261,6 +262,7 @@ class FunctionChart @JvmOverloads constructor(
                 if (noDecimalPoint(x)) {
                     iterator += gridSpacing
                 }
+                firstRun = false
             }
         }
 
