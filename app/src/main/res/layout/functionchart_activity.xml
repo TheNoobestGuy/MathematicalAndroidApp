@@ -59,7 +59,7 @@
                 android:id="@+id/Asymptotes"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/Asymptotes"
+                android:text="@string/VerticalAsymptotes"
                 android:layout_marginTop="8dp"
                 android:textColor="@color/White"
                 android:layout_marginBottom="8dp"/>

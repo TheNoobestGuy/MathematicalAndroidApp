@@ -160,10 +160,10 @@ class FunctionChart @JvmOverloads constructor(
 
         // Asymptotes
         if (asymptotes.size == 1) {
-            asymptotesTextView.text = context.getString(R.string.Asymptote)
+            asymptotesTextView.text = context.getString(R.string.VerticalAsymptote)
         }
         else {
-            asymptotesTextView.text = context.getString(R.string.Asymptotes)
+            asymptotesTextView.text = context.getString(R.string.VerticalAsymptotes)
         }
 
         added = false
@@ -193,14 +193,16 @@ class FunctionChart @JvmOverloads constructor(
 
         // Draw function
         if (equation.isNotEmpty()) {
-            val xAxis = (height/2f).toDouble()
-            val xAxisStart = -(width/(gridSpacing))/2f
-            val xAxisEnd = (width/(gridSpacing))/2f
+            val xAxis = round((height/2f).toDouble()*100)/100
             var lastPoint = 0.0
             var addedAsymptote = false
 
+            var zeroPlaceLastPoint = Double.MAX_VALUE
+            var zeroPlace: Float = Float.MAX_VALUE
+            var addZeroPlace = false
+
             var firstRun = true
-            var x = xAxisStart
+            var x = -(width/(gridSpacing))/2f
             var iterator = 0f
             while (iterator <= width) {
                 // Find Y value for X
@@ -208,17 +210,28 @@ class FunctionChart @JvmOverloads constructor(
                 val bufferX = width/2f + (x * gridSpacing)
                 val y = calculator.calculate(equationAfterSubstitution, 0)
 
+                // Check is it a zero place
+                if (abs(zeroPlaceLastPoint) > abs(y.first) && round(y.first*100)/100 >= -0.01 && round(y.first*100)/100 <= 0.01) {
+                    zeroPlace = x
+                    addZeroPlace = true
+                }
+                else if (addZeroPlace) {
+                    zeroPlaces.add(zeroPlace)
+                    zeroPlace = Float.MAX_VALUE
+                    addZeroPlace = false
+                }
+
+                zeroPlaceLastPoint = y.first
                 y.first = round((xAxis - (y.first*(gridSpacing)))*100)/100
 
                 // Check is it asymptote
                 if (abs(lastPoint-y.first) >= height && !firstRun) {
                     if ((lastPoint > xAxis && y.first < xAxis) || (lastPoint < xAxis && y.first > xAxis)) {
                         if (!addedAsymptote) {
-                            var xValue = x
-                            if (x < 0) {
-                                xValue = round(x*100+1)/100f
-                            }
-                            asymptotes.add(Pair(bufferX, xValue))
+                            println("START")
+                            println(lastPoint)
+                            println(y.first)
+                            asymptotes.add(Pair(bufferX, x))
                             points.add(Pair(bufferX, y.first.toFloat()))
                             addedAsymptote = true
                         }
@@ -239,24 +252,9 @@ class FunctionChart @JvmOverloads constructor(
                     points.add(Pair(bufferX, y.first.toFloat()))
                     addedAsymptote = false
                 }
-
-                // Check is it a zero place
-                if (y.first == xAxis) {
-                    zeroPlaces.add(x)
-                }
-                else if (!addedAsymptote && !firstRun) {
-                    if ((lastPoint > xAxis && y.first < xAxis) || (lastPoint < xAxis && y.first > xAxis)) {
-                        if (x > xAxisStart && x < xAxisEnd) {
-                            if (x < 0) {
-                                zeroPlaces.add(x)
-                            }
-                            else {
-                                zeroPlaces.add(round(x*100-1)/100f)
-                            }
-                        }
-                    }
-                }
-
+                println("END")
+                println(lastPoint)
+                println(y.first)
                 lastPoint = y.first
                 x = round(x*100+1)/100
                 if (noDecimalPoint(x)) {
