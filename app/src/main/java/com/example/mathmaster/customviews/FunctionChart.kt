@@ -228,9 +228,6 @@ class FunctionChart @JvmOverloads constructor(
                 if (abs(lastPoint-y.first) >= height && !firstRun) {
                     if ((lastPoint > xAxis && y.first < xAxis) || (lastPoint < xAxis && y.first > xAxis)) {
                         if (!addedAsymptote) {
-                            println("START")
-                            println(lastPoint)
-                            println(y.first)
                             asymptotes.add(Pair(bufferX, x))
                             points.add(Pair(bufferX, y.first.toFloat()))
                             addedAsymptote = true
@@ -252,9 +249,7 @@ class FunctionChart @JvmOverloads constructor(
                     points.add(Pair(bufferX, y.first.toFloat()))
                     addedAsymptote = false
                 }
-                println("END")
-                println(lastPoint)
-                println(y.first)
+
                 lastPoint = y.first
                 x = round(x*100+1)/100
                 if (noDecimalPoint(x)) {
