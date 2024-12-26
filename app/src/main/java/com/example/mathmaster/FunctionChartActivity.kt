@@ -20,6 +20,10 @@ class FunctionChartActivity : ComponentActivity() {
     private var keyboardIsVisible: Boolean = true
     private var screenHeight: Float = 0f
 
+    private var showZeroPlaces:Boolean = false
+    private var showHorizontalAsymptote: Boolean = false
+    private var showVerticalAsymptotes: Boolean = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.functionchart_activity)
@@ -36,6 +40,7 @@ class FunctionChartActivity : ComponentActivity() {
         informationBlock.translationY = -screenHeight
 
         val zeroPlacesText: TextView = findViewById(R.id.ZeroPlaces)
+        val horizontalAsymptote: TextView = findViewById(R.id.HorizontalAsymptote)
         val asymptotesText: TextView = findViewById(R.id.Asymptotes)
 
         // Show chart button
@@ -84,7 +89,7 @@ class FunctionChartActivity : ComponentActivity() {
 
                 // Draw a function
                 functionChart.drawAFunction(equation.text.toString(), keyboard)
-                functionChart.updateInformation(zeroPlacesText, asymptotesText)
+                functionChart.updateInformation(zeroPlacesText, asymptotesText, horizontalAsymptote)
             }
 
             // Start proper animation
@@ -116,6 +121,75 @@ class FunctionChartActivity : ComponentActivity() {
             Handler(Looper.getMainLooper()).postDelayed({
                 slideButton.setBackgroundResource(unClickedButtonStyle)
             },100)
+        }
+
+        // Show zero places
+        zeroPlacesText.setOnClickListener {
+            if (showZeroPlaces) {
+                zeroPlacesText.setTextColor(getColor(R.color.White))
+                functionChart.setZeroPlaces()
+            }
+            else {
+                zeroPlacesText.setTextColor(getColor(R.color.VeryLightGrey))
+                functionChart.setZeroPlaces()
+            }
+
+            if (showHorizontalAsymptote) {
+                horizontalAsymptote.setTextColor(getColor(R.color.White))
+                showHorizontalAsymptote = !showHorizontalAsymptote
+            }
+            if (showVerticalAsymptotes) {
+                asymptotesText.setTextColor(getColor(R.color.White))
+                showVerticalAsymptotes = !showVerticalAsymptotes
+            }
+
+            showZeroPlaces = !showZeroPlaces
+        }
+
+        // Show horizontal asymptote point
+        horizontalAsymptote.setOnClickListener {
+            if (showHorizontalAsymptote) {
+                horizontalAsymptote.setTextColor(getColor(R.color.White))
+                functionChart.setHorizontalAsymptote()
+            }
+            else {
+                horizontalAsymptote.setTextColor(getColor(R.color.VeryLightGrey))
+                functionChart.setHorizontalAsymptote()
+            }
+
+            if (showVerticalAsymptotes) {
+                asymptotesText.setTextColor(getColor(R.color.White))
+                showVerticalAsymptotes = !showVerticalAsymptotes
+            }
+            if (showZeroPlaces) {
+                zeroPlacesText.setTextColor(getColor(R.color.White))
+                showZeroPlaces = !showZeroPlaces
+            }
+
+            showHorizontalAsymptote = !showHorizontalAsymptote
+        }
+
+        // Show vertical asymptotes points
+        asymptotesText.setOnClickListener {
+            if (showVerticalAsymptotes) {
+                asymptotesText.setTextColor(getColor(R.color.White))
+                functionChart.setVerticalAsymptotes()
+            }
+            else {
+                asymptotesText.setTextColor(getColor(R.color.VeryLightGrey))
+                functionChart.setVerticalAsymptotes()
+            }
+
+            if (showHorizontalAsymptote) {
+                horizontalAsymptote.setTextColor(getColor(R.color.White))
+                showHorizontalAsymptote = !showHorizontalAsymptote
+            }
+            if (showZeroPlaces) {
+                zeroPlacesText.setTextColor(getColor(R.color.White))
+                showZeroPlaces = !showZeroPlaces
+            }
+
+            showVerticalAsymptotes = !showVerticalAsymptotes
         }
     }
 

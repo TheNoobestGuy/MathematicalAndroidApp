@@ -45,6 +45,7 @@
                 android:layout_height="wrap_content"
                 android:text="@string/Information"
                 android:textColor="@color/White"
+                android:layout_marginBottom="8dp"
                 android:gravity="center"/>
 
             <TextView
@@ -52,15 +53,22 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/ZeroPlaces"
-                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"
                 android:textColor="@color/White"/>
+
+            <TextView
+                android:id="@+id/HorizontalAsymptote"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/VerticalAsymptotes"
+                android:textColor="@color/White"
+                android:layout_marginBottom="8dp"/>
 
             <TextView
                 android:id="@+id/Asymptotes"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/VerticalAsymptotes"
-                android:layout_marginTop="8dp"
                 android:textColor="@color/White"
                 android:layout_marginBottom="8dp"/>
 

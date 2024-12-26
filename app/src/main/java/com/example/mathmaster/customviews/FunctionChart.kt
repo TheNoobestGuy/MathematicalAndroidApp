@@ -19,14 +19,20 @@ class FunctionChart @JvmOverloads constructor(
 
     private val paint = Paint()
     private var points: MutableList<Pair<Float, Float>> = mutableListOf()
-    private var asymptotes: MutableList<Pair<Float, Float>> = mutableListOf()
-    private var zeroPlaces: MutableList<Float> = mutableListOf()
+    private var verticalAsymptotes: MutableList<Pair<Float, Float>> = mutableListOf()
+    private var horizontalAsymptote: Pair<Float, Float> = Pair(Float.NaN, Float.NaN)
+    private var zeroPlaces: MutableList<Pair<Float, Float>> = mutableListOf()
 
     private var gridSpacing: Float = 0f
     private val gridColor = context.getColor(R.color.VeryLightGrey)
     private val axisColor = context.getColor(R.color.Black)
+    private val asymptoteColor = context.getColor(R.color.LightGrey)
     private val linesColor = context.getColor(R.color.LimeGreen)
     private val dashEffect = DashPathEffect(floatArrayOf(20f, 10f), 0f)
+
+    private var showZeroPlaces: Boolean = false
+    private var showHorizontalAsymptote: Boolean = false
+    private var showVerticalAsymptotes: Boolean = false
 
     init {
         paint.isAntiAlias = true
@@ -58,24 +64,25 @@ class FunctionChart @JvmOverloads constructor(
         paint.color = axisColor
         canvas.drawLine(0f, height/2f, width.toFloat(), height/2f, paint)
         canvas.drawLine(width/2f, 0f,width/2f, height.toFloat(), paint)
+        if (!showZeroPlaces && !showHorizontalAsymptote && !showVerticalAsymptotes) {
+            // Draw labels
+            paint.textSize = 25f
+            paint.style = Paint.Style.FILL
+            iterator = gridSpacing
+            var xAxisLabels = -((width/(gridSpacing))/2).toInt() + 1
+            while (iterator <= width) {
+                canvas.drawText(xAxisLabels.toString(), iterator+5f, height/2f+25f, paint)
+                iterator += gridSpacing
+                xAxisLabels++
+            }
 
-        // Draw labels
-        paint.textSize = 20f
-        paint.style = Paint.Style.FILL
-        iterator = gridSpacing
-        var xAxisLabels = -((width/(gridSpacing))/2).toInt() + 1
-        while (iterator <= width) {
-            canvas.drawText(xAxisLabels.toString(), iterator+5f, height/2f+20f, paint)
-            iterator += gridSpacing
-            xAxisLabels++
-        }
-
-        iterator = gridSpacing
-        var yAxisLabels: Int = ((height/(gridSpacing))/2).toInt()-1
-        while (iterator <= height) {
-            canvas.drawText(yAxisLabels.toString(), width/2f+5f, iterator+20f, paint)
-            iterator += gridSpacing
-            yAxisLabels--
+            iterator = gridSpacing
+            var yAxisLabels: Int = ((height/(gridSpacing))/2).toInt()-1
+            while (iterator <= height) {
+                canvas.drawText(yAxisLabels.toString(), width/2f+5f, iterator+25f, paint)
+                iterator += gridSpacing
+                yAxisLabels--
+            }
         }
 
         // Draw a function
@@ -91,16 +98,77 @@ class FunctionChart @JvmOverloads constructor(
             }
         }
 
-        // Draw asymptotes
+        // Asymptotes paint style
         paint.strokeWidth = 4f
-        paint.color = context.getColor(R.color.LightGrey)
+        paint.color = asymptoteColor
         paint.pathEffect = dashEffect
-        for (asymptote in asymptotes) {
-            canvas.drawLine(asymptote.first, 0f, asymptote.first, height.toFloat(), paint)
+
+        // Draw vertical asymptotes
+        if (!showHorizontalAsymptote && !showZeroPlaces) {
+            for (asymptote in verticalAsymptotes) {
+                canvas.drawLine(asymptote.first, 0f, asymptote.first, height.toFloat(), paint)
+
+                if (showVerticalAsymptotes) {
+                    val circleSize = 8f
+                    val xValue = asymptote.first
+                    val yValue = height/2f
+
+                    // Draw label
+                    paint.style = Paint.Style.FILL
+                    paint.color = axisColor
+                    canvas.drawText(asymptote.second.toString(), xValue+5f, yValue-15f, paint)
+
+                    // Draw a point
+                    paint.style = Paint.Style.FILL
+                    canvas.drawCircle(xValue, yValue, circleSize, paint)
+
+                    paint.color = asymptoteColor
+                }
+            }
+        }
+
+        // Draw horizontal asymptote
+        if (!horizontalAsymptote.first.isNaN() && !showVerticalAsymptotes && !showZeroPlaces) {
+            canvas.drawLine(0f, horizontalAsymptote.first, width.toFloat(), horizontalAsymptote.first, paint)
+
+            if (showHorizontalAsymptote) {
+                val circleSize = 8f
+                val xValue = height/2f
+                val yValue = horizontalAsymptote.first
+
+                // Draw label
+                paint.style = Paint.Style.FILL
+                paint.color = axisColor
+                canvas.drawText(horizontalAsymptote.second.toString(), xValue+5f, yValue-15f, paint)
+
+                // Draw a point
+                paint.style = Paint.Style.FILL
+                paint.color = axisColor
+                canvas.drawCircle(xValue, yValue, circleSize, paint)
+            }
+        }
+        paint.pathEffect = null
+
+        // Draw zero places
+        if (showZeroPlaces) {
+            val circleSize = 8f
+            for (point in zeroPlaces) {
+                val xValue = width/2f + (point.first * gridSpacing)
+
+                // Draw label
+                paint.style = Paint.Style.FILL
+                paint.color = axisColor
+                canvas.drawText(point.first.toString(), xValue+5f, point.second-15f, paint)
+
+                // Draw a point
+                paint.style = Paint.Style.FILL
+                paint.color = axisColor
+                canvas.drawCircle(xValue, point.second, circleSize, paint)
+            }
         }
 
         // Draw a frame
-        paint.pathEffect = null
+        paint.style = Paint.Style.STROKE
         paint.color = axisColor
         paint.strokeWidth = 10f
         canvas.drawLine(0f, 0f, width.toFloat(), 0f, paint)
@@ -135,7 +203,7 @@ class FunctionChart @JvmOverloads constructor(
         return number % 1 == 0f
     }
 
-    fun updateInformation(zeroPlacesTextView: TextView, asymptotesTextView: TextView) {
+    fun updateInformation(zeroPlacesTextView: TextView, asymptotesTextView: TextView, horizontalTextView: TextView) {
         // Zero places
         if (zeroPlaces.size == 1) {
             zeroPlacesTextView.text = context.getString(R.string.ZeroPlace)
@@ -146,7 +214,7 @@ class FunctionChart @JvmOverloads constructor(
 
         var added = false
         for (place in zeroPlaces) {
-            val text = " $place,"
+            val text = " ${place.first},"
             zeroPlacesTextView.append(text)
             added = true
         }
@@ -154,12 +222,24 @@ class FunctionChart @JvmOverloads constructor(
             zeroPlacesTextView.text = zeroPlacesTextView.text.dropLast(1)
         }
         else {
-            val text = " ${context.getString(R.string.Lack)}"
+            val text = " ${context.getString(R.string.None)}"
             zeroPlacesTextView.append(text)
         }
 
-        // Asymptotes
-        if (asymptotes.size == 1) {
+        // Horizontal asymptote
+        if (horizontalAsymptote.first.isNaN()) {
+            horizontalTextView.text = context.getString(R.string.HorizontalAsymptote)
+            val text = " ${context.getString(R.string.None)}"
+            horizontalTextView.append(text)
+        }
+        else {
+            horizontalTextView.text = context.getString(R.string.HorizontalAsymptote)
+            val text = " ${horizontalAsymptote.second}"
+            horizontalTextView.append(text)
+        }
+
+        // Vertical asymptotes
+        if (verticalAsymptotes.size == 1) {
             asymptotesTextView.text = context.getString(R.string.VerticalAsymptote)
         }
         else {
@@ -167,7 +247,7 @@ class FunctionChart @JvmOverloads constructor(
         }
 
         added = false
-        for (asymptote in asymptotes) {
+        for (asymptote in verticalAsymptotes) {
             val text = " ${asymptote.second},"
             asymptotesTextView.append(text)
             added = true
@@ -176,24 +256,25 @@ class FunctionChart @JvmOverloads constructor(
             asymptotesTextView.text = asymptotesTextView.text.dropLast(1)
         }
         else {
-            val text = " ${context.getString(R.string.Lack)}"
+            val text = " ${context.getString(R.string.None)}"
             asymptotesTextView.append(text)
         }
     }
 
     fun drawAFunction(input: String, calculator: AdvancedKeyboard) {
         zeroPlaces.clear()
-        asymptotes.clear()
+        verticalAsymptotes.clear()
+        horizontalAsymptote = Pair(Float.NaN, Float.NaN)
         points.clear()
 
         paint.color = axisColor
         paint.strokeWidth = 200f
 
         val equation = calculator.transformEquation(input)
+        val xAxis = round((height/2f).toDouble()*100)/100
 
         // Draw function
         if (equation.isNotEmpty()) {
-            val xAxis = round((height/2f).toDouble()*100)/100
             var lastPoint = 0.0
             var addedAsymptote = false
 
@@ -216,7 +297,8 @@ class FunctionChart @JvmOverloads constructor(
                     addZeroPlace = true
                 }
                 else if (addZeroPlace) {
-                    zeroPlaces.add(zeroPlace)
+                    val yBuffer = round((xAxis - (y.first*(gridSpacing)))*100)/100
+                    zeroPlaces.add(Pair(zeroPlace, yBuffer.toFloat()))
                     zeroPlace = Float.MAX_VALUE
                     addZeroPlace = false
                 }
@@ -226,9 +308,10 @@ class FunctionChart @JvmOverloads constructor(
 
                 // Check is it asymptote
                 if (abs(lastPoint-y.first) >= height && !firstRun) {
-                    if ((lastPoint > xAxis && y.first < xAxis) || (lastPoint < xAxis && y.first > xAxis)) {
+                    if ((lastPoint > xAxis && y.first < xAxis) || (lastPoint < xAxis && y.first > xAxis) ||
+                        y.first.isInfinite()) {
                         if (!addedAsymptote) {
-                            asymptotes.add(Pair(bufferX, x))
+                            verticalAsymptotes.add(Pair(bufferX, x))
                             points.add(Pair(bufferX, y.first.toFloat()))
                             addedAsymptote = true
                         }
@@ -236,7 +319,7 @@ class FunctionChart @JvmOverloads constructor(
                 }
                 else if (lastPoint.isNaN() || lastPoint.isInfinite() && !firstRun) {
                     if (y.first.isInfinite()) {
-                        asymptotes.add(Pair(bufferX, x))
+                        verticalAsymptotes.add(Pair(bufferX, x))
                         points.add(Pair(bufferX, y.first.toFloat()))
                         addedAsymptote = true
                     }
@@ -257,8 +340,46 @@ class FunctionChart @JvmOverloads constructor(
                 }
                 firstRun = false
             }
+
+            // Test for large positive and negative x values to find horizontal asymptote
+            val largePositiveX = 1e6
+            val largeNegativeX = -1e6
+
+            var equationAfterSubstitution = substituteVariable(equation, largePositiveX)
+            val positiveLimit = calculator.calculate(equationAfterSubstitution, 0)
+
+            equationAfterSubstitution = substituteVariable(equation, largeNegativeX)
+            val negativeLimit = calculator.calculate(equationAfterSubstitution, 0)
+
+            val first = round(positiveLimit.first*100)/100
+            val second = round(negativeLimit.first*100)/100
+            if (first == second) {
+                horizontalAsymptote = Pair((round((xAxis - (first*(gridSpacing)))*100)/100).toFloat(), first.toFloat())
+            }
         }
 
         invalidate()
     }
+
+    fun setZeroPlaces() {
+        showHorizontalAsymptote = false
+        showVerticalAsymptotes = false
+        showZeroPlaces = !showZeroPlaces
+        invalidate()
+    }
+
+    fun setHorizontalAsymptote() {
+        showVerticalAsymptotes = false
+        showZeroPlaces = false
+        showHorizontalAsymptote = !showHorizontalAsymptote
+        invalidate()
+    }
+
+    fun setVerticalAsymptotes() {
+        showHorizontalAsymptote = false
+        showZeroPlaces = false
+        showVerticalAsymptotes = !showVerticalAsymptotes
+        invalidate()
+    }
+
 }
