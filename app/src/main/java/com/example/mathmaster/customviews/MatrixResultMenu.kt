@@ -110,6 +110,7 @@ class MatrixResultMenu @JvmOverloads constructor(
 
         resultMatrixBuffer = array.copyOf()
         resultMatrixBeforeExp = array.copyOf()
+        matrixBeforePowerTo = array.copyOf()
     }
 
     fun matrixIsQuadratic() {
@@ -151,7 +152,7 @@ class MatrixResultMenu @JvmOverloads constructor(
         var index = 0
         var iterator = 0
         var currentCol = 1
-        while (currentCol * dimension <= array.size) {
+        while (iterator < array.size) {
             bufferArray[iterator] = array[index]
 
             index += dimension
@@ -273,7 +274,11 @@ class MatrixResultMenu @JvmOverloads constructor(
 
             // Transpose rows and columns
             transposeMatrix = DoubleArray(resultMatrixRows * resultMatrixColumns)
-            transposeMatrix = transpose(resultMatrix, resultMatrixRows).copyOf()
+            transposeMatrix = if (resultMatrixRows == 1) {
+                transpose(resultMatrix, resultMatrixRows).copyOf()
+            } else {
+                transpose(resultMatrix, resultMatrixColumns).copyOf()
+            }
 
             // Set new matrix
             val buffer = resultMatrixRows
@@ -381,6 +386,7 @@ class MatrixResultMenu @JvmOverloads constructor(
                 resultMatrixBeforeExp = resultMatrixAfterExp.copyOf()
                 resultMatrixBuffer = resultMatrixAfterExp.copyOf()
                 matrix.setResultMatrix(resultMatrixBeforeExp, resultMatrixRows, resultMatrixColumns, false)
+                resultMatrix = resultMatrixAfterExp.copyOf()
 
                 Handler(Looper.getMainLooper()).postDelayed({
                     powerButtonsArray[i].setBackgroundResource(unClickedButtonStyle)
@@ -395,8 +401,8 @@ class MatrixResultMenu @JvmOverloads constructor(
 
             matrix.setResultMatrix(matrixBeforePowerTo, resultMatrixRows, resultMatrixColumns, false)
 
-            resultMatrixBuffer = backupMatrix.copyOf()
-            resultMatrixBeforeExp = backupMatrix.copyOf()
+            resultMatrixBuffer = matrixBeforePowerTo.copyOf()
+            resultMatrixBeforeExp = matrixBeforePowerTo.copyOf()
 
             Handler(Looper.getMainLooper()).postDelayed({
                 undoPowerButton.setBackgroundResource(unClickedButtonStyle)
