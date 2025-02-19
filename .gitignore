@@ -1,2 +1,5 @@
 /venv
 QA_database_EN.json
+QA_database_EN.json:Zone.Identifier
+vectorized_questions.pkl
+vectorized_answers.pkl
