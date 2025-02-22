@@ -1,5 +1,8 @@
 /venv
+/my_model
 QA_database_EN.json
 QA_database_EN.json:Zone.Identifier
-vectorized_questions.pkl
-vectorized_answers.pkl
+vectorized_questions.pkl.gz
+vectorized_answers.pkl.gz
+model.pth
+test.py
