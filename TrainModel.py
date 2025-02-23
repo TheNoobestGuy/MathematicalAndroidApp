@@ -12,33 +12,34 @@ from transformers import T5ForConditionalGeneration
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Class for dataloader
-class QADataset(Dataset):
-    def __init__(self, answers, questions, questions_attention_masks, answers_attention_masks):
+class QADataset():
+    def __init__(self, answers, questions, questions_attention_masks, answers_attention_masks, batch_size):
         self.answers = answers
         self.questions = questions
         self.questions_attention_masks = questions_attention_masks
         self.answers_attention_masks = answers_attention_masks
+        self.batch_size = batch_size
 
-    def __len__(self):
-        return len(self.questions)
+    def __iter__(self):
+        index = 0
+        while index < len(self.answers):
+            yield self.__getitem__(index)
+            index += 1
 
     def __getitem__(self, index):
         input_ids = torch.stack(self.questions[index]).squeeze(0)
         attention_mask = torch.stack(self.questions_attention_masks[index]).squeeze(0)
 
-        batch_size = input_ids.shape[0]
-        seq_len = input_ids.shape[2]
-
         return  {
-            "input_ids": input_ids.reshape(batch_size, seq_len),
-            "attention_mask": attention_mask.reshape(batch_size, seq_len),
-            "labels": self.answers[index].repeat(batch_size, 1),
-            "decoder_attention_mask": self.answers_attention_masks[index].repeat(batch_size, 1)
+            "input_ids": input_ids.squeeze(1),
+            "attention_mask": attention_mask.squeeze(1),
+            "labels": self.answers[index].repeat(self.batch_size, 1),
+            "decoder_attention_mask": self.answers_attention_masks[index].repeat(self.batch_size, 1)
         }
         
 
 # Load model
-model = T5ForConditionalGeneration.from_pretrained('my_model').to(device)
+model = T5ForConditionalGeneration.from_pretrained('my_model_1.0').to(device)
 
 # Disable caching during training
 model.config.use_cache = False
@@ -107,44 +108,37 @@ for epoch in range(epoches):
                         # Get questions input data from pickle file
                         current_questions_batch = []
                         current_questions_attention_masks_batch = []
-
+                        
+                        seq_len = 0
+                        tokenized_question_size = 0
                         for question in range(questions_amount):
                             tokenized_question = pickle.load(tkn_questions).to(device)
+                            seq_len = max(seq_len, answer.shape[1], tokenized_question.shape[1])
+
+                            if tokenized_question.shape[1] > tokenized_question_size:
+                                tokenized_question_size = tokenized_question.shape[1]
+
                             current_questions_batch.append(tokenized_question)
                             del tokenized_question
 
                         # Equalize tensors
-                        dim = 0
-                        size = 0
-                        equal = True
-                        tokenized_question_size = 0
-                        for question in current_questions_batch:
-                            if answer.shape[1] != question.shape[1]:
-                                dim = max(answer.shape[1], question.shape[1])
-                                equal = False
-                            if dim > size:
-                                size = dim
-                            if question.shape[1] > tokenized_question_size:
-                                tokenized_question_size = question.shape[1]
-                        
-                        if not equal:
-                            if size > dimension:
-                                if tokenized_answer.shape[1] > dimension and tokenized_question_size > dimension:
-                                    anwser = tokenized_answer[:, :dimension]
-                                    for i in range(questions_amount):
-                                        current_questions_batch[i] = current_questions_batch[i][:, :dimension]
-                                elif size == tokenized_answer.shape[1]:
-                                    anwser = tokenized_answer[:, :dimension]
-                                    for i in range(questions_amount):
-                                        current_questions_batch[i] = torch.nn.functional.pad(current_questions_batch[i], (0, dimension-current_questions_batch[i].shape[1]), value=0)
-                                else:
-                                    answer = torch.nn.functional.pad(tokenized_answer, (0, dimension-tokenized_answer.shape[1]), value=0)
-                                    for i in range(questions_amount):
-                                        current_questions_batch[i] = current_questions_batch[i][:, :dimension]
-                            else:
-                                answer = torch.nn.functional.pad(tokenized_answer, (0, size-tokenized_answer.shape[1]), value=0)
+                        if seq_len > dimension:
+                            if tokenized_answer.shape[1] > dimension and tokenized_question_size > dimension:
+                                anwser = tokenized_answer[:, :dimension]
                                 for i in range(questions_amount):
-                                    current_questions_batch[i] = torch.nn.functional.pad(current_questions_batch[i], (0, size-current_questions_batch[i].shape[1]), value=0)
+                                    current_questions_batch[i] = current_questions_batch[i][:, :dimension]
+                            elif seq_len == tokenized_answer.shape[1]:
+                                anwser = tokenized_answer[:, :dimension]
+                                for i in range(questions_amount):
+                                    current_questions_batch[i] = torch.nn.functional.pad(current_questions_batch[i], (0, dimension-current_questions_batch[i].shape[1]), value=0)
+                            else:
+                                answer = torch.nn.functional.pad(tokenized_answer, (0, dimension-tokenized_answer.shape[1]), value=0)
+                                for i in range(questions_amount):
+                                    current_questions_batch[i] = current_questions_batch[i][:, :dimension]
+                        else:
+                            answer = torch.nn.functional.pad(tokenized_answer, (0, seq_len-tokenized_answer.shape[1]), value=0)
+                            for i in range(questions_amount):
+                                current_questions_batch[i] = torch.nn.functional.pad(current_questions_batch[i], (0, seq_len-current_questions_batch[i].shape[1]), value=0)
 
                         # Make attention masks
                         for question in current_questions_batch:
@@ -164,17 +158,16 @@ for epoch in range(epoches):
                         del current_questions_attention_masks_batch
 
                     # Load the data with custom function
-                    dataset = QADataset(answers_batch, questions_batch, questions_attention_masks_batch, anwser_attention_mask_batch)
-                    train_loader = DataLoader(dataset, batch_size=1)
+                    dataset = QADataset(answers_batch, questions_batch, questions_attention_masks_batch, anwser_attention_mask_batch, questions_amount)
 
                     # Train model
-                    for batch in train_loader:
-                        # Move the data to the GPU
-                        input_ids = batch["input_ids"].to(device).squeeze(0)
-                        attention_mask = batch["attention_mask"].to(device).squeeze(0)
-                        decoder_attention_mask = batch["decoder_attention_mask"].to(device).squeeze(0)
-                        labels = batch["labels"].to(device).squeeze(0)
-                    
+                    for batch in dataset:
+                        # Get data from batch
+                        input_ids = batch["input_ids"].squeeze(0)
+                        attention_mask = batch["attention_mask"].squeeze(0)
+                        decoder_attention_mask = batch["decoder_attention_mask"].squeeze(0)
+                        labels = batch["labels"].squeeze(0)
+
                         # Forward pass through the model
                         outputs = model(
                             input_ids=input_ids, 
@@ -194,6 +187,11 @@ for epoch in range(epoches):
                                 optimizer.step()
                                 optimizer.zero_grad()
 
+                        del input_ids
+                        del attention_mask
+                        del decoder_attention_mask
+                        del labels
+
                     # Free memory
                     del tokenized_answer
                     del questions_batch
@@ -211,11 +209,17 @@ for epoch in range(epoches):
 
                 # Print time and save model
                 if iterator > start:
-                    if iterator % 10000 == 0:
-                        print(f"Iteration: {iterator}, Time: {time.strftime("%H:%M:%S")}")
                     if iterator % 100000 == 0:
                         print(f"Iteration: {iterator}, Time: {time.strftime("%H:%M:%S")}")
                         model.save_pretrained(f"my_model_{iterator/100000}")
+                        torch.cuda.empty_cache()
+                    elif iterator % 10000 == 0:
+                        print(f"Iteration: {iterator}, Time: {time.strftime("%H:%M:%S")}")
+                        torch.cuda.empty_cache()
+                    elif iterator % 1000 == 0:
+                        print(f"Memory allocated: {torch.cuda.memory_allocated(device) / 1024 ** 2:.2f} MB")
+                        torch.cuda.empty_cache()
+                
 
 # Done
 print(f"Done, End time: {time.strftime("%H:%M:%S")}")
