@@ -445,6 +445,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         else {
                             if (whatFunction != '0') {
                                 transformedEquation.add(whatFunction)
+                                negativeNumber = false
                                 whatFunction = '0'
                                 inRoot = false
                             }
@@ -666,6 +667,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
         val result: PairEquation<Double, Int> = PairEquation(0.0, index)
         var iterator: Int = index
         val threshold = 1E-10
+        var lastChar = '0'
 
         while (iterator < equation.size) {
             when (equation[iterator]) {
@@ -703,6 +705,11 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         return result
                     } else if ((equation[iterator] as Char).isLetter()) {
                         val equationBuffer = calculate(equation, iterator + 2)
+
+                        if (lastChar == '-') {
+                            equationSign = '-'
+                        }
+
                         when (equationSign) {
                             '+' -> {
                                 when (equation[iterator]) {
@@ -816,6 +823,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
                             result.first = Math.toRadians(result.first) % (2*Math.PI)
                         }
                     }
+
+                    lastChar = equation[iterator] as Char
                 }
 
                 is Double -> {
