@@ -96,7 +96,7 @@ class MultiplyActivity : ComponentActivity() {
 
         var firstNum = numbersFromQuestions[0][questionCounterValue]
         var secondNum = numbersFromQuestions[1][questionCounterValue]
-        var bufferEquation = "$firstNum x $secondNum"
+        var bufferEquation = "$firstNum × $secondNum"
         equation.text = bufferEquation
 
         // Keyboard
@@ -160,7 +160,7 @@ class MultiplyActivity : ComponentActivity() {
 
                 firstNum = numbersFromQuestions[0][questionCounterValue]
                 secondNum = numbersFromQuestions[1][questionCounterValue]
-                bufferEquation = "$firstNum x $secondNum"
+                bufferEquation = "$firstNum × $secondNum"
                 equation.text = bufferEquation
 
                 firstNum = numbersFromQuestions[0][questionCounterValue-1]

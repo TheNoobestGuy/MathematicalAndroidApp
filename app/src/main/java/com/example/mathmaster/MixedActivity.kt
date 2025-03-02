@@ -10,8 +10,6 @@ import android.os.Handler
 import android.os.Looper
 import android.view.View
 import androidx.activity.OnBackPressedCallback
-import kotlin.random.Random
-import java.util.ArrayDeque
 
 class MixedActivity : ComponentActivity() {
 
@@ -53,82 +51,12 @@ class MixedActivity : ComponentActivity() {
         }
     }
 
-    private fun hasDecimalPart(value: Float): Boolean {
-        return value != value.toInt().toFloat()
+    private fun noDecimalPart(value: Float): Boolean {
+        return value == value.toInt().toFloat()
     }
 
-    private fun calculateEquation(equation: String): Int {
-        val bufferEquation = equation.split(' ')
-
-        // Stacks
-        val numbers = ArrayDeque<Int>()
-        val signs = ArrayDeque<String>()
-
-        // Get numbers and signs from equation
-        for (i in bufferEquation.indices) {
-            if (bufferEquation[i] == "+" || bufferEquation[i] == "-") {
-                signs.push(bufferEquation[i])
-            }
-            else if (bufferEquation[i] == "*" || bufferEquation[i] == "/") {
-                signs.push(bufferEquation[i])
-            }
-            else {
-                numbers.push(bufferEquation[i].toInt())
-            }
-        }
-
-        // Evaluate equation
-        var result: Int = numbers.removeLast()!!
-        var bufferNum: Int
-
-        while(signs.isNotEmpty()) {
-            if (numbers.isNotEmpty()) {
-                if (signs.peekLast() == "+") {
-                    bufferNum = numbers.removeLast()!!
-                    signs.removeLast()
-                    if (signs.isNotEmpty()) {
-                        if (signs.peekLast() == "*") {
-                            result += bufferNum * numbers.removeLast()!!
-                            signs.removeLast()
-                            continue
-                        }
-                        else if (signs.peekLast() == "/") {
-                            result += bufferNum / numbers.removeLast()!!
-                            signs.removeLast()
-                            continue
-                        }
-                    }
-                    result += bufferNum
-                }
-                else if (signs.peekLast() == "-") {
-                    bufferNum = numbers.removeLast()!!
-                    signs.removeLast()
-                    if (signs.isNotEmpty()) {
-                        if (signs.peekLast() == "*") {
-                            result -= bufferNum * numbers.removeLast()!!
-                            signs.removeLast()
-                            continue
-                        }
-                        else if (signs.peekLast() == "/") {
-                            result -= bufferNum / numbers.removeLast()!!
-                            signs.removeLast()
-                            continue
-                        }
-                    }
-                    result -= bufferNum
-                }
-                else if (signs.peekLast() == "/") {
-                    result /= numbers.removeLast()!!
-                    signs.removeLast()
-                }
-                else {
-                    result *= numbers.removeLast()!!
-                    signs.removeLast()
-                }
-            }
-        }
-
-        return result
+    private fun notNegative(value: Int): Boolean {
+        return value > 0
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -146,10 +74,9 @@ class MixedActivity : ComponentActivity() {
         // Database
         var questionCounterValue = 0
         val numberOfQuestions = 15
-        val twoNumbersRange = 8..99
         val numbersFromQuestions: MutableList<MutableList<Int>> = mutableListOf(mutableListOf(), mutableListOf(), mutableListOf())
         val correctAnswersArray = IntArray(numberOfQuestions)
-        val equationSignsArray = charArrayOf('+', '-', '/', '*')
+        val equationSignsArray = charArrayOf('+', '-', '/', '×')
         val firstEquationSigns = CharArray(numberOfQuestions)
         val secondEquationSigns = CharArray(numberOfQuestions)
         val answersArray = IntArray(numberOfQuestions)
@@ -164,193 +91,123 @@ class MixedActivity : ComponentActivity() {
             randomSign = randomSignRange.random()
             secondEquationSigns[i] = equationSignsArray[randomSign]
 
-            // Numbers
-            var firstNumber: Int
-            for (k in 0..1) {
-                val equationSign = if (k == 0) firstEquationSigns[i] else secondEquationSigns[i]
+            // Variables
+            val signs = arrayOf(firstEquationSigns[i], secondEquationSigns[i])
+            val numberRange = 1..99
+            val firstNumber = numberRange.random()+1
+            numbersFromQuestions[0].add(firstNumber)
 
-                if (equationSign == '/') {
-                    var passNumber = false
-                    firstNumber = if (k == 0)  twoNumbersRange.random() else numbersFromQuestions[1][i]
+            val numbers = mutableListOf(firstNumber)
+            var higherAttention = false
 
-                    // Restrict second division so it doesn't go float
-                    if (k == 1) {
-                        if (firstEquationSigns[i] == '*') {
-                            val bufferEquation = numbersFromQuestions[0].last() * numbersFromQuestions[1].last()
-                            firstNumber = bufferEquation
+            if (signs.last() == '×' || signs.last() == '/') {
+                higherAttention = true
+            }
+
+            //Generate equation
+            for (num in signs.indices) {
+                var numBuffer = numberRange.random()
+                when (signs[num]) {
+                    '+' -> {
+                        if (higherAttention) {
+                            numbers.add(numBuffer)
                         }
-                        else if (firstEquationSigns[i] == '/') {
-                            val bufferEquation = numbersFromQuestions[0].last() / numbersFromQuestions[1].last()
-                            firstNumber = bufferEquation
-                        }
-                    }
-
-                    // Append divider
-                    while (!passNumber) {
-                        val listOfDividers: MutableList<Int> = mutableListOf()
-
-                        var counter = 1
-                        var run = true
-
-                        // Find dividers of picked number
-                        while (run) {
-                            val divider: Float = firstNumber.toFloat() / counter.toFloat()
-
-                            if (!hasDecimalPart(divider)) {
-                                listOfDividers.add(counter)
-                            }
-
-                            if (firstNumber / 2 <= counter) {
-                                run = false
-                            }
-
-                            counter++
-                        }
-
-                        // If list of dividers contains true dividers pass numbers
-                        if (listOfDividers.size >= 1) {
-                            var pickRandom = Random.nextInt(listOfDividers.size)
-                            var pickedNumber = listOfDividers[pickRandom]
-
-                            if (pickedNumber == 1 && listOfDividers.size > 1) {
-                                while (pickedNumber == 1) {
-                                    pickRandom = Random.nextInt(listOfDividers.size)
-                                    pickedNumber = listOfDividers[pickRandom]
-                                }
-                            }
-
-                            if (k == 0) {
-                                numbersFromQuestions[0].add(firstNumber)
-                                numbersFromQuestions[1].add(pickedNumber)
-                            } else {
-                                numbersFromQuestions[2].add(pickedNumber)
-                            }
-
-                            passNumber = true
+                        else {
+                            numbers[numbers.lastIndex] = numbers.last() + numBuffer
                         }
                     }
-                }
-                else if (equationSign == '*') {
-                    val randomSize = Random.nextBoolean()
-                    val oneNumberRangeMultiply = 2..9
-                    val twoNumbersRangeMultiply = 10..99
-                    firstNumber = if (k == 0)  twoNumbersRange.random() else numbersFromQuestions[1][i]
-
-                    // Check for special conditions on second sign
-                    if (k == 1) {
-                        // Prevent multiplication from being greater than the number from which it will be subtracted
-                        if (firstEquationSigns[i] == '-') {
-                            val listOfMultipliers: MutableList<Int> = mutableListOf()
-                            val bufferNumber = numbersFromQuestions[0].last()
-                            var partValue: Int
-                            var counter = 1
-
-                            do {
-                                partValue = numbersFromQuestions[1].last() * counter
-                                if (partValue <= bufferNumber) {
-                                    listOfMultipliers.add(counter)
-                                }
-                                counter++
-                            } while (partValue <= bufferNumber)
-
-                            val randomMultiplier = Random.nextInt(listOfMultipliers.size)
-                            numbersFromQuestions[2].add(listOfMultipliers[randomMultiplier])
-                            continue
-                        }
-                        // Append multiplication normally when is about to be added
-                        else if (firstEquationSigns[i] == '+') {
-                            if(randomSize) {
-                                val randomNumberMultiply = oneNumberRangeMultiply.random()
-                                numbersFromQuestions[2].add(randomNumberMultiply)
-                            } else {
-                                val randomNumberMultiply = twoNumbersRangeMultiply.random()
-                                numbersFromQuestions[2].add(randomNumberMultiply)
+                    '-' -> {
+                        val possibilities = mutableListOf<Int>()
+                        var step = 1
+                        while (step < numbers.last()) {
+                            if (notNegative(numbers.last()-step)) {
+                                possibilities.add(step)
                             }
-                            continue
-                        }
-
-                        // Prevent result of equation to be greater than 9999
-                        val listOfMultipliers: MutableList<Int> = mutableListOf()
-                        var bufferEquation = 0
-
-                        if (firstEquationSigns[i] == '*') {
-                            bufferEquation = numbersFromQuestions[0].last() * numbersFromQuestions[1].last()
-                        }
-                        else if (firstEquationSigns[i] == '/') {
-                            bufferEquation = numbersFromQuestions[0].last() / numbersFromQuestions[1].last()
-                        }
-
-                        var partValue: Int
-                        var counter = 1
-
-                        do {
-                            partValue = bufferEquation * counter
-                            listOfMultipliers.add(counter)
-                            counter++
-
-                            if (counter > 21) {
+                            else {
                                 break
                             }
-                        } while (partValue <= 9999)
-
-                        val randomMultiplier = Random.nextInt(listOfMultipliers.size)
-                        numbersFromQuestions[2].add(listOfMultipliers[randomMultiplier])
-                        continue
-                    }
-
-                    if(randomSize) {
-                        val randomNumberMultiply = oneNumberRangeMultiply.random()
-
-                        numbersFromQuestions[0].add(firstNumber)
-                        numbersFromQuestions[1].add(randomNumberMultiply)
-                    } else {
-                        val randomNumberMultiply = twoNumbersRangeMultiply.random()
-
-                        numbersFromQuestions[0].add(firstNumber)
-                        numbersFromQuestions[1].add(randomNumberMultiply)
-                    }
-                }
-                else {
-                    var secondNumber: Int
-
-                    firstNumber = if (k == 0)  twoNumbersRange.random() else numbersFromQuestions[1][i]
-                    val sign = if (k == 0) firstEquationSigns[i] else secondEquationSigns[i]
-
-                    if (sign == '-') {
-                        var limiter = firstNumber
-
-                        // Prevent result of equation to go under 0
-                        if (k == 1) {
-                            val firstNum = numbersFromQuestions[0].last()
-                            val secondNum = numbersFromQuestions[1].last()
-
-                            val bufferEquation = if (firstEquationSigns[i] == '*') {
-                                firstNum * secondNum
-                            } else if (firstEquationSigns[i] == '/') {
-                                firstNum / secondNum
-                            } else if (firstEquationSigns[i] == '-') {
-                                firstNum - secondNum
-                            } else {
-                                firstNum + secondNum
-                            }
-
-                            limiter = if (bufferEquation > 99) 99 else bufferEquation
+                            step++
+                        }
+                        numBuffer = if (possibilities.isEmpty()) {
+                            1
+                        } else {
+                            possibilities.random()
                         }
 
-                        val secondNumberRange = 1 until limiter
-                        secondNumber = secondNumberRange.random()
-                    } else {
-                        secondNumber = twoNumbersRange.random()
+                        if (higherAttention) {
+                            numbers.add(numBuffer)
+                        }
+                        else {
+                            numbers[numbers.lastIndex] = numbers.last() - numBuffer
+                        }
                     }
+                    '×' -> {
+                        if (signs.first() == '-') {
+                            val possibilities = mutableListOf<Int>()
+                            var step = 1
+                            while (true) {
+                                if (notNegative(numbers.first() - (step*numbers.last()))) {
+                                    possibilities.add(step)
+                                }
+                                else {
+                                    break
+                                }
+                                step++
+                            }
+                            numBuffer = possibilities.random()
+                        }
 
-                    if (k == 0) {
-                        numbersFromQuestions[0].add(firstNumber)
-                        numbersFromQuestions[1].add(secondNumber)
-                    } else {
-                        numbersFromQuestions[2].add(secondNumber)
+                        if (higherAttention) {
+                            numbers.add(numbers.removeLast() * numBuffer)
+                        }
+                        else {
+                            numbers.add(numbers.last() * numBuffer)
+                        }
+                    }
+                    '/' -> {
+                        val possibilities = mutableListOf<Int>()
+                        var step = 1
+                        while (step <= numbers.last()) {
+                            if (noDecimalPart(numbers.last().toFloat() / step.toFloat())) {
+                                possibilities.add(step)
+                            }
+                            step++
+                        }
+
+                        if (possibilities.size > 2) {
+                            possibilities.removeLast()
+                            possibilities.removeFirst()
+                        }
+
+                        numBuffer = possibilities.random()
+
+                        if (higherAttention) {
+                            numbers.add(numbers.removeLast() / numBuffer)
+                        }
+                        else {
+                            numbers.add(numbers.last() / numBuffer)
+                        }
+                    }
+                }
+
+                numbersFromQuestions[num+1].add(numBuffer)
+            }
+
+            // Append correct answer
+            var result = numbers.last()
+
+            if (higherAttention) {
+                when (signs[0]) {
+                    '+' -> {
+                        result = numbers[0] + numbers[1]
+                    }
+                    '-' -> {
+                        result = numbers[0] - numbers[1]
                     }
                 }
             }
+
+            correctAnswersArray[i] = result
         }
 
         // Show question counter and equation
@@ -379,17 +236,6 @@ class MixedActivity : ComponentActivity() {
 
             // End game statement
             if (questionCounterValue >= numberOfQuestions) {
-                // Append last answer
-                firstNum = numbersFromQuestions[0][questionCounterValue-1]
-                secondNum = numbersFromQuestions[1][questionCounterValue-1]
-                thirdNum = numbersFromQuestions[2][questionCounterValue-1]
-
-                firstSign = firstEquationSigns[questionCounterValue-1]
-                secondSign = secondEquationSigns[questionCounterValue-1]
-
-                bufferEquation = "$firstNum $firstSign $secondNum $secondSign $thirdNum"
-                correctAnswersArray[questionCounterValue-1] = calculateEquation(bufferEquation)
-
                 answersArray[questionCounterValue-1] = keyboard.getTextField()
                 keyboard.resetTextField()
 
@@ -452,16 +298,6 @@ class MixedActivity : ComponentActivity() {
 
                 bufferEquation = "$firstNum $firstSign $secondNum $secondSign $thirdNum"
                 equation.text = bufferEquation
-
-                firstNum = numbersFromQuestions[0][questionCounterValue-1]
-                secondNum = numbersFromQuestions[1][questionCounterValue-1]
-                thirdNum = numbersFromQuestions[2][questionCounterValue-1]
-
-                firstSign = firstEquationSigns[questionCounterValue-1]
-                secondSign = secondEquationSigns[questionCounterValue-1]
-
-                bufferEquation = "$firstNum $firstSign $secondNum $secondSign $thirdNum"
-                correctAnswersArray[questionCounterValue-1] = calculateEquation(bufferEquation)
 
                 answersArray[questionCounterValue-1] = keyboard.getTextField()
                 keyboard.resetTextField()
