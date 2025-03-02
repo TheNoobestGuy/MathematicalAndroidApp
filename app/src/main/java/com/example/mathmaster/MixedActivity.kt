@@ -74,9 +74,9 @@ class MixedActivity : ComponentActivity() {
         // Database
         var questionCounterValue = 0
         val numberOfQuestions = 15
-        val numbersFromQuestions: MutableList<MutableList<Int>> = mutableListOf(mutableListOf(), mutableListOf(), mutableListOf())
+        val numbersFromQuestions: MutableList<MutableList<Int>> =
+            mutableListOf(mutableListOf(), mutableListOf(), mutableListOf())
         val correctAnswersArray = IntArray(numberOfQuestions)
-        val equationSignsArray = charArrayOf('+', '-', '/', '×')
         val firstEquationSigns = CharArray(numberOfQuestions)
         val secondEquationSigns = CharArray(numberOfQuestions)
         val answersArray = IntArray(numberOfQuestions)
@@ -84,9 +84,16 @@ class MixedActivity : ComponentActivity() {
         // Create list of questions
         for (i in 0 until numberOfQuestions) {
             // Get two random signs
-            val randomSignRange = 0..3
+            val equationSignsArray = charArrayOf('+', '-', '/', '×')
+            var randomSignRange = 0..3
             var randomSign = randomSignRange.random()
             firstEquationSigns[i] = equationSignsArray[randomSign]
+
+            randomSignRange = if (firstEquationSigns[i] == '-' || firstEquationSigns[i] == '+') {
+                2..3
+            } else {
+                0..1
+            }
 
             randomSign = randomSignRange.random()
             secondEquationSigns[i] = equationSignsArray[randomSign]
@@ -94,7 +101,7 @@ class MixedActivity : ComponentActivity() {
             // Variables
             val signs = arrayOf(firstEquationSigns[i], secondEquationSigns[i])
             val numberRange = 1..99
-            val firstNumber = numberRange.random()+1
+            val firstNumber = numberRange.random() + 1
             numbersFromQuestions[0].add(firstNumber)
 
             val numbers = mutableListOf(firstNumber)
@@ -111,47 +118,33 @@ class MixedActivity : ComponentActivity() {
                     '+' -> {
                         if (higherAttention) {
                             numbers.add(numBuffer)
-                        }
-                        else {
+                        } else {
                             numbers[numbers.lastIndex] = numbers.last() + numBuffer
                         }
                     }
+
                     '-' -> {
-                        val possibilities = mutableListOf<Int>()
-                        var step = 1
-                        while (step < numbers.last()) {
-                            if (notNegative(numbers.last()-step)) {
-                                possibilities.add(step)
-                            }
-                            else {
-                                break
-                            }
+                        val possibilities = mutableListOf(1)
+                        var step = 2
+                        while (notNegative(numbers.last() - step)) {
+                            possibilities.add(step)
                             step++
                         }
-                        numBuffer = if (possibilities.isEmpty()) {
-                            1
-                        } else {
-                            possibilities.random()
-                        }
+                        numBuffer = possibilities.random()
 
                         if (higherAttention) {
                             numbers.add(numBuffer)
-                        }
-                        else {
+                        } else {
                             numbers[numbers.lastIndex] = numbers.last() - numBuffer
                         }
                     }
+
                     '×' -> {
                         if (signs.first() == '-') {
                             val possibilities = mutableListOf<Int>()
                             var step = 1
-                            while (true) {
-                                if (notNegative(numbers.first() - (step*numbers.last()))) {
-                                    possibilities.add(step)
-                                }
-                                else {
-                                    break
-                                }
+                            while (notNegative(numbers.first() - (step * numbers.last()))) {
+                                possibilities.add(step)
                                 step++
                             }
                             numBuffer = possibilities.random()
@@ -159,11 +152,11 @@ class MixedActivity : ComponentActivity() {
 
                         if (higherAttention) {
                             numbers.add(numbers.removeLast() * numBuffer)
-                        }
-                        else {
+                        } else {
                             numbers.add(numbers.last() * numBuffer)
                         }
                     }
+
                     '/' -> {
                         val possibilities = mutableListOf<Int>()
                         var step = 1
@@ -183,24 +176,24 @@ class MixedActivity : ComponentActivity() {
 
                         if (higherAttention) {
                             numbers.add(numbers.removeLast() / numBuffer)
-                        }
-                        else {
+                        } else {
                             numbers.add(numbers.last() / numBuffer)
                         }
                     }
                 }
 
-                numbersFromQuestions[num+1].add(numBuffer)
+                numbersFromQuestions[num + 1].add(numBuffer)
             }
 
             // Append correct answer
             var result = numbers.last()
 
-            if (higherAttention) {
+            if (numbers.size == 2 && higherAttention) {
                 when (signs[0]) {
                     '+' -> {
                         result = numbers[0] + numbers[1]
                     }
+
                     '-' -> {
                         result = numbers[0] - numbers[1]
                     }
@@ -236,7 +229,7 @@ class MixedActivity : ComponentActivity() {
 
             // End game statement
             if (questionCounterValue >= numberOfQuestions) {
-                answersArray[questionCounterValue-1] = keyboard.getTextField()
+                answersArray[questionCounterValue - 1] = keyboard.getTextField()
                 keyboard.resetTextField()
 
                 // Count correctness of answers
@@ -253,18 +246,15 @@ class MixedActivity : ComponentActivity() {
                 val secondNumbersFromQuestions = IntArray(numberOfQuestions)
                 val thirdNumbersFromQuestions = IntArray(numberOfQuestions)
 
-                for (i in numbersFromQuestions[0].indices)
-                {
+                for (i in numbersFromQuestions[0].indices) {
                     firstNumbersFromQuestions[i] = numbersFromQuestions[0][i]
                 }
 
-                for (i in numbersFromQuestions[0].indices)
-                {
+                for (i in numbersFromQuestions[0].indices) {
                     secondNumbersFromQuestions[i] = numbersFromQuestions[1][i]
                 }
 
-                for (i in numbersFromQuestions[0].indices)
-                {
+                for (i in numbersFromQuestions[0].indices) {
                     thirdNumbersFromQuestions[i] = numbersFromQuestions[2][i]
                 }
 
@@ -299,7 +289,7 @@ class MixedActivity : ComponentActivity() {
                 bufferEquation = "$firstNum $firstSign $secondNum $secondSign $thirdNum"
                 equation.text = bufferEquation
 
-                answersArray[questionCounterValue-1] = keyboard.getTextField()
+                answersArray[questionCounterValue - 1] = keyboard.getTextField()
                 keyboard.resetTextField()
             }
 

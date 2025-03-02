@@ -22,6 +22,9 @@ class AdvancedKeyboard @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : LinearLayout(context, attrs, defStyleAttr) {
 
+    // Grid layout
+    private val gridLayout: GridLayout
+
     // Buttons styles
     private val clickedButtonStyle: Int
     private val unClickedButtonStyle: Int
@@ -94,11 +97,14 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
     // Optional variable button
     private var functionChartMode: Boolean = false
+    private var unknownsCalculatorMode: Boolean = false
     private var variableButton: Button
+    private var equalSign: Boolean = false
 
     init {
         // Inflate the custom XML layout
         LayoutInflater.from(context).inflate(R.layout.advancedcalculator_layout, this, true)
+        gridLayout = findViewById(R.id.AdvanceCalculatorKeyboard)
 
         // Main buttons
         enterButton = findViewById(R.id.Equal)
@@ -274,6 +280,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
         var inDegree = false
         var addDegree = false
         var inRoot = false
+        var negativeNumber = false
 
         // Brackets
         val bracketsInput: MutableList<Char> = mutableListOf()
@@ -319,7 +326,14 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         transformedEquation.removeLast()
                     }
 
-                    transformedEquation.add(outputNumber)
+                    if (negativeNumber) {
+                        transformedEquation.removeLast()
+                        transformedEquation.add(-outputNumber)
+                        negativeNumber = false
+                    }
+                    else {
+                        transformedEquation.add(outputNumber)
+                    }
                 }
             }
             else {
@@ -333,7 +347,14 @@ class AdvancedKeyboard @JvmOverloads constructor(
                             numBuffer.clear()
                         }
                         else {
-                            transformedEquation.add(outputNumber)
+                            if (negativeNumber) {
+                                transformedEquation.removeLast()
+                                transformedEquation.add(-outputNumber)
+                                negativeNumber = false
+                            }
+                            else {
+                                transformedEquation.add(outputNumber)
+                            }
                         }
                     }
                 }
@@ -373,7 +394,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         if (transformedEquation.isNotEmpty()) {
                             if (transformedEquation.last() != '×' && transformedEquation.last() != '/'
                                 && transformedEquation.last() != '+' && transformedEquation.last() != '-'
-                                && transformedEquation.last() != '(' && transformedEquation.last() != '√') {
+                                && transformedEquation.last() != '(' && transformedEquation.last() != '√'
+                                && transformedEquation.last() != '^') {
                                 addMultiplication = true
                             }
                         }
@@ -459,10 +481,13 @@ class AdvancedKeyboard @JvmOverloads constructor(
                             transformedEquation.add(additionalOpenedBrackets.last().removeLast())
                         }
 
+                        if (lastChar == '(' && element == '-' && !transformedEquation.last().toString().last().isDigit()) {
+                            negativeNumber = true
+                        }
+
                         if (powerToOpenedBrackets.isNotEmpty()) {
                             while (powerToOpenedBrackets.isNotEmpty() &&
-                                powerToOpenedBrackets.last() >= additionalOpenedBrackets.size - 1
-                            ) {
+                                powerToOpenedBrackets.last() >= additionalOpenedBrackets.size - 1) {
                                 powerToOpenedBrackets.removeLast()
                             }
 
@@ -596,7 +621,15 @@ class AdvancedKeyboard @JvmOverloads constructor(
         // Add number that lasts in buffer
         if (numBuffer.isNotEmpty() && lastChar != '.') {
             val outputNumber: Double = calculateNumber(numBuffer, intConverter, false)
-            transformedEquation.add(outputNumber)
+
+            if (negativeNumber) {
+                transformedEquation.removeLast()
+                transformedEquation.add(-outputNumber)
+                negativeNumber = false
+            }
+            else {
+                transformedEquation.add(outputNumber)
+            }
         }
 
         // Add degree if lasts
@@ -935,7 +968,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 }
 
                 if (addedNumber) {
-                    if (!functionChartMode) {
+                    if (!functionChartMode && !unknownsCalculatorMode) {
                         resultOfCalculate(textView, resultTextView)
                     }
                 }
@@ -956,7 +989,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     if (textView.text.last().isDigit() || textView.text.last() == ')'
                         || textView.text.last() == 'π' || textView.text.last() == 'e'
                         || textView.text.last() == '!' || textView.text.last() == '%'
-                        || textView.text.last() == 'x') {
+                        || textView.text.last() == 'x' || textView.text.last() == 'y') {
 
                         textView.append(basicCalcButtons[i].text)
 
@@ -1011,7 +1044,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
             if (textView.text.isNotEmpty()) {
                 if (textView.text.last().isDigit() || textView.text.last() == ')'
                     || textView.text.last() == 'π' || textView.text.last() == 'e'
-                    || textView.text.last() == 'x' || textView.text.last() == '°') {
+                    || textView.text.last() == 'x' || textView.text.last() == '°'
+                    || textView.text.last() == 'y') {
                     textView.append(powerButton.text.toString())
 
                     if (!radians && functionLevel > 0) {
@@ -1069,7 +1103,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     || textView.text.last() == '-' || textView.text.last() == '×'
                     || textView.text.last() == '/' || textView.text.last() == 'π'
                     || textView.text.last() == '(' || textView.text.last() == 'e'
-                    || textView.text.last() == 'x') {
+                    || textView.text.last() == 'x' || textView.text.last() == 'y') {
                     textView.append("√")
 
                     if (!radians && functionLevel > 0) {
@@ -1098,14 +1132,15 @@ class AdvancedKeyboard @JvmOverloads constructor(
             var appendedFactorial = false
             if (textView.text.isNotEmpty()) {
                 if (textView.text.last().isDigit() || textView.text.last() == ')'
-                    || textView.text.last() == 'x' || textView.text.last() == '°') {
+                    || textView.text.last() == 'x' || textView.text.last() == '°'
+                    || textView.text.last() == 'y') {
                     textView.append("!")
                     appendedFactorial = true
                 }
             }
 
             if (appendedFactorial) {
-                if (!functionChartMode) {
+                if (!functionChartMode && unknownsCalculatorMode) {
                     resultOfCalculate(textView, resultTextView)
                 }
             }
@@ -1123,7 +1158,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
             if (textView.text.isNotEmpty()) {
                 if (textView.text.last().isDigit() || textView.text.last() == ')'
                     || textView.text.last() == 'π' || textView.text.last() == 'e'
-                    || textView.text.last() == 'x') {
+                    || textView.text.last() == 'x' || textView.text.last() == 'y') {
                     textView.append("^(-")
                     bracketsCounter++
 
@@ -1134,6 +1169,9 @@ class AdvancedKeyboard @JvmOverloads constructor(
                                     functionLevel, functionIndex))
                             addDegree = true
                         }
+                    }
+                    else {
+                        bracketsLevel.addLast(false)
                     }
                 }
             }
@@ -1151,14 +1189,14 @@ class AdvancedKeyboard @JvmOverloads constructor(
             var appendedPercent = false
             if (textView.text.isNotEmpty()) {
                 if (textView.text.last().isDigit() || textView.text.last() == ')'
-                    || textView.text.last() == 'x') {
+                    || textView.text.last() == 'x' || textView.text.last() == 'y') {
                     textView.append("%")
                     appendedPercent = true
                 }
             }
 
             if (appendedPercent) {
-                if (!functionChartMode) {
+                if (!functionChartMode && unknownsCalculatorMode) {
                     resultOfCalculate(textView, resultTextView)
                 }
             }
@@ -1187,7 +1225,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
             }
 
             if (addedNumber) {
-                if (!functionChartMode) {
+                if (!functionChartMode && unknownsCalculatorMode) {
                     resultOfCalculate(textView, resultTextView)
                 }
             }
@@ -1216,7 +1254,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
             }
 
             if (addedNumber) {
-                if (!functionChartMode) {
+                if (!functionChartMode && unknownsCalculatorMode) {
                     resultOfCalculate(textView, resultTextView)
                 }
             }
@@ -1237,9 +1275,10 @@ class AdvancedKeyboard @JvmOverloads constructor(
             functionLevel = 0
             functionEnds.clear()
             dotUsed = false
+            equalSign = false
             textView.text = ""
 
-            if (!functionChartMode) {
+            if (!functionChartMode && !unknownsCalculatorMode) {
                 if (clearButton.text == "AC") {
                     historyTextView.text = ""
                 }
@@ -1285,7 +1324,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 if (textView.text.last().isDigit() || textView.text.last() == ')'
                     || textView.text.last() == '!' || textView.text.last() == 'π'
                     || textView.text.last() == 'e' || textView.text.last() == '°'
-                    || textView.text.last() == '%' || textView.text.last() == 'x') {
+                    || textView.text.last() == '%' || textView.text.last() == 'x'
+                    || textView.text.last() == 'y') {
                     val text = closeBracketButton.text.toString()
                     textView.append(text)
                     bracketsCounter--
@@ -1377,6 +1417,10 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     dotUsed = false
                     textView.text = textView.text.dropLast(1)
                 }
+                else if (textView.text.last() == '=') {
+                    equalSign = false
+                    textView.text = textView.text.dropLast(1)
+                }
                 else {
                     if(operatorsOccurrence.isNotEmpty()) {
                         if (textView.text.length-1 == operatorsOccurrence.last().occurrence) {
@@ -1388,7 +1432,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 }
             }
 
-            if (!functionChartMode) {
+            if (!functionChartMode && !unknownsCalculatorMode) {
                 if (textView.text.isNotEmpty()) {
                     resultOfCalculate(textView, resultTextView)
                 }
@@ -1545,5 +1589,91 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 variableButton.setBackgroundResource(unClickedButtonStyle)
             }, 100)
         }
+    }
+
+    fun setUnknownsCalculatorMode() {
+        unknownsCalculatorMode = true
+
+        gridLayout.removeView(changeFunctionsButton)
+        gridLayout.removeView(degreeButton)
+        gridLayout.removeView(sinButton)
+        gridLayout.removeView(cosButton)
+        gridLayout.removeView(tgButton)
+
+        logarithmButton.text ="x"
+        naturalLogarithmButton.text = "y"
+    }
+
+    fun xVariableClick(textView: TextView) {
+        logarithmButton.setOnClickListener {
+            logarithmButton.setBackgroundResource(clickedButtonStyle)
+
+            if (textView.text.isNotEmpty()) {
+                if (textView.text.last() != '.' && textView.text.last() != 'x') {
+                    textView.append(logarithmButton.text.toString())
+                }
+            } else {
+                textView.append(logarithmButton.text.toString())
+            }
+
+            Handler(Looper.getMainLooper()).postDelayed({
+                logarithmButton.setBackgroundResource(unClickedButtonStyle)
+            }, 100)
+        }
+    }
+
+    fun yVariableClick(textView: TextView) {
+        naturalLogarithmButton.setOnClickListener {
+            naturalLogarithmButton.setBackgroundResource(clickedButtonStyle)
+
+            if (textView.text.isNotEmpty()) {
+                if (textView.text.last() != '.' && textView.text.last() != 'y') {
+                    textView.append(naturalLogarithmButton.text.toString())
+                }
+            } else {
+                textView.append(naturalLogarithmButton.text.toString())
+            }
+
+            Handler(Looper.getMainLooper()).postDelayed({
+                naturalLogarithmButton.setBackgroundResource(unClickedButtonStyle)
+            }, 100)
+        }
+    }
+
+    fun enterWhenInUnknownsCalculatorMode(textView: TextView) {
+        enterButton.setOnClickListener {
+            enterButton.setBackgroundResource(clickedButtonStyle)
+
+            if (textView.text.isNotEmpty() && !equalSign) {
+                if (textView.text.last().isDigit() || textView.text.last() == 'x' || textView.text.last() == 'y') {
+                    textView.append(enterButton.text.toString())
+                    equalSign = true
+                }
+            }
+
+            Handler(Looper.getMainLooper()).postDelayed({
+                enterButton.setBackgroundResource(unClickedButtonStyle)
+            }, 100)
+        }
+    }
+
+    fun refreshAllClickListeners(textView: TextView, blank: TextView) {
+        numberButtonClick(textView, blank)
+        basicCalcButtonClick(textView)
+        powerButtonClick(textView)
+        dotButtonClick(textView)
+        rootButtonClick(textView)
+        factorialButtonClick(textView, blank)
+        fractionButtonClick(textView)
+        percentButtonClick(textView, blank)
+        numberPIButtonClick(textView, blank)
+        numberEulerButtonClick(textView, blank)
+        clearButtonClick(textView, blank, blank)
+        openBracketButtonClick(textView)
+        closeBracketButtonClick(textView)
+        deleteButtonClick(textView, blank)
+        xVariableClick(textView)
+        yVariableClick(textView)
+        enterWhenInUnknownsCalculatorMode(textView)
     }
 }

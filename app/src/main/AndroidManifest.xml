@@ -121,7 +121,7 @@
             android:screenOrientation="portrait">
         </activity>
 
-        <!-- Advance calculator -->
+        <!-- Draw Function -->
         <activity
             android:name=".FunctionChartActivity"
             android:exported="true"
@@ -156,6 +156,15 @@
         </activity>
         <activity
             android:name=".MatrixResultActivity"
+            android:exported="true"
+            android:label="Math Master"
+            android:theme="@style/Theme.MathMaster"
+            android:screenOrientation="portrait">
+        </activity>
+
+        <!-- Unknowns calculator -->
+        <activity
+            android:name=".UnknownsCalculatorActivity"
             android:exported="true"
             android:label="Math Master"
             android:theme="@style/Theme.MathMaster"

@@ -44,6 +44,7 @@
     // Tools
     <string name="MatrixCalculator" translatable="false">Matrix calculator</string>
     <string name="AdvancedCalculator" translatable="false">Advanced calculator</string>
+    <string name="UnknownsCalculator" translatable="false">Unknowns calculator</string>
 
     // Advance calculator
     <string name="FirstCalc" translatable="false">1st</string>
@@ -98,6 +99,10 @@
     <string name="ZeroPlaces" translatable="false">Zero places:</string>
     <string name="ZeroPlace" translatable="false">Zero place:</string>
     <string name="None" translatable="false">None</string>
+
+    // Unknowns calculator
+    <string name="FirstEquation" translatable="false">First equation:</string>
+    <string name="SecondEquation" translatable="false">Second equation:</string>
 
     // Statistics
     <string name="StatisticsOverview" translatable="false">Statistics Overview</string>
