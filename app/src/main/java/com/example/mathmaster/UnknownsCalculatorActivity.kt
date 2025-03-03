@@ -3,6 +3,9 @@ package com.example.mathmaster
 import android.app.ActivityOptions
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.text.InputType
 import android.widget.EditText
 import android.widget.TextView
 import androidx.activity.ComponentActivity
@@ -18,45 +21,77 @@ class UnknownsCalculatorActivity : ComponentActivity() {
 
         // Get equations
         val firstEquation: EditText = findViewById(R.id.FirstEquation)
+        firstEquation.inputType = InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
         val secondEquation: EditText = findViewById(R.id.SecondEquation)
+        secondEquation.inputType = InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+
         val blank: TextView = findViewById(R.id.Blank)
+        val equalSigns = booleanArrayOf(false, false)
+        var equationIdx = 0
         actualEquation = firstEquation
 
         // Keyboard
         val keyboard: AdvancedKeyboard = findViewById(R.id.Keyboard)
         keyboard.setUnknownsCalculatorMode()
-
-        keyboard.numberButtonClick(actualEquation, blank)
-        keyboard.basicCalcButtonClick(actualEquation)
-        keyboard.functionButtonClick(actualEquation)
-        keyboard.openBracketButtonClick(actualEquation)
-        keyboard.closeBracketButtonClick(actualEquation)
-        keyboard.powerButtonClick(actualEquation)
-        keyboard.dotButtonClick(actualEquation)
-        keyboard.rootButtonClick(actualEquation)
-        keyboard.factorialButtonClick(actualEquation, blank)
-        keyboard.numberPIButtonClick(actualEquation, blank)
-        keyboard.numberEulerButtonClick(actualEquation, blank)
-        keyboard.percentButtonClick(actualEquation, blank)
-        keyboard.fractionButtonClick(actualEquation)
-        keyboard.variableButtonClick(actualEquation)
-
-        keyboard.xVariableClick(actualEquation)
-        keyboard.yVariableClick(actualEquation)
-
-        keyboard.enterWhenInUnknownsCalculatorMode(actualEquation)
-        keyboard.deleteButtonClick(actualEquation, blank)
-        keyboard.clearButtonClick(actualEquation, blank, blank)
+        keyboard.refreshAllClickListeners(actualEquation, blank)
 
         // Select equations listeners
         firstEquation.setOnClickListener {
             actualEquation = firstEquation
+
+            if (equationIdx == 1 && keyboard.getEqualSign()) {
+                keyboard.unsetEqualSign()
+                equalSigns[equationIdx] = true
+            }
+            else if (equationIdx == 1 && !keyboard.getEqualSign()) {
+                equalSigns[equationIdx] = false
+            }
+
+            equationIdx = 0
+            if (equalSigns[equationIdx]) {
+                keyboard.setEqualSign()
+            }
             keyboard.refreshAllClickListeners(actualEquation, blank)
         }
 
         secondEquation.setOnClickListener {
             actualEquation = secondEquation
+
+            if (equationIdx == 0 && keyboard.getEqualSign()) {
+                keyboard.unsetEqualSign()
+                equalSigns[equationIdx] = true
+            }
+            else if (equationIdx == 0 && !keyboard.getEqualSign()) {
+                equalSigns[equationIdx] = false
+            }
+
+            equationIdx = 1
+            if (equalSigns[equationIdx]) {
+                keyboard.setEqualSign()
+            }
             keyboard.refreshAllClickListeners(actualEquation, blank)
+        }
+
+        // Calculate unknowns
+        val checkButton = keyboard.getCheckButton()
+        val clickedButtonStyle = R.drawable.menubutton_background_clicked
+        val unClickedButtonStyle = R.drawable.menubutton_background
+
+        checkButton.setOnClickListener {
+            checkButton.setBackgroundResource(clickedButtonStyle)
+
+            val value = keyboard.solveLinearEquation(firstEquation.text.toString(), secondEquation.text.toString())
+
+            if (value != null) {
+                println("x: ${value.first}, y: ${value.second}")
+            }
+            else {
+                println("No solutions")
+            }
+
+            Handler(Looper.getMainLooper()).postDelayed({
+                checkButton.setBackgroundResource(unClickedButtonStyle)
+                }, 100)
         }
 
         // Handle the back button press

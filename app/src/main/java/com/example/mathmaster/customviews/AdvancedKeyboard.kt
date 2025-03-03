@@ -238,7 +238,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 if (closeBrackets == openBrackets) {
                     if (i > 0) {
                         if (transformedEquation[i-1].toString()[0].isLetter()) {
-                            if (transformedEquation[i] != 'x') {
+                            if (transformedEquation[i] != 'x' && transformedEquation[i] != 'y') {
                                 return i - 1
                             }
                         }
@@ -562,7 +562,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         inRoot = false
                         inDegree = false
                     }
-                    'π', 'e', 'x' -> {
+                    'π', 'e', 'x', 'y' -> {
                         if (transformedEquation.isNotEmpty()) {
                             if (transformedEquation.last() != '×' && transformedEquation.last() != '/'
                                 && transformedEquation.last() != '+' && transformedEquation.last() != '-'
@@ -609,6 +609,20 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         }
 
                         inRoot = false
+                    }
+                    '=' -> {
+                        while(bracketsInput.isNotEmpty()) {
+                            transformedEquation.add(bracketsInput.removeLast())
+                        }
+
+                        while(additionalOpenedBrackets.isNotEmpty()) {
+                            while(additionalOpenedBrackets.last().isNotEmpty()) {
+                                transformedEquation.add(additionalOpenedBrackets.last().removeLast())
+                            }
+                            additionalOpenedBrackets.removeLast()
+                        }
+
+                        transformedEquation.add(element)
                     }
                 }
 
@@ -824,7 +838,9 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         }
                     }
 
-                    lastChar = equation[iterator] as Char
+                    if (iterator < equation.size) {
+                        lastChar = equation[iterator] as Char
+                    }
                 }
 
                 is Double -> {
@@ -932,7 +948,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 if (textView.text.isNotEmpty()) {
                     if (textView.text.last() != ')' && textView.text.last() != 'π'
                         && textView.text.last() != '!' && textView.text.last() != 'e'
-                        && textView.text.last() != '%'  && textView.text.last() != 'x') {
+                        && textView.text.last() != '%'  && textView.text.last() != 'x'
+                        && textView.text.last() != 'y') {
                         if (textView.text.last() == '°') {
                             textView.text = textView.text.dropLast(1)
                         }
@@ -1149,7 +1166,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
             }
 
             if (appendedFactorial) {
-                if (!functionChartMode && unknownsCalculatorMode) {
+                if (!functionChartMode && !unknownsCalculatorMode) {
                     resultOfCalculate(textView, resultTextView)
                 }
             }
@@ -1205,7 +1222,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
             }
 
             if (appendedPercent) {
-                if (!functionChartMode && unknownsCalculatorMode) {
+                if (!functionChartMode && !unknownsCalculatorMode) {
                     resultOfCalculate(textView, resultTextView)
                 }
             }
@@ -1234,7 +1251,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
             }
 
             if (addedNumber) {
-                if (!functionChartMode && unknownsCalculatorMode) {
+                if (!functionChartMode && !unknownsCalculatorMode) {
                     resultOfCalculate(textView, resultTextView)
                 }
             }
@@ -1263,7 +1280,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
             }
 
             if (addedNumber) {
-                if (!functionChartMode && unknownsCalculatorMode) {
+                if (!functionChartMode && !unknownsCalculatorMode) {
                     resultOfCalculate(textView, resultTextView)
                 }
             }
@@ -1587,7 +1604,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
             variableButton.setBackgroundResource(clickedButtonStyle)
 
             if (textView.text.isNotEmpty()) {
-                if (textView.text.last() != '.' && textView.text.last() != 'x') {
+                if (textView.text.last() != '.' && textView.text.last() != 'x'
+                    && textView.text.last() != 'y') {
                     textView.append(variableButton.text.toString())
                 }
             } else {
@@ -1611,14 +1629,16 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
         logarithmButton.text ="x"
         naturalLogarithmButton.text = "y"
+        variableButton.text = "✓"
     }
 
-    fun xVariableClick(textView: TextView) {
+    private fun xVariableClick(textView: TextView) {
         logarithmButton.setOnClickListener {
             logarithmButton.setBackgroundResource(clickedButtonStyle)
 
             if (textView.text.isNotEmpty()) {
-                if (textView.text.last() != '.' && textView.text.last() != 'x') {
+                if (textView.text.last() != '.' && textView.text.last() != 'x'
+                    && textView.text.last() != 'y') {
                     textView.append(logarithmButton.text.toString())
                 }
             } else {
@@ -1631,7 +1651,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
         }
     }
 
-    fun yVariableClick(textView: TextView) {
+    private fun yVariableClick(textView: TextView) {
         naturalLogarithmButton.setOnClickListener {
             naturalLogarithmButton.setBackgroundResource(clickedButtonStyle)
 
@@ -1649,12 +1669,17 @@ class AdvancedKeyboard @JvmOverloads constructor(
         }
     }
 
-    fun enterWhenInUnknownsCalculatorMode(textView: TextView) {
+    fun getCheckButton(): Button {
+        return variableButton
+    }
+
+    private fun enterWhenInUnknownsCalculatorMode(textView: TextView) {
         enterButton.setOnClickListener {
             enterButton.setBackgroundResource(clickedButtonStyle)
 
             if (textView.text.isNotEmpty() && !equalSign) {
-                if (textView.text.last().isDigit() || textView.text.last() == 'x' || textView.text.last() == 'y') {
+                if (textView.text.last().isDigit() || textView.text.last() == 'x'
+                    || textView.text.last() == 'y' || textView.text.last() == ')') {
                     textView.append(enterButton.text.toString())
                     equalSign = true
                 }
@@ -1664,6 +1689,18 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 enterButton.setBackgroundResource(unClickedButtonStyle)
             }, 100)
         }
+    }
+
+    fun setEqualSign() {
+        equalSign = true
+    }
+
+    fun unsetEqualSign() {
+        equalSign = false
+    }
+
+    fun getEqualSign(): Boolean {
+        return equalSign
     }
 
     fun refreshAllClickListeners(textView: TextView, blank: TextView) {
@@ -1685,4 +1722,443 @@ class AdvancedKeyboard @JvmOverloads constructor(
         yVariableClick(textView)
         enterWhenInUnknownsCalculatorMode(textView)
     }
+
+    private fun transformEquationForSolvingUnknowns(input: String): MutableList<Any> {
+        // Get equation
+        val equation = mutableListOf<Any>()
+        var brackets = 0
+        var number = ""
+
+        for (char in input) {
+            if (char == '(') {
+                brackets++
+            }
+            else if (char == ')') {
+                brackets--
+            }
+
+            if (char.isDigit()) {
+                number += char
+            }
+            else if (char == '.') {
+                number += char
+            }
+            else {
+                if (char.isLetter() && number == "") {
+                    equation.add(1.0)
+                }
+
+                if (number != "") {
+                    equation.add(number.toDouble())
+                    number = ""
+                }
+                equation.add(char)
+            }
+        }
+        if (number != "") {
+            equation.add(number.toDouble())
+        }
+        for (i in 0 until brackets) {
+            equation.add(')')
+        }
+
+        val result = mutableListOf<Any>()
+        val multiplicative = mutableListOf<Double>()
+        val unknowns = mutableListOf<Char>()
+        var lastNumber = Double.MIN_VALUE
+        var lastUnknown = '0'
+        var lastChar: Any = '0'
+        var deep = -1
+        var level = -1
+        var omit = false
+        var add = false
+        var multiplication = false
+        var appended = false
+
+        var iterator = 0
+        while (iterator < equation.size) {
+            when (equation[iterator]) {
+                is Char -> {
+                    when (equation[iterator]) {
+                        'x', 'y', 'z', 'a' -> {
+                            lastUnknown = equation[iterator] as Char
+
+                            if (result.isNotEmpty()) {
+                                if (result.last().toString()[0].isDigit()) {
+                                    multiplication = true
+                                }
+                            }
+
+                            if (deep >= 0 && !appended) {
+                                println("CHAR")
+                                add = true
+                            }
+                            else {
+                                appended = false
+                            }
+                        }
+                        '(' -> {
+                            var added = false
+                            if (multiplication && lastUnknown != '0') {
+                                val numbers = mutableListOf<Double>()
+                                val unknownsBuffer = mutableListOf<Char>()
+                                println("MULTIPLICATION")
+                                var idx = iterator-1
+                                while (idx >= 0 && (equation[idx] != '+' && equation[idx] != '-')) {
+                                    when (equation[idx]) {
+                                        is Double -> numbers.add(equation[idx] as Double)
+                                        is Char -> {
+                                            if (equation[idx].toString()[0].isLetter()) {
+                                                unknownsBuffer.add(equation[idx] as Char)
+                                            }
+                                        }
+
+                                    }
+                                    idx--
+                                }
+
+                                if (multiplicative.isNotEmpty() || unknownsBuffer.isNotEmpty()) {
+                                    for (num in numbers) {
+                                        multiplicative.add(num)
+                                    }
+                                    for (char in unknownsBuffer) {
+                                        unknowns.add(char)
+                                    }
+
+                                    level++
+                                    deep++
+                                    added = true
+                                    omit = true
+                                    add = false
+                                }
+                            }
+
+                            if (lastChar != '+' && lastChar != '-' && lastChar != '/' && !added) {
+                                if ((lastUnknown != '0' || lastNumber != Double.MIN_VALUE)){
+                                    if (lastNumber != Double.MIN_VALUE) {
+                                        multiplicative.add(lastNumber)
+                                        lastNumber = 0.0
+                                        level++
+                                    }
+
+                                    if (lastUnknown != '0') {
+                                        deep++
+                                        unknowns.add(lastUnknown)
+                                        lastUnknown = '0'
+                                    }
+
+                                    omit = true
+                                }
+                            }
+                        }
+                        ')' -> {
+                            if (deep >= 0) {
+                                unknowns.removeLast()
+                                deep--
+                            }
+                            if (level >= 0) {
+                                level--
+                            }
+                        }
+                        '×' -> {
+                            if (lastUnknown != '0') {
+                                multiplication = true
+                            }
+                        }
+                        '/' -> {
+                            multiplication = false
+
+                            var numberBuffer = Double.MIN_VALUE
+                            var unknownBuffer = '0'
+
+                            // Find first part of divide
+                            var begin = iterator
+                            while (begin > 0) {
+                                if (equation[begin] == '+' || equation[begin] == '-' || equation[begin] == '×') {
+                                    begin++
+                                    break
+                                }
+                                begin--
+                            }
+
+                            // Find second part of divide
+                            var i = iterator+1
+                            while (i < equation.size && (equation[i].toString()[0].isDigit() || equation[i].toString()[0].isLetter())) {
+                                if (equation[i].toString()[0].isDigit()) {
+                                    numberBuffer = equation[i] as Double
+                                }
+                                else if (equation[i].toString()[0].isLetter()) {
+                                    unknownBuffer = equation[i] as Char
+                                }
+                                i++
+                            }
+
+                            // Append to equation result of divide
+                            if (numberBuffer != Double.MIN_VALUE || unknownBuffer != '0') {
+                                iterator = i
+
+                                var num = Double.MIN_VALUE
+
+                                if (numberBuffer != Double.MIN_VALUE) {
+                                    num = lastNumber / numberBuffer
+                                }
+
+                                val unknown = if (lastChar == unknownBuffer) {
+                                    ""
+                                } else {
+                                    "$lastChar/$unknownBuffer"
+                                }
+
+                                // Remove calculation from equation
+                                i = begin
+                                while (i < iterator) {
+                                    equation.removeAt(begin)
+                                    iterator--
+                                }
+
+                                // Remove calculation from result
+                                i = result.size-1
+                                while (i >= 0 && result[i] != '+' && result[i] != '-' && result[i] != '×') {
+                                    result.removeLast()
+                                    i--
+                                }
+
+                                // Append results
+                                if (num != Double.MIN_VALUE && num != 1.0) {
+                                    equation.add(begin, num)
+                                    result.add(num)
+                                }
+                                if (unknown != "") {
+                                    equation.add(begin, unknown)
+                                    result.add(unknown)
+                                }
+
+                                // Break if iterator out of scope
+                                if (iterator >= equation.size) {
+                                    if (num == 1.0) {
+                                        result.add(1.0)
+                                    }
+                                    break
+                                }
+                                omit = true
+                            }
+                        }
+                        else -> {
+                            if (deep < 0 && level < 0) {
+                                multiplicative.clear()
+                                unknowns.clear()
+                                lastUnknown = '0'
+                                lastNumber = Double.MIN_VALUE
+                            }
+                            add = false
+                            appended = false
+                            multiplication = false
+                        }
+                    }
+                }
+
+                is Double -> {
+                    lastNumber = equation[iterator] as Double
+                    lastUnknown = '0'
+                    if (deep < 0) {
+                        unknowns.clear()
+                    }
+                    if (level >= 0) {
+                        var run = true
+
+                        var i = iterator
+                        while (i < equation.size) {
+                            if (equation[i] == '(') {
+                                run = false
+                                break
+                            }
+                            else if (equation[i] == '+' || equation[i] == '-' || equation[i] == ')') {
+                                break
+                            }
+                            i++
+                        }
+
+                        if (run) {
+                            println("DOUBLE")
+                            add = true
+                            omit = true
+                            appended = true
+                        }
+                    }
+                }
+            }
+
+            if (add) {
+                println("ADD")
+                if (multiplication) {
+                    // Delete multiplication
+                    var i = result.size-1
+                    while (i >= 0) {
+                        if (result[i] == '+' || result[i] == '-') {
+                            break
+                        }
+                        println("s")
+                        result.removeAt(i)
+                        i--
+                    }
+                }
+
+                if (multiplicative.isNotEmpty()) {
+                    for (num in multiplicative) {
+                        lastNumber *= num
+                    }
+
+                    if (result.isNotEmpty()) {
+                        if (result.last().toString()[0].isDigit()) {
+                            result.removeLast()
+                        }
+                    }
+                    result.add(lastNumber)
+                }
+
+                if (deep >= 0) {
+                    for (unknown in unknowns) {
+                        result.add(unknown)
+                    }
+                }
+                add = false
+            }
+
+            lastChar = equation[iterator]
+            println("RESULT = $result")
+            println(equation)
+            if (!omit) {
+                result.add(equation[iterator])
+            }
+            else {
+                omit = false
+            }
+            iterator++
+        }
+
+        println(result)
+        return result
+    }
+
+    private fun getCoefficientsLinearEquation(firstEquation: String, secondEquation: String): Array<DoubleArray> {
+        val result = Array(2) { DoubleArray(3) }
+
+        val equations = arrayOf(transformEquationForSolvingUnknowns(firstEquation)
+            , transformEquationForSolvingUnknowns(secondEquation))
+
+        println("FINAL ${equations[0]}")
+        /*
+        // Get coefficients for further calculations
+        for (index in equations.indices) {
+            val firstUnknownCoefficients = mutableListOf<Double>()
+            val secondUnknownCoefficients = mutableListOf<Double>()
+            val numbersQueue = mutableListOf<Double>()
+            var leftSide = true
+            var lastChar: Any = equations[index].first()
+
+            for (char in 1 until equations[index].size) {
+                when (equations[index][char]) {
+                    'x' -> {
+                        when (lastChar) {
+                            '×' -> {
+                                if (leftSide) {
+                                    firstUnknownCoefficients.add(numbersQueue.removeLast())
+                                }
+                                else {
+                                    firstUnknownCoefficients.add(-numbersQueue.removeLast())
+                                }
+                            }
+                        }
+                    }
+                    'y' -> {
+                        when (lastChar) {
+                            '×' -> {
+                                if (leftSide) {
+                                    secondUnknownCoefficients.add(numbersQueue.removeLast())
+                                }
+                                else {
+                                    secondUnknownCoefficients.add(-numbersQueue.removeLast())
+                                }
+                            }
+                        }
+                    }
+                    '=' -> {
+                        leftSide = false
+                    }
+                    is Double -> {
+                        if (leftSide) {
+                            numbersQueue.add(equations[index][char] as Double)
+                        }
+                        else {
+                            numbersQueue.add(-(equations[index][char]as Double))
+                        }
+                    }
+                    else -> {
+                        when (lastChar) {
+                            '×' -> {
+                                when (equations[index][char]) {
+                                    is Double -> {
+                                        if (leftSide) {
+                                            numbersQueue[numbersQueue.lastIndex] = -(numbersQueue.removeLast() * equations[index][char] as Double)
+                                        }
+                                        else {
+                                            numbersQueue[numbersQueue.lastIndex] = numbersQueue.removeLast() * equations[index][char] as Double
+                                        }
+                                    }
+                                }
+                            }
+                            '/' -> {
+                                when (equations[index][char]) {
+                                    is Double -> {
+                                        if (leftSide) {
+                                            numbersQueue[numbersQueue.lastIndex] = -(numbersQueue.removeLast() / equations[index][char] as Double)
+                                        }
+                                        else {
+                                            numbersQueue[numbersQueue.lastIndex] = numbersQueue.removeLast() / equations[index][char] as Double
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                lastChar = equations[index][char]
+            }
+
+            // Push coefficients to result array
+            result[index][0] = firstUnknownCoefficients.sum()
+            result[index][1] = secondUnknownCoefficients.sum()
+            result[index][2] = -(numbersQueue.sum())
+
+            println()
+
+            println(result[index][0])
+            println(result[index][1])
+            println(result[index][2])
+
+            println()
+        }*/
+
+        return result
+    }
+
+    fun solveLinearEquation(firstEquation: String, secondEquation: String): Pair<Double, Double>? {
+        // Simplify equations
+        val equations = getCoefficientsLinearEquation(firstEquation, secondEquation)
+
+        // Calculate equation
+        val determinant = equations[0][0] * equations[1][1] - equations[1][0] * equations[0][1]
+        if (determinant == 0.0) {
+            return null
+        }
+
+        val determinantX = equations[0][2] * equations[1][2] - equations[1][2] * equations[0][1]
+        val determinantY = equations[0][0] * equations[1][2] - equations[1][0] * equations[0][2]
+        val x = determinantX / determinant
+        val y = determinantY / determinant
+
+        return Pair(x, y)
+    }
+
 }

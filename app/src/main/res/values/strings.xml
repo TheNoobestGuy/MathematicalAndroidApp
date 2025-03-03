@@ -103,6 +103,7 @@
     // Unknowns calculator
     <string name="FirstEquation" translatable="false">First equation:</string>
     <string name="SecondEquation" translatable="false">Second equation:</string>
+    <string name="ThirdEquation" translatable="false">Third equation:</string>
 
     // Statistics
     <string name="StatisticsOverview" translatable="false">Statistics Overview</string>
