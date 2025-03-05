@@ -1724,6 +1724,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
         enterWhenInUnknownsCalculatorMode(textView)
     }
 
+    // Solve Equation Calculator
     private fun connectUnknowns(unknowns: MutableList<Char>,
                                 multipliers: MutableList<Double>, flag: Boolean): MutableList<Any> {
         val result = mutableListOf<Any>()
@@ -1756,12 +1757,14 @@ class AdvancedKeyboard @JvmOverloads constructor(
     }
 
     private fun getUnknown(unknowns: MutableList<Char>,
-                                         stack: MutableList<Char>): MutableList<Any> {
+                                         stack: MutableList<Char>?): MutableList<Any> {
         val result = mutableListOf<Any>()
         val unknown = mutableListOf<Char>()
 
         unknown.addAll(unknowns)
-        unknown.addAll(stack)
+        if (stack != null) {
+            unknown.addAll(stack)
+        }
 
         // Count unknowns
         val map = HashMap<Char, Int>()
@@ -1790,7 +1793,10 @@ class AdvancedKeyboard @JvmOverloads constructor(
         val multiplierNumber = if (subEquation.isEmpty()) {
             1.0
         }else {
-            subEquation[0] as Double
+            when (subEquation[0]) {
+                is Double -> subEquation[0] as Double
+                else -> {1.0}
+            }
         }
 
         val multiplierUnknowns = mutableListOf<Char>()
@@ -1832,17 +1838,151 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 }
             }
         }
-        when (result.last()) {
-            is Double -> {
-                val unknown = getUnknown(multiplierUnknowns, stack)
-                result.addAll(unknown)
+        if (result.isNotEmpty()) {
+            when (result.last()) {
+                is Double -> {
+                    val unknown = getUnknown(multiplierUnknowns, stack)
+                    result.addAll(unknown)
+                }
             }
         }
 
         return result
     }
 
-    private fun transformEquationForSolvingUnknowns(equation: MutableList<Any>, index: Int): PairSolve<MutableList<Any>, Int> {
+    private fun getUnknowns(equation: MutableList<Any>): MutableList<Char> {
+        val result = mutableListOf<Char>()
+
+        var lastUnknown = '0'
+        for (element in equation) {
+            when (element) {
+                is Char -> {
+                    if (element.isLetter()) {
+                        lastUnknown = element
+                    }
+                }
+                is Double -> {
+                    if (lastUnknown != '0') {
+                        for (i in 0 until element.toInt()) {
+                            result.add(lastUnknown)
+                        }
+                    }
+                    lastUnknown = '0'
+                }
+            }
+        }
+
+        return result
+    }
+
+    private fun getMultipliers(equation: MutableList<Any>): MutableList<Double> {
+        val result = mutableListOf<Double>()
+
+        var lastUnknown = '0'
+        for (element in equation) {
+            when (element) {
+                is Char -> {
+                    lastUnknown = element
+                }
+                is Double -> {
+                    if (!lastUnknown.isLetter()) {
+                        result.add(element)
+                    }
+                }
+            }
+        }
+
+        return result
+    }
+
+    private fun tearIntoPiecesEquation(equation: MutableList<Any>): MutableList<MutableList<Any>> {
+        val result = mutableListOf<MutableList<Any>>()
+
+        val buffer = mutableListOf<Any>()
+        for (i in equation) {
+            when (i) {
+                '+', '-' -> {
+                    val copy = mutableListOf<Any>()
+                    copy.addAll(buffer)
+                    result.add(copy)
+                    buffer.clear()
+                }
+                else -> {
+                    buffer.add(i)
+                }
+            }
+        }
+        if (buffer.isNotEmpty()) {
+            result.add(buffer)
+        }
+
+        return result
+    }
+
+    private fun calculateUnknownsAndMultipliers(unknowns: MutableList<Char>,
+                                                multipliers: MutableList<Double>, flag: Boolean): MutableList<Any> {
+        val result = mutableListOf<Any>()
+        val subEquation = connectUnknowns(unknowns, multipliers, flag)
+
+        var number = 1.0
+        val stack = mutableListOf<Char>()
+        for (element in subEquation) {
+            when (element) {
+                is Double -> {
+                    number *= element
+                }
+                is Char -> {
+                    stack.add(element)
+                }
+            }
+        }
+
+        result.add(number)
+        result.addAll(getUnknown(stack, null))
+        return result
+    }
+
+
+    private fun calculateTwoEquations(first: MutableList<Any>, second: MutableList<Any>, flag: Boolean): MutableList<Any> {
+        val result = mutableListOf<Any>()
+
+        // Get every piece of first and second equation
+        val firstPieces = tearIntoPiecesEquation(first)
+        val secondPieces = tearIntoPiecesEquation(second)
+
+        // Get operators from first equation
+        val stack = mutableListOf<Char>()
+        for (operator in first) {
+            when (operator) {
+                '+', '-' -> stack.add(operator as Char)
+            }
+        }
+
+        // Calculate equations
+        for (element in firstPieces) {
+            for (tab in secondPieces) {
+                val unknowns = getUnknowns(tab)
+                val multipliers = getMultipliers(tab)
+                println(calculateUnknownsPreparation(element, unknowns, multipliers, flag))
+                result.addAll(calculateUnknownsPreparation(element, unknowns, multipliers, flag))
+                if (stack.isNotEmpty()) {
+                    result.add(stack.removeFirst())
+                }
+                else {
+                    result.add('+')
+                }
+            }
+        }
+        if (result.isNotEmpty()) {
+            if (result.last() == '+') {
+                result.removeLast()
+            }
+        }
+
+        return result
+    }
+
+    private fun transformEquationForSolvingUnknowns(equation: MutableList<Any>, index: Int, flag: Boolean): PairSolve<MutableList<Any>, Int> {
         // Variables
         val result = mutableListOf<Any>()
         val unknowns = mutableListOf<Char>()
@@ -1851,7 +1991,10 @@ class AdvancedKeyboard @JvmOverloads constructor(
         var lastElement: Any = 0
         var multiply = false
         var divide = false
+        var keepMultiply = false
+        var doMultiplication = flag
 
+        println("EQ: $equation")
         var number = false
         var iterator = index
         while (iterator < equation.size) {
@@ -1863,34 +2006,105 @@ class AdvancedKeyboard @JvmOverloads constructor(
                             result.removeLast()
                         }
                     }
-                    val subEquation = transformEquationForSolvingUnknowns(equation, iterator+1)
+                    println("BEFORE; $result")
+                    val subEquation = transformEquationForSolvingUnknowns(equation, iterator+1, flag)
+                    println("AFTER ${subEquation.list}")
+                    iterator = subEquation.iterator
 
-                    if (divide) {
-                        result.addAll(calculateUnknownsPreparation(subEquation.list, unknowns, multipliers, false))
+                    // Check for brackets multiplication or division
+                    if (iterator < equation.size) {
+                        if (equation[iterator] == '×') {
+                            println("KEEP MULTIPLY")
+                            multiply = true
+                            keepMultiply = true
+                            iterator++
+                            equation.add(iterator, '(')
+
+                            var i = iterator
+                            while (i < equation.size) {
+                                if (equation[i] == '+' || equation[i] == '-') {
+                                    equation.add(i, ')')
+                                    break
+                                }
+                                i++
+                            }
+                        }
+                        else if (equation[iterator] == '/') {
+                            divide = true
+                            keepMultiply = true
+                            iterator++
+                            equation.add(iterator, '(')
+
+                            var i = iterator
+                            while (i < equation.size) {
+                                if (equation[i] == '+' || equation[i] == '-') {
+                                    equation.add(i, ')')
+                                    break
+                                }
+                                i++
+                            }
+                        }
+                    }
+                    println(result)
+                    if (!keepMultiply || !doMultiplication) {
+                        if (divide) {
+                            result.addAll(calculateUnknownsPreparation(subEquation.list, unknowns, multipliers, false))
+                        }
+                        else {
+                            result.addAll(calculateUnknownsPreparation(subEquation.list, unknowns, multipliers, true))
+                        }
                     }
                     else {
-                        result.addAll(calculateUnknownsPreparation(subEquation.list, unknowns, multipliers, true))
+                        val buffer = if (divide) {
+                            calculateTwoEquations(result, subEquation.list, false)
+                        } else {
+                            println("H")
+                            println(result)
+                            println(subEquation.list)
+                            calculateTwoEquations(result, subEquation.list, true)
+                        }
+
+                        result.clear()
+                        result.addAll(buffer)
                     }
 
                     unknowns.clear()
                     multipliers.clear()
-                    iterator = subEquation.iterator
+                    doMultiplication = true
                     continue
                 }
                 ')' -> {
+                    println("BEFORE CONN: $result")
                     // Append multiplication or division
-                    if (unknowns.isNotEmpty() || multipliers.isNotEmpty()) {
-                        if (divide) {
-                            result.addAll(connectUnknowns(unknowns, multipliers, false))
-                        }
-                        else {
-                            result.addAll(connectUnknowns(unknowns, multipliers, true))
+                    if (!keepMultiply) {
+                        if (unknowns.isNotEmpty() || multipliers.isNotEmpty()) {
+                            if (divide) {
+                                result.addAll(connectUnknowns(unknowns, multipliers, false))
+                            }
+                            else {
+                                result.addAll(connectUnknowns(unknowns, multipliers, true))
+                            }
                         }
                     }
+                    println("AFTER CONN: $result")
 
                     return PairSolve(result, iterator+1)
                 }
                 '+', '-' -> {
+                    if (unknowns.isNotEmpty() || multipliers.isNotEmpty()) {
+                        if (divide) {
+                            result.addAll(calculateUnknownsAndMultipliers(unknowns, multipliers, false))
+                        }
+                        else {
+                            println("BEFORE +: $result")
+                            result.addAll(calculateUnknownsAndMultipliers(unknowns, multipliers, true))
+                            println("AFFTER -: $result")
+                        }
+
+                        unknowns.clear()
+                        multipliers.clear()
+                    }
+
                     multiply = false
                     divide = false
                 }
@@ -1907,7 +2121,6 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     }
 
                     multiply = true
-                    result.add(equation[iterator] as Char)
                 }
                 '/' -> {
                     if (!divide) {
@@ -1922,10 +2135,16 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     }
 
                     divide = true
-                    result.add(equation[iterator] as Char)
                 }
                 // Get unknowns
                 is Char -> {
+                    if (!multiply) {
+                        when (lastElement) {
+                            is Double -> multipliers.add(result.removeLast() as Double)
+                            is Char -> unknowns.add(result.removeLast() as Char)
+                        }
+                    }
+
                     if (multiply || divide) {
                         if (result.isNotEmpty()) {
                             if (result.last() == '×') {
@@ -1961,8 +2180,35 @@ class AdvancedKeyboard @JvmOverloads constructor(
     private fun getCoefficientsLinearEquation(firstEquation: String, secondEquation: String): Array<DoubleArray> {
         val result = Array(2) { DoubleArray(3) }
 
-        val equations = arrayOf(transformEquationForSolvingUnknowns(transformEquation(firstEquation), 0)
-            , transformEquationForSolvingUnknowns(transformEquation(secondEquation), 0))
+        val transformedEquations = arrayOf(transformEquation(firstEquation), transformEquation(secondEquation))
+
+        // Put 1 before every unknown
+        for (equation in transformedEquations) {
+            var lastElement: Any = '0'
+            var index = 0
+            var limit = equation.size
+            while (index < limit) {
+                when (equation[index]) {
+                    is Char -> {
+                        if (equation[index].toString()[0].isLetter()) {
+                            when (lastElement) {
+                                is Char -> {
+                                    equation.add(index, '×')
+                                    equation.add(index, 1.0)
+                                    index += 2
+                                    limit += 2
+                                }
+                            }
+                        }
+                    }
+                }
+                lastElement = equation[index]
+                index++
+            }
+        }
+
+        val equations = arrayOf(transformEquationForSolvingUnknowns(transformedEquations[0], 0, false),
+            transformEquationForSolvingUnknowns(transformedEquations[1], 0, false))
 
         println("END")
         println(equations[0].list)
