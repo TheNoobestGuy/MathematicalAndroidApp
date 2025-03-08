@@ -2557,17 +2557,223 @@ class AdvancedKeyboard @JvmOverloads constructor(
         return TripleSolve(result, iterator+1, compute)
     }
 
-    private fun groupUnknowns(equation: MutableList<Any>): MutableList<Any> {
-        val result = mutableListOf<Any>()
+    private fun appendKeyWithValue(map: LinkedHashMap<MutableList<Any>, Double>, key: MutableList<Any>, value: Double, operator: Char, operatorsIndexes: MutableList<Int>, result: MutableList<Any>) {
+        var inserted = false
 
-        val map = HashMap<String, MutableList<Any>>()
-        var value = mutableListOf<Any>()
-        var key = ""
+        if (key.isEmpty()) {
+            key.add("value")
 
-        for (element in equation) {
+            if (map.getOrDefault(key, 0.0) != 0.0) {
+                inserted = true
+            }
+
+            if (operator == '-') {
+                map[key] = map.getOrDefault(key, 0.0) - value
+            }
+            else {
+                map[key] = map.getOrDefault(key, 0.0) + value
+            }
+        }
+        else {
+            if (map.getOrDefault(key, 0.0) != 0.0) {
+                inserted = true
+            }
+
+            if (operator == '-') {
+                map[key] = map.getOrDefault(key, 0.0) - value
+            }
+            else {
+                map[key] = map.getOrDefault(key, 0.0) + value
+            }
+            println("RETURN")
+            println(key)
+            println(map.getOrDefault(key, 0.0))
         }
 
-        return result
+        if (map.getOrDefault(key, 0.0) == 0.0 && inserted) {
+            println(operatorsIndexes)
+
+            val index = operatorsIndexes[map.keys.indexOf(key)]
+            println(result)
+            if (index-1 >= 0) {
+                result.removeAt(index-1)
+            }
+            else {
+                result.removeFirst()
+            }
+            if (result.isNotEmpty()) {
+                result.removeAt(result.size-1)
+            }
+
+            println("REMOVE")
+            println(result)
+            println(key)
+            map.remove(key)
+        }
+        else {
+            if (inserted) {
+                println(result)
+                if (result.isNotEmpty()) {
+                    result.removeAt(result.size-1)
+                }
+            }
+        }
+    }
+
+    private fun groupUnknowns(equation: MutableList<Any>, iterator: Int): Pair<MutableList<Any>, Int> {
+        val result = mutableListOf<Any>()
+        val operatorsList = mutableListOf<Any>()
+
+        val map = LinkedHashMap<MutableList<Any>, Double>()
+        var value = 0.0
+        val key = mutableListOf<Any>()
+
+        var powerTo = false
+        var operator = '|'
+        val operatorsIndexes = mutableListOf<Int>()
+        var closeBracket = false
+
+        var i = iterator
+        while (i < equation.size) {
+            println(equation[i])
+            when (equation[i]) {
+                is Double -> {
+                    if (powerTo) {
+                        key.add(equation[i])
+                    }
+                    else {
+                        value = equation[i] as Double
+                    }
+                }
+                is Char -> {
+                    when  (equation[i]) {
+                        '^' -> {
+                            if (powerTo) {
+                                key.add(equation[i])
+                            }
+                            else {
+                                result.add('^')
+                            }
+                        }
+                        '+', '-' -> {
+                            operatorsList.add(equation[i])
+                            operatorsIndexes.add(operatorsList.size-1)
+
+                            if (key.isNotEmpty()) {
+                                println("operatorsList")
+                                println(operatorsList)
+
+                                println("KEY: $key")
+                                println("VALUE: $value")
+                                println("OPERATOR: ${equation[i]}")
+                                val buffer = mutableListOf<Any>()
+                                buffer.addAll(key)
+                                appendKeyWithValue(map, buffer, value, equation[i] as Char, operatorsIndexes, operatorsList)
+                            }
+                            else if (value != 0.0 && operator != '|') {
+                                val buffer = mutableListOf<Any>("value")
+                                appendKeyWithValue(map, buffer, value, equation[i] as Char, operatorsIndexes, operatorsList)
+                            }
+
+                            operator = equation[i] as Char
+                            key.clear()
+                            powerTo = false
+                            value = 0.0
+                        }
+                        '(' ->  {
+                            val bufferEquation = groupUnknowns(equation, i+1)
+                            bufferEquation.first.add(0, '(')
+                            result.addAll(bufferEquation.first)
+                            println("AFTER REC")
+                            println(bufferEquation.first)
+                            println(result)
+                            i = bufferEquation.second
+                            value = 0.0
+                            key.clear()
+                            powerTo = false
+                            continue
+                        }
+                        ')' -> {
+                            closeBracket = true
+                            break
+                        }
+                        '×', '/' -> {
+                            operatorsList.add(equation[i])
+                            operatorsIndexes.add(operatorsList.size-1)
+                            value = 0.0
+                        }
+                        else -> {
+                            powerTo = true
+                            key.add(equation[i])
+                        }
+                    }
+                }
+            }
+            i++
+        }
+        if (key.isNotEmpty() && value != 0.0) {
+            println("KEY: $key")
+            println("VALUE: $value")
+            println("OPERATOR: $operator")
+            appendKeyWithValue(map, key, value, operator, operatorsIndexes, operatorsList)
+        }
+        else if (value != 0.0){
+            val buffer = mutableListOf<Any>("value")
+            appendKeyWithValue(map, buffer, value, operator, operatorsIndexes, operatorsList)
+        }
+
+        println(operatorsList)
+        // Get keys with values
+        val list = mutableListOf<Pair<MutableList<Any>, Double>>()
+        var insert = 0
+        for ((k, v) in map) {
+            list.add(Pair(k,v))
+            println(Pair(k,v))
+
+            operatorsList.add(insert, '0')
+            insert += 2
+        }
+        println("OPERATORS LIST")
+        println(operatorsList)
+        // Append everything to the result
+        if (operatorsList.isNotEmpty()) {
+            if (operatorsList.first() is Char) {
+                if (!closeBracket) {
+                    operatorsList.reverse()
+                }
+            }
+            else {
+                if (closeBracket) {
+                    operatorsList.reverse()
+                }
+            }
+        }
+
+        var step = 0
+        var index = 0
+        while (index < operatorsList.size) {
+            when (operatorsList[index]) {
+                '0' -> {
+                    println("added")
+                    println(list[step].second)
+                    result.add(list[step].second)
+                    if (list[step].first.first() != "value") {
+                        result.addAll(list[step].first)
+                    }
+                    step++
+                }
+                else ->  {
+                    result.add(operatorsList[index])
+                }
+            }
+            index++
+        }
+
+        if (closeBracket) {
+            result.add(')')
+        }
+
+        return Pair(result, i+1)
     }
 
     private fun getCoefficientsLinearEquation(firstEquation: String, secondEquation: String): Array<DoubleArray> {
@@ -2602,11 +2808,11 @@ class AdvancedKeyboard @JvmOverloads constructor(
             }
         }
 
-        val equations = arrayOf(transformEquationForSolvingUnknowns(transformedEquations[0], 0, false),
-            transformEquationForSolvingUnknowns(transformedEquations[1], 0, false))
+        val equations = arrayOf(groupUnknowns(transformEquationForSolvingUnknowns(transformedEquations[0], 0, false).list, 0),
+            groupUnknowns(transformEquationForSolvingUnknowns(transformedEquations[1], 0, false).list, 0))
 
         println("END")
-        println(equations[0].list)
+        println(equations[0].first)
         /*
         // Get coefficients for further calculations
         for (index in equations.indices) {
