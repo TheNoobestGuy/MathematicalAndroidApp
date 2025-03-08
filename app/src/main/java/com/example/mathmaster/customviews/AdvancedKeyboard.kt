@@ -2565,10 +2565,13 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
             if (map.getOrDefault(key, 0.0) != 0.0) {
                 inserted = true
-            }
 
-            if (operator == '-') {
-                map[key] = map.getOrDefault(key, 0.0) - value
+                if (operator == '-') {
+                    map[key] = map.getOrDefault(key, 0.0) - value
+                }
+                else {
+                    map[key] = map.getOrDefault(key, 0.0) + value
+                }
             }
             else {
                 map[key] = map.getOrDefault(key, 0.0) + value
@@ -2577,14 +2580,18 @@ class AdvancedKeyboard @JvmOverloads constructor(
         else {
             if (map.getOrDefault(key, 0.0) != 0.0) {
                 inserted = true
-            }
 
-            if (operator == '-') {
-                map[key] = map.getOrDefault(key, 0.0) - value
+                if (operator == '-') {
+                    map[key] = map.getOrDefault(key, 0.0) - value
+                }
+                else {
+                    map[key] = map.getOrDefault(key, 0.0) + value
+                }
             }
             else {
                 map[key] = map.getOrDefault(key, 0.0) + value
             }
+
             println("RETURN")
             println(key)
             println(map.getOrDefault(key, 0.0))
@@ -2630,6 +2637,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
         var powerTo = false
         var operator = '|'
+
         val operatorsIndexes = mutableListOf<Int>()
         var closeBracket = false
 
@@ -2668,11 +2676,11 @@ class AdvancedKeyboard @JvmOverloads constructor(
                                 println("OPERATOR: ${equation[i]}")
                                 val buffer = mutableListOf<Any>()
                                 buffer.addAll(key)
-                                appendKeyWithValue(map, buffer, value, equation[i] as Char, operatorsIndexes, operatorsList)
+                                appendKeyWithValue(map, buffer, value, operator, operatorsIndexes, operatorsList)
                             }
                             else if (value != 0.0 && operator != '|') {
                                 val buffer = mutableListOf<Any>("value")
-                                appendKeyWithValue(map, buffer, value, equation[i] as Char, operatorsIndexes, operatorsList)
+                                appendKeyWithValue(map, buffer, value, operator, operatorsIndexes, operatorsList)
                             }
 
                             operator = equation[i] as Char
@@ -2730,22 +2738,28 @@ class AdvancedKeyboard @JvmOverloads constructor(
             list.add(Pair(k,v))
             println(Pair(k,v))
 
-            operatorsList.add(insert, '0')
+            if (insert < operatorsList.size) {
+                operatorsList.add(insert, '0')
+            }
+            else {
+                operatorsList.add('0')
+            }
+
             insert += 2
         }
         println("OPERATORS LIST")
         println(operatorsList)
         // Append everything to the result
         if (operatorsList.isNotEmpty()) {
-            if (operatorsList.first() is Char) {
+            if (operatorsList.first() == '0') {
                 if (!closeBracket) {
                     operatorsList.reverse()
+                    list.reverse()
                 }
             }
             else {
-                if (closeBracket) {
-                    operatorsList.reverse()
-                }
+                operatorsList.reverse()
+                list.reverse()
             }
         }
 
