@@ -223,9 +223,13 @@ class AdvancedKeyboard @JvmOverloads constructor(
         return outputNumber
     }
 
-    private fun findNewBracketIndex(transformedEquation: MutableList<Any>): Int {
+    private fun findNewBracketIndex(transformedEquation: MutableList<Any>, variable: Boolean = false): Int {
         var openBrackets = 0
-        var closeBrackets = 1
+        var closeBrackets = 0
+
+        if (variable) {
+            closeBrackets++
+        }
 
         val range = transformedEquation.size - 1 downTo 0
 
@@ -569,7 +573,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         inRoot = false
                         inDegree = false
                     }
-                    'π', 'e', 'x', 'y' -> {
+                    'π', 'e' -> {
                         if (transformedEquation.isNotEmpty()) {
                             if (transformedEquation.last() != '×' && transformedEquation.last() != '/'
                                 && transformedEquation.last() != '+' && transformedEquation.last() != '-'
@@ -579,25 +583,43 @@ class AdvancedKeyboard @JvmOverloads constructor(
                                     transformedEquation.add(addBracketIndex, '(')
                                     additionalOpenedBrackets.last().add(')')
 
-                                    transformedEquation.add('×')
                                     multiplyDivide = true
                                 }
                             }
                         }
 
-                        if (element == 'π' || element == 'e') {
-                            val constant = if (element == 'π') PI else Math.E
-                            transformedEquation.add(constant)
+                        if (transformedEquation.isNotEmpty()) {
+                            if (transformedEquation.last().toString()[0].isDigit()) {
+                                transformedEquation.add('×')
+                            }
                         }
-                        else {
-                            if (transformedEquation.isNotEmpty()) {
-                                if (transformedEquation.last().toString()[0].isDigit()) {
-                                    transformedEquation.add('×')
+
+                        val constant = if (element == 'π') PI else Math.E
+                        transformedEquation.add(constant)
+                        inDegree = false
+                    }
+                    'x', 'y' -> {
+                        if (transformedEquation.isNotEmpty()) {
+                            if (transformedEquation.last() != '×' && transformedEquation.last() != '/'
+                                && transformedEquation.last() != '+' && transformedEquation.last() != '-'
+                                && transformedEquation.last() != '(' && transformedEquation.last() != '√') {
+                                if (!multiplyDivide) {
+                                    addBracketIndex = findNewBracketIndex(transformedEquation, true)
+                                    transformedEquation.add(addBracketIndex, '(')
+                                    additionalOpenedBrackets.last().add(')')
+
+                                    multiplyDivide = true
                                 }
                             }
-
-                            transformedEquation.add(element)
                         }
+
+                        if (transformedEquation.isNotEmpty()) {
+                            if (transformedEquation.last().toString()[0].isDigit()) {
+                                transformedEquation.add('×')
+                            }
+                        }
+
+                        transformedEquation.add(element)
                         inDegree = false
                     }
                     '!', '%', '°' -> {
@@ -2055,7 +2077,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         number = element
                         first = false
                     }
-                    else if (flag) {
+                    else if (!flag) {
                         number *= element
                     }
                     else {
@@ -2069,7 +2091,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
         }
 
         result.add(number)
-        result.addAll(getUnknown(stack, null, flag, false))
+        result.addAll(getUnknown(stack, null, !flag, false))
         return result
     }
 
@@ -2093,7 +2115,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
             i++
         }
 
-        return i
+        return i+1
     }
 
     private fun calculateTwoEquations(first: MutableList<Any>, second: MutableList<Any>, flag: Boolean): MutableList<Any> {
@@ -2233,7 +2255,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                                     println("W")
                                     println(result)
                                     println(subEquation.list)
-                                    result.addAll(calculateUnknownsPreparation(subEquation.list, unknowns, multipliers, true))
+                                    result.addAll(calculateUnknownsPreparation(subEquation.list, unknowns, multipliers, false))
 
                                     unknowns.clear()
                                     multipliers.clear()
@@ -2280,19 +2302,23 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
                         if (unknowns.isNotEmpty() || multipliers.isNotEmpty()) {
                             if (divide) {
-                                result.addAll(calculateUnknownsAndMultipliers(unknowns, multipliers, true))
+                                result.addAll(calculateUnknownsAndMultipliers(unknowns, multipliers, false))
+                                if (subEquation.list.isNotEmpty()) {
+                                    result.add('/')
+                                }
                             }
                             else {
                                 println(unknowns)
                                 println(multipliers)
-                                result.addAll(calculateUnknownsAndMultipliers(unknowns, multipliers, false))
+                                result.addAll(calculateUnknownsAndMultipliers(unknowns, multipliers, true))
+                                if (subEquation.list.isNotEmpty()) {
+                                    result.add('×')
+                                }
                             }
                             unknowns.clear()
                             multipliers.clear()
                         }
-                        else {
-                            result.addAll(subEquation.list)
-                        }
+                        result.addAll(subEquation.list)
                     }
                     continue
                 }
@@ -2302,10 +2328,10 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     if (!keepMultiply) {
                         if (unknowns.isNotEmpty() || multipliers.isNotEmpty()) {
                             if (divide) {
-                                result.addAll(calculateUnknownsAndMultipliers(unknowns, multipliers, true))
+                                result.addAll(calculateUnknownsAndMultipliers(unknowns, multipliers, false))
                             }
                             else {
-                                result.addAll(calculateUnknownsAndMultipliers(unknowns, multipliers, false))
+                                result.addAll(calculateUnknownsAndMultipliers(unknowns, multipliers, true))
                             }
                         }
                     }
@@ -2316,7 +2342,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                             result.addAll(buffer)
                             buffer.clear()
                         }
-                        else if (divide) {
+                        else if (divide && !multiply) {
                            if (unknowns.isNotEmpty() || multipliers.isNotEmpty()) {
                                val buffer = calculateUnknownsPreparation(result, unknowns, multipliers, false)
                                result.clear()
@@ -2333,11 +2359,11 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     println("+")
                     if (unknowns.isNotEmpty() || multipliers.isNotEmpty()) {
                         if (divide) {
-                            result.addAll(calculateUnknownsAndMultipliers(unknowns, multipliers, true))
+                            result.addAll(calculateUnknownsAndMultipliers(unknowns, multipliers, false))
                         }
                         else {
                             println("BEFORE +: $result")
-                            result.addAll(calculateUnknownsAndMultipliers(unknowns, multipliers, false))
+                            result.addAll(calculateUnknownsAndMultipliers(unknowns, multipliers, true))
                             println("AFFTER -: $result")
                         }
 
@@ -2416,23 +2442,9 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         }
                     }
 
-                    if (multiply && !keepMultiply) {
-                        if (unknowns.isNotEmpty() || multipliers.isNotEmpty()) {
-                            println("CHECK!?")
-                            println(unknowns)
-                            println(multipliers)
-                            result.addAll(calculateUnknownsAndMultipliers(unknowns, multipliers, true))
-                            unknowns.clear()
-                            multipliers.clear()
-                            println("NO")
-                        }
-                        multiply = false
-                    }
-
                     val endBracket = findEndBracketIndex(equation, iterator+1)
                     equation.add(iterator+1, '(')
                     equation.add(endBracket, ')')
-                    iterator++
 
                     divide = true
                 }
@@ -2440,16 +2452,15 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     println("BEFORE POWER $result")
                     val endBracket = findEndBracketIndex(equation, iterator+1)
                     equation.add(endBracket, ')')
-
                     if (result.isEmpty()) {
                         if (unknowns.isNotEmpty() || multipliers.isNotEmpty()) {
-                            result.addAll(
-                                calculateUnknownsAndMultipliers(
-                                    unknowns,
-                                    multipliers,
-                                    false
-                                )
-                            )
+                            if (divide) {
+                                result.addAll(calculateUnknownsAndMultipliers(unknowns, multipliers, false))
+                            }
+                            else {
+                                result.addAll(calculateUnknownsAndMultipliers(unknowns, multipliers, true))
+                            }
+
                             unknowns.clear()
                             multipliers.clear()
                         }
@@ -2458,33 +2469,10 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     println("POWER")
                     val subEquation = transformEquationForSolvingUnknowns(equation, iterator+1, flag)
                     iterator = subEquation.iterator
-
+                    println("AFTER BUFF POWER $result")
                     println("APPEND")
                     // Handle root and power
                     var appended = false
-                    var onlyNumbers = true
-                    val list = mutableListOf<Double>()
-                    for (element in subEquation.list) {
-                        if (element is Char) {
-                            if (element.isLetter()) {
-                                onlyNumbers = false
-                                break
-                            }
-                            else if (element == '^' || element == '√') {
-                                onlyNumbers = false
-                                break
-                            }
-                        }
-                        if (element is Double) {
-                            list.add(element)
-                        }
-                    }
-
-                    if (onlyNumbers) {
-                        subEquation.list.clear()
-                        subEquation.list = mutableListOf(list.sum())
-                    }
-
                     if (subEquation.list.size == 1) {
                         if (subEquation.list.last() is Double) {
                             if (result.isNotEmpty() && result.last() is Double) {
@@ -2502,10 +2490,12 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
                     if (!appended && subEquation.list.isNotEmpty()) {
                         result.add(0, '(')
+                        result.add(0, '(')
                         result.add(')')
                         result.add('^')
                         result.add('(')
                         result.addAll(subEquation.list)
+                        result.add(')')
                         result.add(')')
                     }
 
@@ -2553,6 +2543,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
             number = false
             iterator++
         }
+        println("FINAL")
+        println(result)
 
         return TripleSolve(result, iterator+1, compute)
     }
@@ -2562,39 +2554,22 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
         if (key.isEmpty()) {
             key.add("value")
+        }
 
-            if (map.getOrDefault(key, 0.0) != 0.0) {
-                inserted = true
+        if (map.getOrDefault(key, 0.0) != 0.0) {
+            inserted = true
+        }
 
-                if (operator == '-') {
-                    map[key] = map.getOrDefault(key, 0.0) - value
-                }
-                else {
-                    map[key] = map.getOrDefault(key, 0.0) + value
-                }
-            }
-            else {
-                map[key] = map.getOrDefault(key, 0.0) + value
-            }
+        println("RETURN")
+        println(key)
+        println(operator)
+        println(map.getOrDefault(key, 0.0))
+
+        if (operator == '-') {
+            map[key] = map.getOrDefault(key, 0.0) - value
         }
         else {
-            if (map.getOrDefault(key, 0.0) != 0.0) {
-                inserted = true
-
-                if (operator == '-') {
-                    map[key] = map.getOrDefault(key, 0.0) - value
-                }
-                else {
-                    map[key] = map.getOrDefault(key, 0.0) + value
-                }
-            }
-            else {
-                map[key] = map.getOrDefault(key, 0.0) + value
-            }
-
-            println("RETURN")
-            println(key)
-            println(map.getOrDefault(key, 0.0))
+            map[key] = map.getOrDefault(key, 0.0) + value
         }
 
         if (map.getOrDefault(key, 0.0) == 0.0 && inserted) {
@@ -2617,14 +2592,119 @@ class AdvancedKeyboard @JvmOverloads constructor(
             println(key)
             map.remove(key)
         }
-        else {
-            if (inserted) {
-                println(result)
-                if (result.isNotEmpty()) {
-                    result.removeAt(result.size-1)
+        else if (inserted) {
+            println(result)
+            if (result.isNotEmpty()) {
+                result.removeAt(result.size-1)
+            }
+        }
+        println("--------------")
+    }
+
+    private fun appendEquationToResult(result: MutableList<Any>, map :LinkedHashMap<MutableList<Any>, Double>,
+                                       value: Double, key: MutableList<Any>, operator: Char,
+                                       operatorsList: MutableList<Any>, operatorsIndexes: MutableList<Int>,
+                                       closeBracket: Boolean, additionalPlus: Boolean, multiplication: Boolean) {
+        if (key.isNotEmpty() && value != 0.0) {
+            println("KEY: $key")
+            println("VALUE: $value")
+            println("OPERATOR: $operator")
+            appendKeyWithValue(map, key, value, operator, operatorsIndexes, operatorsList)
+        }
+        else if (value != 0.0){
+            appendKeyWithValue(map, key, value, operator, operatorsIndexes, operatorsList)
+        }
+
+        println(operatorsList)
+        // Get keys with values
+        val list = mutableListOf<Pair<MutableList<Any>, Double>>()
+        var insert = 0
+        for ((k, v) in map) {
+            list.add(Pair(k,v))
+            println(Pair(k,v))
+
+            if (insert < operatorsList.size) {
+                operatorsList.add(insert, '0')
+            }
+            else {
+                operatorsList.add('0')
+            }
+
+            insert += 2
+        }
+        println("OPERATORS LIST")
+        println(operatorsList)
+
+        // Append everything to the result
+        if (operatorsList.isNotEmpty()) {
+            if (operatorsList.first() == '0') {
+                if (closeBracket) {
+                    operatorsList.reverse()
+                    list.reverse()
+                }
+            }
+            else {
+                if (additionalPlus && !multiplication) {
+                    operatorsList.add(0, '+')
                 }
             }
         }
+
+        if (multiplication) {
+            if (operatorsList.isNotEmpty()) {
+                if (operatorsList.first() == '0') {
+                    operatorsList.reverse()
+                    list.reverse()
+                }
+            }
+        }
+
+        var step = 0
+        var index = 0
+        while (index < operatorsList.size) {
+            when (operatorsList[index]) {
+                '0' -> {
+                    println("added")
+                    println(list[step].second)
+                    var addKey = true
+                    if (list[step].first.first() is String)
+                    {
+                        addKey = false
+                        if (result.isNotEmpty()) {
+                            if ((result.last() == '-' || result.last() == '×'
+                                || result.last() == '/') && list[step].second < 0) {
+                                result.add(-list[step].second)
+                            }
+                            else {
+                                result.add(list[step].second)
+                            }
+                        }
+                        else {
+                            result.add(list[step].second)
+                        }
+                    }
+                    else {
+                        result.add(list[step].second)
+                    }
+
+                    // Check key
+                    if (addKey) {
+                        result.addAll(list[step].first)
+                    }
+                    step++
+                }
+                else ->  {
+                    result.add(operatorsList[index])
+                }
+            }
+            index++
+        }
+
+        // Clear lists
+        map.clear()
+        key.clear()
+        operatorsList.clear()
+        operatorsIndexes.clear()
     }
 
     private fun groupUnknowns(equation: MutableList<Any>, iterator: Int): Pair<MutableList<Any>, Int> {
@@ -2639,7 +2719,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
         var operator = '|'
 
         val operatorsIndexes = mutableListOf<Int>()
-        var closeBracket = false
+        var additionalPlus = false
+        var multiplication = false
 
         var i = iterator
         while (i < equation.size) {
@@ -2650,6 +2731,9 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         key.add(equation[i])
                     }
                     else {
+                        if (operatorsList.isEmpty()) {
+                            additionalPlus = true
+                        }
                         value = equation[i] as Double
                     }
                 }
@@ -2678,7 +2762,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                                 buffer.addAll(key)
                                 appendKeyWithValue(map, buffer, value, operator, operatorsIndexes, operatorsList)
                             }
-                            else if (value != 0.0 && operator != '|') {
+                            else if (value != 0.0) {
                                 val buffer = mutableListOf<Any>("value")
                                 appendKeyWithValue(map, buffer, value, operator, operatorsIndexes, operatorsList)
                             }
@@ -2689,9 +2773,58 @@ class AdvancedKeyboard @JvmOverloads constructor(
                             value = 0.0
                         }
                         '(' ->  {
+                            if (operatorsList.isNotEmpty()) {
+                                if (operatorsList.last() == '-') {
+                                    result.add(0, operatorsList.removeLast())
+                                }
+                                else if (operatorsList.last() == '×' || operatorsList.last() == '/') {
+                                    multiplication = true
+                                }
+                            }
+
+                            if (key.isNotEmpty()) {
+                                println("operatorsList")
+                                println(operatorsList)
+
+                                println("KEY: $key")
+                                println("VALUE: $value")
+                                println("OPERATOR: ${equation[i]}")
+                                val buffer = mutableListOf<Any>()
+                                buffer.addAll(key)
+                                appendKeyWithValue(map, buffer, value, operator, operatorsIndexes, operatorsList)
+                            }
+                            else if (value != 0.0) {
+                                val buffer = mutableListOf<Any>("value")
+                                appendKeyWithValue(map, buffer, value, operator, operatorsIndexes, operatorsList)
+                            }
+
                             val bufferEquation = groupUnknowns(equation, i+1)
+                            appendEquationToResult(result, map, value, key, operator, operatorsList, operatorsIndexes, false, additionalPlus, multiplication)
                             bufferEquation.first.add(0, '(')
-                            result.addAll(bufferEquation.first)
+
+                            // Move divide or multiplication sign before brackets
+                            var j = 0
+                            while (j < result.size && (result[j] == '×' || result[j] == '/')) {
+                                j++
+                            }
+                            if (j != 0 && j < result.size) {
+                                bufferEquation.first.add(0, result.removeAt(j))
+                            }
+
+                            if (result.isNotEmpty()) {
+                                if (result.first() == '×' || result.first() == '/') {
+                                    bufferEquation.first.addAll(result)
+                                    result.clear()
+                                    result.addAll(bufferEquation.first)
+                                }
+                                else {
+                                    result.addAll(bufferEquation.first)
+                                }
+                            }
+                            else {
+                                result.addAll(bufferEquation.first)
+                            }
+
                             println("AFTER REC")
                             println(bufferEquation.first)
                             println(result)
@@ -2699,15 +2832,27 @@ class AdvancedKeyboard @JvmOverloads constructor(
                             value = 0.0
                             key.clear()
                             powerTo = false
+                            operator = '|'
                             continue
                         }
                         ')' -> {
-                            closeBracket = true
-                            break
+                            println("CLOSE BRACKET")
+                            appendEquationToResult(result, map, value, key, operator, operatorsList, operatorsIndexes, true, additionalPlus, multiplication)
+                            result.add(')')
+                            return Pair(result, i+1)
                         }
-                        '×', '/' -> {
+                        '×' -> {
                             operatorsList.add(equation[i])
                             operatorsIndexes.add(operatorsList.size-1)
+                            val buffer = mutableListOf<Any>("true")
+                            appendKeyWithValue(map, buffer, value, operator, operatorsIndexes, operatorsList)
+                            value = 0.0
+                        }
+                        '/' -> {
+                            operatorsList.add(equation[i])
+                            operatorsIndexes.add(operatorsList.size-1)
+                            val buffer = mutableListOf<Any>("false")
+                            appendKeyWithValue(map, buffer, value, operator, operatorsIndexes, operatorsList)
                             value = 0.0
                         }
                         else -> {
@@ -2719,75 +2864,59 @@ class AdvancedKeyboard @JvmOverloads constructor(
             }
             i++
         }
-        if (key.isNotEmpty() && value != 0.0) {
-            println("KEY: $key")
-            println("VALUE: $value")
-            println("OPERATOR: $operator")
-            appendKeyWithValue(map, key, value, operator, operatorsIndexes, operatorsList)
-        }
-        else if (value != 0.0){
-            val buffer = mutableListOf<Any>("value")
-            appendKeyWithValue(map, buffer, value, operator, operatorsIndexes, operatorsList)
-        }
-
-        println(operatorsList)
-        // Get keys with values
-        val list = mutableListOf<Pair<MutableList<Any>, Double>>()
-        var insert = 0
-        for ((k, v) in map) {
-            list.add(Pair(k,v))
-            println(Pair(k,v))
-
-            if (insert < operatorsList.size) {
-                operatorsList.add(insert, '0')
-            }
-            else {
-                operatorsList.add('0')
-            }
-
-            insert += 2
-        }
-        println("OPERATORS LIST")
-        println(operatorsList)
-        // Append everything to the result
-        if (operatorsList.isNotEmpty()) {
-            if (operatorsList.first() == '0') {
-                if (!closeBracket) {
-                    operatorsList.reverse()
-                    list.reverse()
-                }
-            }
-            else {
-                operatorsList.reverse()
-                list.reverse()
-            }
-        }
-
-        var step = 0
-        var index = 0
-        while (index < operatorsList.size) {
-            when (operatorsList[index]) {
-                '0' -> {
-                    println("added")
-                    println(list[step].second)
-                    result.add(list[step].second)
-                    if (list[step].first.first() != "value") {
-                        result.addAll(list[step].first)
-                    }
-                    step++
-                }
-                else ->  {
-                    result.add(operatorsList[index])
-                }
-            }
-            index++
-        }
-
-        if (closeBracket) {
-            result.add(')')
-        }
+        appendEquationToResult(result, map, value, key, operator, operatorsList, operatorsIndexes, false, additionalPlus, multiplication)
 
         return Pair(result, i+1)
+    }
+
+    private fun getDegreeOfEquation(equation: MutableList<Any>): Int {
+        var result = 0
+
+        var bracket = false
+        var power = false
+        for ((iterator, element) in equation.withIndex()) {
+            when(element) {
+                '^' -> power = true
+                is Double -> {
+                    if (power) {
+                        if (element.toInt() > result) {
+                            result = element.toInt()
+                        }
+                    }
+                }
+                else -> {
+                    if (element == '(' && power) {
+                        bracket = true
+                    }
+                    else if (element == '-' && bracket) {
+                        var brackets = 1
+                        var i = iterator+1
+                        while (i < equation.size) {
+                            when (equation[i]) {
+                                '(' -> brackets++
+                                ')' -> brackets--
+                                is Char -> {
+                                    if ((equation[i] as Char).isLetter()) {
+                                        power = false
+                                        break
+                                    }
+                                }
+                            }
+                            if (brackets == 0) {
+                                break
+                            }
+                            i++
+                        }
+                    }
+                    else {
+                        power = false
+                        bracket = false
+                    }
+                }
+            }
+        }
+
+        return result
     }
 
     private fun getCoefficientsLinearEquation(firstEquation: String, secondEquation: String): Array<DoubleArray> {
@@ -2821,7 +2950,9 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 index++
             }
         }
-
+        /*
+        val equations = arrayOf(transformEquationForSolvingUnknowns(transformedEquations[0], 0, false))
+        */
         val equations = arrayOf(groupUnknowns(transformEquationForSolvingUnknowns(transformedEquations[0], 0, false).list, 0),
             groupUnknowns(transformEquationForSolvingUnknowns(transformedEquations[1], 0, false).list, 0))
 
