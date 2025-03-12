@@ -3107,7 +3107,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
         val equations = arrayOf(groupUnknowns(transformEquationForSolvingUnknowns(transformedEquations[0], 0, false).list, eqSign = false, insideRec = false,0),
                 groupUnknowns(transformEquationForSolvingUnknowns(transformedEquations[1], 0, false).list, eqSign = false, insideRec = false, 0))
 
-        println("EQUATION")
+        println("EQUATION:")
         println(equations[0].first)
         println(getDegreeOfEquation(equations[0].first))
 
