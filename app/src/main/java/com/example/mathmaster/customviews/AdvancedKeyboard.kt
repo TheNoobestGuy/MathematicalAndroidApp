@@ -2592,9 +2592,28 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
                     return TripleSolve(result, iterator+1, appended)
                 }
+                '=' -> {
+                    if (unknowns.isNotEmpty() || multipliers.isNotEmpty()) {
+                        if (divide) {
+                            result.addAll(calculateUnknownsAndMultipliers(unknowns, multipliers, false))
+                        }
+                        else {
+                            result.addAll(calculateUnknownsAndMultipliers(unknowns, multipliers, true))
+                        }
+
+                        unknowns.clear()
+                        multipliers.clear()
+                    }
+
+                    multiply = false
+                    divide = false
+                    number = false
+
+                    result.add('=')
+                }
                 // Get unknowns
                 is Char -> {
-                    if (!multiply && equation[iterator] != '=') {
+                    if (!multiply) {
                         when (lastElement) {
                             is Double -> multipliers.add(result.removeLast() as Double)
                             is Char -> unknowns.add(result.removeLast() as Char)
@@ -2623,7 +2642,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
             }
 
             lastElement = equation[iterator]
-            if (!multiply && !divide && !number) {
+            if (!multiply && !divide && !number && equation[iterator] != '=') {
                 result.add(equation[iterator])
             }
 
@@ -2815,7 +2834,6 @@ class AdvancedKeyboard @JvmOverloads constructor(
         var closeBracket = false
         var numberWas = false
         var equalSign = eqSign
-
         var i = iterator
         while (i < equation.size) {
             when (equation[i]) {
@@ -3097,38 +3115,234 @@ class AdvancedKeyboard @JvmOverloads constructor(
         return result
     }
 
-    private fun getCoefficientsLinearEquation(firstEquation: String, secondEquation: String): Array<DoubleArray> {
-        val result = Array(2) { DoubleArray(3) }
+    private fun transformEquationsForSolve(equationsList: MutableList<String>): MutableList<MutableList<Any>> {
+        val list = mutableListOf<MutableList<Any>>()
 
-        val transformedEquations = arrayOf(addBracketsForSpecialOperations(transformEquation(firstEquation)), addBracketsForSpecialOperations(transformEquation(secondEquation)))
-        /*
-        val equations = arrayOf(transformEquationForSolvingUnknowns(transformedEquations[0], 0, false))
-        */
-        val equations = arrayOf(groupUnknowns(transformEquationForSolvingUnknowns(transformedEquations[0], 0, false).list, eqSign = false, insideRec = false,0),
-                groupUnknowns(transformEquationForSolvingUnknowns(transformedEquations[1], 0, false).list, eqSign = false, insideRec = false, 0))
+        for (equation in equationsList) {
+            val eq = groupUnknowns(transformEquationForSolvingUnknowns(addBracketsForSpecialOperations(transformEquation(equation)), 0 ,false).list, eqSign = false, insideRec = false,0).first
+            list.add(eq)
+        }
 
-        println("EQUATION")
-        println(equations[0].first)
-        println(getDegreeOfEquation(equations[0].first))
+        return list
+    }
+
+    private fun getCoefficientsForSolveStandard(equationsList: MutableList<MutableList<Any>>): MutableList<MutableList<Triple<String, Double, Double>>> {
+        val result = mutableListOf<MutableList<Triple<String, Double, Double>>>()
+
+        for (equation in equationsList) {
+            // Find every coefficient
+            val map: HashMap<String, Pair<Double, Double>> = HashMap()
+            var number = 0.0
+            var powerTo = 0.0
+            var equalSign = false
+            var key:MutableList<Any>? = null
+            for (element in equation) {
+                when(element) {
+                    '+', '-' -> {
+                        if (key != null) {
+                            map[key.toString()] = Pair(number, powerTo)
+                        }
+
+                        key = null
+                    }
+                    '(', ')' -> {
+
+                    }
+                    '=' -> {
+                        if (key != null) {
+                            map[key.toString()] = Pair(number, powerTo)
+                        }
+                        equalSign = true
+                    }
+                    is Char -> {
+                        if (key == null) {
+                            key = mutableListOf()
+                        }
+                        key.add(element)
+                    }
+                    is Double -> {
+                        if (equalSign) {
+                            map["value"] = Pair(element, 1.0)
+                            break
+                        }
+                        if (key == null) {
+                            number = element
+                        }
+                        else {
+                            key.add(element)
+                            powerTo = element
+                        }
+                    }
+                }
+            }
+
+            // Append coefficients and add them to result
+            val coefficients: MutableList<Triple<String,Double,Double>> = mutableListOf()
+
+            for ((k, v) in map) {
+                coefficients.add(Triple(k, v.first, v.second))
+            }
+
+            result.add(coefficients)
+        }
 
         return result
     }
 
-    fun solveLinearEquation(firstEquation: String, secondEquation: String): Pair<Double, Double>? {
-        // Simplify equations
-        val equations = getCoefficientsLinearEquation(firstEquation, secondEquation)
+    private fun solveLinearEquation(coefficients: MutableList<MutableList<Triple<String, Double, Double>>>): MutableList<Pair<Char, Double>>? {
+        val result: MutableList<Pair<Char, Double>> = mutableListOf()
+        val equations: MutableList<MutableList<Double>> = mutableListOf()
+        val unknowns = mutableListOf<Char>()
 
-        // Calculate equation
-        val determinant = equations[0][0] * equations[1][1] - equations[1][0] * equations[0][1]
-        if (determinant == 0.0) {
-            return null
+        for (equation in coefficients) {
+            if (equation.size == 1) {
+                continue
+            }
+            else if (equation.size == 2) {
+                var varaiable:Char? = null
+                var value = 0.0
+                var number = 0.0
+                for (element in equation) {
+                    if (element.first == "value") {
+                        value = element.second / number
+                    }
+                    else {
+                        number = element.second
+                        varaiable = element.first[1]
+                    }
+                }
+
+                if (varaiable != null) {
+                    if (result.isNotEmpty()) {
+                        if (result.last().first != varaiable) {
+                            result.add(Pair(varaiable, value))
+                        }
+                    }
+                    else {
+                        result.add(Pair(varaiable, value))
+                    }
+
+                    if (result.size == 2) {
+                        return result
+                    }
+                }
+            }
+            else {
+                val eq: MutableList<Double> = mutableListOf()
+                val origin = equation.sortedBy { it.first }
+                for (element in origin) {
+                    if (element.first != "value") {
+                        eq.add(element.second)
+                    }
+                }
+                for (element in origin) {
+                    if (element.first == "value") {
+                        eq.add(element.second)
+                        break
+                    }
+                }
+                equations.add(eq)
+
+                // Check what unknowns are expected to be calculated
+                if (unknowns.isEmpty()) {
+                    for (element in origin) {
+                        if (element.first != "value") {
+                            unknowns.add(element.first[1])
+                        }
+                    }
+                }
+
+                if (equations.size == 2) {
+                    break
+                }
+                if (result.isNotEmpty()) {
+                    break
+                }
+            }
         }
 
-        val determinantX = equations[0][2] * equations[1][2] - equations[1][2] * equations[0][1]
-        val determinantY = equations[0][0] * equations[1][2] - equations[1][0] * equations[0][2]
-        val x = determinantX / determinant
-        val y = determinantY / determinant
+        // Prepare equation that is needed for calculating if found some variable before
+        if (result.size == 1 && equations.size == 1) {
+            val lastEquation = mutableListOf<Double>()
+            var index = 0
+            for (unknown in unknowns) {
+                if (unknown == result[0].first) {
+                    break
+                }
+                index++
+            }
 
-        return Pair(x, y)
+            for (i in 0 until 2) {
+                if (i == index) {
+                    lastEquation.add(1.0)
+                }
+                else {
+                    lastEquation.add(0.0)
+                }
+            }
+            lastEquation.add(result[0].second)
+            equations.add(lastEquation)
+            result.clear()
+        }
+
+        // Calculate equation for two unknowns
+        if (equations.size == 2 && unknowns.size == 2) {
+            val determinant = equations[0][0] * equations[1][1] - equations[1][0] * equations[0][1]
+            if (determinant == 0.0) {
+                return null
+            }
+
+            val determinantX = equations[0][2] * equations[1][1] - equations[0][1] * equations[1][2]
+            val determinantY = equations[0][0] * equations[1][2] - equations[0][2] * equations[1][0]
+            val x = determinantX / determinant
+            val y = determinantY / determinant
+
+            result.add(Pair(unknowns[0], x))
+            result.add(Pair(unknowns[1], y))
+            return result
+        }
+
+        if (result.size == 1 && equations.isEmpty()) {
+            return mutableListOf(Pair(result[0].first, result[0].second))
+        }
+
+        return null
+    }
+
+    fun solveEquationsWithUnknowns(equationsList: MutableList<String>): MutableList<Pair<Char, Double>>? {
+        val listOfEquations = transformEquationsForSolve(equationsList)
+
+        // Get degree of equation
+        var degreeOfEquation:Double? = 0.0
+        for (equation in listOfEquations) {
+            val degree = getDegreeOfEquation(equation)
+            if (degree == null) {
+                degreeOfEquation = null
+                break
+            }
+            else {
+                if (degree > degreeOfEquation!!) {
+                    degreeOfEquation = degree
+                }
+            }
+        }
+
+        // Get coefficients
+        val coefficients: MutableList<MutableList<Triple<String, Double, Double>>>
+        if (degreeOfEquation != null) {
+            coefficients = getCoefficientsForSolveStandard(listOfEquations)
+
+            // Calculate result for linear equation
+            if (degreeOfEquation == 1.0) {
+                return solveLinearEquation(coefficients)
+            }
+
+            // Calculate result for quadratic equation
+            else if (degreeOfEquation == 2.0) {
+                return null
+            }
+        }
+
+        return null
     }
 }

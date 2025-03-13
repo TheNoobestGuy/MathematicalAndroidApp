@@ -79,11 +79,17 @@ class UnknownsCalculatorActivity : ComponentActivity() {
 
         checkButton.setOnClickListener {
             checkButton.setBackgroundResource(clickedButtonStyle)
-
-            val value = keyboard.solveLinearEquation(firstEquation.text.toString(), secondEquation.text.toString())
+            val equationsList = mutableListOf(firstEquation.text.toString(), secondEquation.text.toString())
+            val value = keyboard.solveEquationsWithUnknowns(equationsList)
 
             if (value != null) {
-                println("x: ${value.first}, y: ${value.second}")
+                if (value.size == 1) {
+                    println("${value[0].first}: ${value[0].second}")
+                }
+                else {
+                    println(value)
+                    println("${value[0].first}: ${value[0].second}, ${value[1].first}: ${value[1].second}")
+                }
             }
             else {
                 println("No solutions")
