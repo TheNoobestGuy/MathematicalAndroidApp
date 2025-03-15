@@ -342,7 +342,6 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     if (negativeNumber) {
                         transformedEquation.removeLast()
                         transformedEquation.add(-outputNumber)
-                        negativeNumber = false
                     }
                     else {
                         transformedEquation.add(outputNumber)
@@ -363,7 +362,6 @@ class AdvancedKeyboard @JvmOverloads constructor(
                             if (negativeNumber) {
                                 transformedEquation.removeLast()
                                 transformedEquation.add(-outputNumber)
-                                negativeNumber = false
                             }
                             else {
                                 transformedEquation.add(outputNumber)
@@ -491,11 +489,13 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         transformedEquation.add(element)
                     }
                     '+', '-' -> {
+                        negativeNumber = false
+
                         while (additionalOpenedBrackets.last().isNotEmpty()) {
                             transformedEquation.add(additionalOpenedBrackets.last().removeLast())
                         }
 
-                        if (lastChar == '(' && element == '-' && !transformedEquation.last().toString().last().isDigit()) {
+                        if (lastChar == '(' && element == '-' && transformedEquation.last() !is Double) {
                             negativeNumber = true
                         }
 
@@ -551,6 +551,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         multiplyDivide = true
                         inRoot = false
                         inDegree = false
+                        negativeNumber = false
                     }
                     '^' -> {
                         if (inRoot) {
@@ -568,12 +569,21 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
                         addBracketIndex = findNewBracketIndex(transformedEquation)
                         transformedEquation.add(addBracketIndex, '(')
+
+                        if (negativeNumber) {
+                            if (transformedEquation.last() is Double) {
+                                transformedEquation[transformedEquation.size-1] = -(transformedEquation[transformedEquation.size-1] as Double)
+                                transformedEquation.add(addBracketIndex, '-')
+                            }
+                        }
+
                         transformedEquation.add('^')
                         additionalOpenedBrackets.last().add(')')
 
                         powerToOpenedBrackets.add(additionalOpenedBrackets.size-1)
                         inRoot = false
                         inDegree = false
+                        negativeNumber = false
                     }
                     'π', 'e' -> {
                         if (transformedEquation.isNotEmpty()) {
@@ -646,6 +656,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         }
 
                         inRoot = false
+                        negativeNumber = false
                     }
                     '=' -> {
                         while(bracketsInput.isNotEmpty()) {
@@ -699,7 +710,6 @@ class AdvancedKeyboard @JvmOverloads constructor(
             if (negativeNumber) {
                 transformedEquation.removeLast()
                 transformedEquation.add(-outputNumber)
-                negativeNumber = false
             }
             else {
                 transformedEquation.add(outputNumber)
@@ -724,7 +734,6 @@ class AdvancedKeyboard @JvmOverloads constructor(
             }
             additionalOpenedBrackets.removeLast()
         }
-
         return transformedEquation
     }
 
@@ -2235,7 +2244,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
         return transformedEquation
     }
 
-    private fun transformEquationForSolvingUnknowns(equation: MutableList<Any>, index: Int, flag: Boolean): TripleSolve<MutableList<Any>, Int, Boolean> {
+    private fun transformEquationForSolvingUnknowns(equation: MutableList<Any>, index: Int, flag: Boolean, subtract: Boolean = false): TripleSolve<MutableList<Any>, Int, Boolean> {
         // Variables
         val result = mutableListOf<Any>()
         val unknowns = mutableListOf<Char>()
@@ -2258,7 +2267,13 @@ class AdvancedKeyboard @JvmOverloads constructor(
                             result.removeLast()
                         }
                     }
-                    val subEquation = transformEquationForSolvingUnknowns(equation, iterator+1, true)
+
+                    var subtraction = false
+                    if (lastElement == '-') {
+                        subtraction = true
+                    }
+
+                    val subEquation = transformEquationForSolvingUnknowns(equation, iterator+1, true, subtraction)
                     iterator = subEquation.iterator
                     compute = subEquation.compute
                     if (result.isNotEmpty()) {
@@ -2531,8 +2546,10 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     number = false
                 }
                 '^', '√' -> {
-                    val endBracket = findEndBracketIndex(equation, iterator+1)
-                    equation.add(endBracket, ')')
+                    var subtraction = false
+                    if (lastElement == '-') {
+                        subtraction = true
+                    }
 
                     val subEquation = transformEquationForSolvingUnknowns(equation, iterator+1, flag)
                     iterator = subEquation.iterator
@@ -2577,6 +2594,9 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     }
 
                     if (!appended && subEquation.list.isNotEmpty()) {
+                        if (subtraction) {
+                            result.add(0, '-')
+                        }
                         result.add(0, '(')
                         result.add(0, '(')
                         result.add(')')
@@ -2590,7 +2610,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     unknowns.clear()
                     multipliers.clear()
 
-                    return TripleSolve(result, iterator+1, appended)
+                    return TripleSolve(result, iterator, appended)
                 }
                 '=' -> {
                     if (unknowns.isNotEmpty() || multipliers.isNotEmpty()) {
@@ -2642,8 +2662,17 @@ class AdvancedKeyboard @JvmOverloads constructor(
             }
 
             lastElement = equation[iterator]
+
             if (!multiply && !divide && !number && equation[iterator] != '=') {
-                result.add(equation[iterator])
+                if (equation[iterator] == '+' && subtract) {
+                    result.add('-')
+                }
+                else if (equation[iterator] == '-' && subtract) {
+                    result.add('+')
+                }
+                else {
+                    result.add(equation[iterator])
+                }
             }
 
             iterator++
@@ -2819,7 +2848,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
         operatorsIndexes.clear()
     }
 
-    private fun groupUnknowns(equation: MutableList<Any>, eqSign: Boolean, insideRec: Boolean, iterator: Int): Pair<MutableList<Any>, Int> {
+    private fun groupUnknowns(equation: MutableList<Any>, eqSign: Boolean, insideRec: Boolean, iterator: Int, subtract: Boolean = false): Pair<MutableList<Any>, Int> {
         val result = mutableListOf<Any>()
         val operatorsList = mutableListOf<Char>()
 
@@ -2829,7 +2858,6 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
         var powerTo = false
         var operator = '0'
-
         val operatorsIndexes = mutableListOf<Int>()
         var closeBracket = false
         var numberWas = false
@@ -2970,7 +2998,15 @@ class AdvancedKeyboard @JvmOverloads constructor(
                             val bufferEquation = groupUnknowns(equation, eqSign = true, insideRec = true, i+1)
                             bufferEquation.first.add(0, '(')
                             if (operator != '0' && result.isNotEmpty()) {
-                                bufferEquation.first.add(0, '+')
+                                if (operator == '-') {
+                                    result.add('-')
+                                }
+                                else {
+                                    bufferEquation.first.add(0, '+')
+                                }
+                            }
+                            else if (operator == '-') {
+                                result.add('-')
                             }
                             result.addAll(bufferEquation.first)
                             if (specialAddition.isNotEmpty()) {
@@ -3020,10 +3056,13 @@ class AdvancedKeyboard @JvmOverloads constructor(
         return Pair(result, i+1)
     }
 
-    private fun calcPowerIfPossible(equation: MutableList<Any>, normalEquation: Boolean, iterator: Int): Triple<Boolean, Double, Int> {
+    private fun calcPowerForStandardEquations(equation: MutableList<Any>, iterator: Int, subtract: Boolean = false, amountOfVariables: MutableList<Char>): Triple<Char?, Double, Int> {
         var result = 0.0
-        var lastNumber: Double? = null
-        var possible = normalEquation
+        var variable: Char? = null
+        var lastNumber:Double? = null
+        var base = 0.0
+        var lastChar = '0'
+        var powerTo = false
         var added = false
         var i = iterator
         while (i < equation.size) {
@@ -3033,85 +3072,131 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         result += lastNumber
                         added = true
                     }
+                    base = 0.0
+                    powerTo = false
+                    lastChar = equation[i] as Char
                 }
                 '-' -> {
                     if (lastNumber != null) {
                         result -= lastNumber
                         added = true
                     }
+                    base = 0.0
+                    powerTo = false
+                    lastChar = equation[i] as Char
                 }
                 '(' -> {
-                    val nextBracket = calcPowerIfPossible(equation, possible, i+1)
-                    possible = nextBracket.first
-                    result += nextBracket.second
+                    val nextBracket = if (lastChar == '-') {
+                        calcPowerForStandardEquations(equation, iterator = i+1, subtract = true, amountOfVariables = amountOfVariables)
+                    }
+                    else {
+                        calcPowerForStandardEquations(equation, iterator = i+1, amountOfVariables = amountOfVariables)
+                    }
+
+                    if (variable == null) {
+                        variable = nextBracket.first
+                    }
+
+                    if (variable == null && powerTo && base != 0.0) {
+                        result += base.pow(nextBracket.second)
+                        powerTo = false
+                    }
+                    else if (variable == null) {
+                        base = nextBracket.second
+                        result += base
+                    }
+                    else {
+                        result += nextBracket.second
+                    }
+
                     i = nextBracket.third
                     continue
                 }
                 ')' -> {
                     if (lastNumber != null && !added) {
-                        result += lastNumber
-                    }
-                    return Triple(possible, result, i+1)
-                }
-                '^' -> {
-                    if (i+1 < equation.size) {
-                        if (equation[i+1] == '(') {
-                            val nextBracket = calcPowerIfPossible(equation, possible, i+2)
-                            possible = nextBracket.first
-                            result = result.pow(nextBracket.second)
-                            i = nextBracket.third
-                            continue
+                        if (lastChar == '-') {
+                            result -= lastNumber
+                        }
+                        else {
+                            result += lastNumber
                         }
                     }
+
+                    if (subtract) {
+                        return Triple(variable, -result, i+1)
+                    }
+                    return Triple(variable, result, i+1)
+                }
+                '^' -> {
+                    if (variable != null) {
+                        result = 0.0
+                        base = 0.0
+                    }
+                    result -= base
+                    powerTo = true
                 }
                 is Double -> {
                     lastNumber = equation[i] as Double
                 }
-                else -> {
-                    possible = false
+                is Char -> {
+                    if (variable == null) {
+                        variable = equation[i] as Char
+                        amountOfVariables.add(variable)
+                    }
+                    result = 0.0
                     lastNumber = 0.0
                 }
             }
             i++
         }
 
-        return Triple(possible, result, i)
+        return Triple(variable, result, i+1)
     }
 
     private fun getDegreeOfEquation(equation: MutableList<Any>): Double? {
-        var result = 0.0
-
-        var power = false
+        var result: Double? = null
+        var powerTo = false
         var iterator = 0
         while (iterator < equation.size) {
             when(equation[iterator]) {
-                '^' -> power = true
+                '^' -> powerTo = true
+                '(' -> {
+                    val amountOfVariables: MutableList<Char> = mutableListOf()
+                    val powerResult = calcPowerForStandardEquations(equation, iterator+1, amountOfVariables = amountOfVariables)
+                    if (amountOfVariables.size > 1) {
+                        return null
+                    }
+                    if (result == null) {
+                        result = powerResult.second
+                    }
+                    else {
+                        if (result < powerResult.second) {
+                            result = powerResult.second
+                        }
+                    }
+                    iterator = powerResult.third
+                    powerTo = false
+                    continue
+                }
                 is Double -> {
-                    if (power) {
-                        if (equation[iterator] as Double > result) {
+                    if (powerTo) {
+                        if (result == null) {
                             result = equation[iterator] as Double
+                        }
+                        else {
+                            if (result < equation[iterator] as Double) {
+                                result = equation[iterator] as Double
+                            }
                         }
                     }
                 }
                 else -> {
-                    if (equation[iterator] == '(' && power) {
-                        val powerResult = calcPowerIfPossible(equation, normalEquation = true, iterator)
-                        if (!powerResult.first) {
-                            return null
-                        }
-                        if (result < powerResult.second) {
-                            result = powerResult.second
-                        }
-                        iterator = powerResult.third
-                        continue
-                    }
-                    else {
-                        power = false
-                    }
+                    powerTo = false
                 }
             }
             iterator++
         }
+
         return result
     }
 
@@ -3135,45 +3220,93 @@ class AdvancedKeyboard @JvmOverloads constructor(
             var number = 0.0
             var powerTo = 0.0
             var equalSign = false
-            var key:MutableList<Any>? = null
-            for (element in equation) {
-                when(element) {
+            var key: MutableList<Any>? = null
+            var powerKey: MutableList<Any>? = null
+            val amountOfVariables: MutableList<Char> = mutableListOf()
+            var i = 0
+            while (i < equation.size) {
+                when(equation[i]) {
                     '+', '-' -> {
                         if (key != null) {
                             map[key.toString()] = Pair(number, powerTo)
                         }
 
+                        if (powerKey != null) {
+                            if (number == 0.0) {
+                                number = 1.0
+                            }
+                            map[powerKey.toString()] = Pair(number, powerTo)
+                        }
+
+                        powerKey = null
                         key = null
                     }
-                    '(', ')' -> {
+                    '×' -> {
+                        i++
+                        continue
+                    }
+                    '(' -> {
+                        if (powerKey == null) {
+                            val equationInBrackets = calcPowerForStandardEquations(equation, iterator = i+1, amountOfVariables = amountOfVariables)
+                            i = equationInBrackets.third
 
+                            powerKey = if (equationInBrackets.first != null) {
+                                mutableListOf(equationInBrackets.first.toString(), '^', equationInBrackets.second)
+                            } else {
+                                mutableListOf("value")
+                            }
+
+                            number = 0.0
+                            powerTo = equationInBrackets.second
+                            continue
+                        }
+                        else {
+                            val equationInBrackets = calcPowerForStandardEquations(equation, iterator = i+1, amountOfVariables = amountOfVariables)
+                            i = equationInBrackets.third
+                            number = equationInBrackets.second
+                            continue
+                        }
+                    }
+                    ')' -> {
+                        i++
+                        continue
                     }
                     '=' -> {
                         if (key != null) {
                             map[key.toString()] = Pair(number, powerTo)
                         }
+                        if (powerKey != null) {
+                            if (number == 0.0) {
+                                number = 1.0
+                            }
+                            map[powerKey.toString()] = Pair(number, powerTo)
+                        }
+
+                        powerKey = null
+                        key = null
                         equalSign = true
                     }
                     is Char -> {
                         if (key == null) {
                             key = mutableListOf()
                         }
-                        key.add(element)
+                        key.add(equation[i])
                     }
                     is Double -> {
                         if (equalSign) {
-                            map["value"] = Pair(element, 1.0)
+                            map["value"] = Pair(equation[i] as Double, 1.0)
                             break
                         }
                         if (key == null) {
-                            number = element
+                            number = equation[i] as Double
                         }
                         else {
-                            key.add(element)
-                            powerTo = element
+                            key.add(equation[i])
+                            powerTo = equation[i] as Double
                         }
                     }
                 }
+                i++
             }
 
             // Append coefficients and add them to result
@@ -3182,8 +3315,103 @@ class AdvancedKeyboard @JvmOverloads constructor(
             for ((k, v) in map) {
                 coefficients.add(Triple(k, v.first, v.second))
             }
-
+            println(coefficients)
             result.add(coefficients)
+        }
+
+        return result
+    }
+
+    private fun sarrusMethodImplementation(equations: MutableList<MutableList<Double>>): Double {
+        if (equations.size == 2) {
+            return equations[0][0] * equations[1][1] - equations[1][0] * equations[0][1]
+        }
+
+        // Fill list
+        equations.add(equations[0])
+        equations.add(equations[1])
+
+        // Variables
+        var index = 0
+        var steps = 0
+        var lastNumber: Double? = null
+
+        // Additions
+        val addition = mutableListOf<Double>()
+        while (steps < 3) {
+            for(row in 0 until equations.size) {
+                if (lastNumber == null) {
+                    lastNumber = equations[row][index]
+                }
+                else {
+                    lastNumber *= equations[row][index]
+                }
+                index++
+            }
+            addition.add(lastNumber!!)
+            lastNumber = 0.0
+            index = 0
+            steps++
+        }
+
+        // Subtractions
+        index = 2
+        steps = 0
+        lastNumber = null
+        val subtract = mutableListOf<Double>()
+        while (steps < 3) {
+            for(row in 0 until equations.size) {
+                if (lastNumber == null) {
+                    lastNumber = equations[row][index]
+                }
+                else {
+                    lastNumber *= equations[row][index]
+                }
+                index--
+            }
+            addition.add(lastNumber!!)
+            lastNumber = 0.0
+            index = 2
+            steps++
+        }
+
+        return addition.sum() - subtract.sum()
+    }
+
+    private fun replaceColumnWithResults(equations: MutableList<MutableList<Double>>, index: Int): MutableList<MutableList<Double>> {
+        val result = mutableListOf<MutableList<Double>>()
+        val dimension = equations.size
+
+        for (row in equations.indices) {
+            result.add(mutableListOf())
+            for (col in equations[row].indices) {
+                if (col == dimension) {
+                    break
+                }
+                if (col == index) {
+                    result.last().add(equations[row].last())
+                }
+                else {
+                    result.last().add(equations[row][col])
+                }
+            }
+        }
+
+        return result
+    }
+
+    private fun removeResultsFromMatrix(equations: MutableList<MutableList<Double>>): MutableList<MutableList<Double>> {
+        val result = mutableListOf<MutableList<Double>>()
+        val dimension = equations.size
+
+        for (row in equations.indices) {
+            result.add(mutableListOf())
+            for (col in equations[row].indices) {
+                if (col == dimension) {
+                    break
+                }
+                result.last().add(equations[row][col])
+            }
         }
 
         return result
@@ -3194,12 +3422,32 @@ class AdvancedKeyboard @JvmOverloads constructor(
         val equations: MutableList<MutableList<Double>> = mutableListOf()
         val unknowns = mutableListOf<Char>()
 
+        // Get unknowns
+        for (equation in coefficients) {
+            for (element in equation) {
+                if (element.first != "value") {
+                    var add = true
+                    for (char in unknowns) {
+                        if (char == element.first[1]) {
+                            add = false
+                            break
+                        }
+                    }
+                    if (add) {
+                        unknowns.add(element.first[1])
+                    }
+                }
+            }
+        }
+        unknowns.sort()
+
+        // Get coefficients
         for (equation in coefficients) {
             if (equation.size == 1) {
                 continue
             }
             else if (equation.size == 2) {
-                var varaiable:Char? = null
+                var variable:Char? = null
                 var value = 0.0
                 var number = 0.0
                 for (element in equation) {
@@ -3208,21 +3456,21 @@ class AdvancedKeyboard @JvmOverloads constructor(
                     }
                     else {
                         number = element.second
-                        varaiable = element.first[1]
+                        variable = element.first[1]
                     }
                 }
 
-                if (varaiable != null) {
+                if (variable != null) {
                     if (result.isNotEmpty()) {
-                        if (result.last().first != varaiable) {
-                            result.add(Pair(varaiable, value))
+                        if (result.last().first != variable) {
+                            result.add(Pair(variable, value))
                         }
                     }
                     else {
-                        result.add(Pair(varaiable, value))
+                        result.add(Pair(variable, value))
                     }
 
-                    if (result.size == 2) {
+                    if (result.size == unknowns.size) {
                         return result
                     }
                 }
@@ -3243,16 +3491,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 }
                 equations.add(eq)
 
-                // Check what unknowns are expected to be calculated
-                if (unknowns.isEmpty()) {
-                    for (element in origin) {
-                        if (element.first != "value") {
-                            unknowns.add(element.first[1])
-                        }
-                    }
-                }
-
-                if (equations.size == 2) {
+                if (equations.size == unknowns.size) {
                     break
                 }
                 if (result.isNotEmpty()) {
@@ -3262,43 +3501,46 @@ class AdvancedKeyboard @JvmOverloads constructor(
         }
 
         // Prepare equation that is needed for calculating if found some variable before
-        if (result.size == 1 && equations.size == 1) {
-            val lastEquation = mutableListOf<Double>()
-            var index = 0
-            for (unknown in unknowns) {
-                if (unknown == result[0].first) {
-                    break
+        if (result.size >= 1 && equations.size == unknowns.size-result.size) {
+            for (element in result) {
+                val additionalEquation = mutableListOf<Double>()
+                var index = 0
+                for (unknown in unknowns) {
+                    if (unknown == element.first) {
+                        break
+                    }
+                    index++
                 }
-                index++
-            }
 
-            for (i in 0 until 2) {
-                if (i == index) {
-                    lastEquation.add(1.0)
+                for (i in 0 until unknowns.size) {
+                    if (i == index) {
+                        additionalEquation.add(1.0)
+                    }
+                    else {
+                        additionalEquation.add(0.0)
+                    }
                 }
-                else {
-                    lastEquation.add(0.0)
-                }
+                additionalEquation.add(element.second)
+                equations.add(additionalEquation)
             }
-            lastEquation.add(result[0].second)
-            equations.add(lastEquation)
             result.clear()
         }
 
         // Calculate equation for two unknowns
-        if (equations.size == 2 && unknowns.size == 2) {
-            val determinant = equations[0][0] * equations[1][1] - equations[1][0] * equations[0][1]
+        if (equations.size == unknowns.size) {
+            val baseMatrix = removeResultsFromMatrix(equations)
+            val determinant = sarrusMethodImplementation(baseMatrix)
             if (determinant == 0.0) {
                 return null
             }
 
-            val determinantX = equations[0][2] * equations[1][1] - equations[0][1] * equations[1][2]
-            val determinantY = equations[0][0] * equations[1][2] - equations[0][2] * equations[1][0]
-            val x = determinantX / determinant
-            val y = determinantY / determinant
+            for (i in 0 until unknowns.size) {
+                val determinantUnknown = sarrusMethodImplementation(replaceColumnWithResults(equations, i))
+                val unknown = determinantUnknown / determinant
 
-            result.add(Pair(unknowns[0], x))
-            result.add(Pair(unknowns[1], y))
+                result.add(Pair(unknowns[i], unknown))
+            }
+
             return result
         }
 
