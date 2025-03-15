@@ -2848,7 +2848,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
         operatorsIndexes.clear()
     }
 
-    private fun groupUnknowns(equation: MutableList<Any>, eqSign: Boolean, insideRec: Boolean, iterator: Int, subtract: Boolean = false): Pair<MutableList<Any>, Int> {
+    private fun groupUnknowns(equation: MutableList<Any>, eqSign: Boolean, insideRec: Boolean, iterator: Int): Pair<MutableList<Any>, Int> {
         val result = mutableListOf<Any>()
         val operatorsList = mutableListOf<Char>()
 
