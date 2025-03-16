@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.text.InputType
+import android.view.View
 import android.widget.EditText
 import android.widget.TextView
 import androidx.activity.ComponentActivity
@@ -14,22 +15,45 @@ import com.example.mathmaster.customviews.AdvancedKeyboard
 
 class UnknownsCalculatorActivity : ComponentActivity() {
     private lateinit var actualEquation: EditText
+    private var equationAmount = 1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.unknownscalculator_activity)
 
+        // Get label of equations
+        val labelsForEquations: MutableList<TextView> = mutableListOf()
+
+        val firstEquationLabel: TextView = findViewById(R.id.FirstEquationLabel)
+        labelsForEquations.add(firstEquationLabel)
+
+        val secondEquationLabel: TextView = findViewById(R.id.SecondEquationLabel)
+        secondEquationLabel.visibility = View.GONE
+        labelsForEquations.add(secondEquationLabel)
+
+        val thirdEquationLabel: TextView = findViewById(R.id.ThirdEquationLabel)
+        thirdEquationLabel.visibility = View.GONE
+        labelsForEquations.add(thirdEquationLabel)
+
         // Get equations
+        val equationsInput: MutableList<EditText> = mutableListOf()
+
         val firstEquation: EditText = findViewById(R.id.FirstEquation)
         firstEquation.inputType = InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+        equationsInput.add(firstEquation)
+
         val secondEquation: EditText = findViewById(R.id.SecondEquation)
         secondEquation.inputType = InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+        secondEquation.visibility = View.GONE
+        equationsInput.add(secondEquation)
+
         val thirdEquation: EditText = findViewById(R.id.ThirdEquation)
         thirdEquation.inputType = InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+        thirdEquation.visibility = View.GONE
+        equationsInput.add(thirdEquation)
 
         val blank: TextView = findViewById(R.id.Blank)
         val equalSigns = booleanArrayOf(false, false, false)
-        var equationIdx = 0
         actualEquation = firstEquation
 
         // Keyboard
@@ -38,82 +62,25 @@ class UnknownsCalculatorActivity : ComponentActivity() {
         keyboard.refreshAllClickListeners(actualEquation, blank)
 
         // Select equations listeners
-        firstEquation.setOnClickListener {
-            actualEquation = firstEquation
+        var equationIdx = 0
+        for ((index, input) in equationsInput.withIndex()) {
+            input.setOnClickListener {
+                actualEquation = input
 
-            if (equationIdx == 1 && keyboard.getEqualSign()) {
-                keyboard.unsetEqualSign()
-                equalSigns[equationIdx] = true
-            }
-            else if (equationIdx == 1 && !keyboard.getEqualSign()) {
-                equalSigns[equationIdx] = false
-            }
+                if (keyboard.getEqualSign()) {
+                    keyboard.unsetEqualSign()
+                    equalSigns[equationIdx] = true
+                }
+                else {
+                    equalSigns[equationIdx] = false
+                }
 
-            if (equationIdx == 2 && keyboard.getEqualSign()) {
-                keyboard.unsetEqualSign()
-                equalSigns[equationIdx] = true
+                equationIdx = index
+                if (equalSigns[index]) {
+                    keyboard.setEqualSign()
+                }
+                keyboard.refreshAllClickListeners(actualEquation, blank)
             }
-            else if (equationIdx == 2 && !keyboard.getEqualSign()) {
-                equalSigns[equationIdx] = false
-            }
-
-            equationIdx = 0
-            if (equalSigns[equationIdx]) {
-                keyboard.setEqualSign()
-            }
-            keyboard.refreshAllClickListeners(actualEquation, blank)
-        }
-
-        secondEquation.setOnClickListener {
-            actualEquation = secondEquation
-
-            if (equationIdx == 0 && keyboard.getEqualSign()) {
-                keyboard.unsetEqualSign()
-                equalSigns[equationIdx] = true
-            }
-            else if (equationIdx == 0 && !keyboard.getEqualSign()) {
-                equalSigns[equationIdx] = false
-            }
-
-            if (equationIdx == 2 && keyboard.getEqualSign()) {
-                keyboard.unsetEqualSign()
-                equalSigns[equationIdx] = true
-            }
-            else if (equationIdx == 2 && !keyboard.getEqualSign()) {
-                equalSigns[equationIdx] = false
-            }
-
-            equationIdx = 1
-            if (equalSigns[equationIdx]) {
-                keyboard.setEqualSign()
-            }
-            keyboard.refreshAllClickListeners(actualEquation, blank)
-        }
-
-        thirdEquation.setOnClickListener {
-            actualEquation = thirdEquation
-
-            if (equationIdx == 0 && keyboard.getEqualSign()) {
-                keyboard.unsetEqualSign()
-                equalSigns[equationIdx] = true
-            }
-            else if (equationIdx == 0 && !keyboard.getEqualSign()) {
-                equalSigns[equationIdx] = false
-            }
-
-            if (equationIdx == 1 && keyboard.getEqualSign()) {
-                keyboard.unsetEqualSign()
-                equalSigns[equationIdx] = true
-            }
-            else if (equationIdx == 1 && !keyboard.getEqualSign()) {
-                equalSigns[equationIdx] = false
-            }
-
-            equationIdx = 2
-            if (equalSigns[equationIdx]) {
-                keyboard.setEqualSign()
-            }
-            keyboard.refreshAllClickListeners(actualEquation, blank)
         }
 
         // Calculate unknowns
@@ -123,8 +90,13 @@ class UnknownsCalculatorActivity : ComponentActivity() {
 
         checkButton.setOnClickListener {
             checkButton.setBackgroundResource(clickedButtonStyle)
-            val equationsList = mutableListOf(firstEquation.text.toString(), secondEquation.text.toString()
-                , thirdEquation.text.toString())
+            val equationsList = mutableListOf<String>()
+            for (input in equationsInput) {
+                if (input.text.isNotEmpty()) {
+                    equationsList.add(input.text.toString())
+                }
+            }
+
             val value = keyboard.solveEquationsWithUnknowns(equationsList)
 
             if (value != null) {
@@ -137,6 +109,39 @@ class UnknownsCalculatorActivity : ComponentActivity() {
             Handler(Looper.getMainLooper()).postDelayed({
                 checkButton.setBackgroundResource(unClickedButtonStyle)
                 }, 100)
+        }
+
+        // Add equation
+        val addEquationButton = keyboard.getAddEquation()
+        addEquationButton.setOnClickListener {
+            addEquationButton.setBackgroundResource(clickedButtonStyle)
+
+            if (equationAmount < equationsInput.size) {
+                equationsInput[equationAmount].visibility = View.VISIBLE
+                labelsForEquations[equationAmount].visibility = View.VISIBLE
+                equationAmount++
+            }
+
+            Handler(Looper.getMainLooper()).postDelayed({
+                addEquationButton.setBackgroundResource(unClickedButtonStyle)
+            }, 100)
+        }
+
+        // Subtract equation
+        val subtractEquationButton = keyboard.getSubtractEquation()
+        subtractEquationButton.setOnClickListener {
+            subtractEquationButton.setBackgroundResource(clickedButtonStyle)
+
+            if (equationAmount > 1) {
+                equationAmount--
+                equationsInput[equationAmount].text.clear()
+                equationsInput[equationAmount].visibility = View.GONE
+                labelsForEquations[equationAmount].visibility = View.GONE
+            }
+
+            Handler(Looper.getMainLooper()).postDelayed({
+                subtractEquationButton.setBackgroundResource(unClickedButtonStyle)
+            }, 100)
         }
 
         // Handle the back button press

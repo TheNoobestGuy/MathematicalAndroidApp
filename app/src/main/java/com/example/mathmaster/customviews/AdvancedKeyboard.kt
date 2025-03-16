@@ -1815,25 +1815,12 @@ class AdvancedKeyboard @JvmOverloads constructor(
         }
     }
 
-    private fun addEquation() {
-        changeFunctionsButton.setOnClickListener {
-            changeFunctionsButton.setBackgroundResource(clickedButtonStyle)
-
-
-            Handler(Looper.getMainLooper()).postDelayed({
-                changeFunctionsButton.setBackgroundResource(unClickedButtonStyle)
-            }, 100)
-        }
+   fun getAddEquation(): Button {
+        return changeFunctionsButton
     }
 
-    private fun subtractEquation() {
-        percentButton.setOnClickListener {
-            percentButton.setBackgroundResource(clickedButtonStyle)
-
-            Handler(Looper.getMainLooper()).postDelayed({
-                percentButton.setBackgroundResource(unClickedButtonStyle)
-            }, 100)
-        }
+   fun getSubtractEquation(): Button {
+        return percentButton
     }
 
     fun getCheckButton(): Button {
@@ -1886,8 +1873,6 @@ class AdvancedKeyboard @JvmOverloads constructor(
         xVariableClick(textView)
         yVariableClick(textView)
         zVariableClick(textView)
-        addEquation()
-        subtractEquation()
         enterWhenInUnknownsCalculatorMode(textView)
     }
 
@@ -3314,8 +3299,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
     private fun getCoefficientsForSolveStandard(equationsList: MutableList<MutableList<Any>>): MutableList<MutableList<Triple<String, Double, Double>>> {
         val result = mutableListOf<MutableList<Triple<String, Double, Double>>>()
         val unknowns = mutableListOf<Char>()
-        println("LIST")
-        println(equationsList)
+
         // Get unknowns
         for (equation in equationsList) {
             for (element in equation) {
@@ -3337,7 +3321,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 }
             }
         }
-        println(unknowns)
+
         // Get coefficients
         for (equation in equationsList) {
             // Find every coefficient
@@ -3471,8 +3455,6 @@ class AdvancedKeyboard @JvmOverloads constructor(
         // Fill list
         equations.add(equations[0])
         equations.add(equations[1])
-        println("EQUATIONS")
-        println(equations)
 
         // Variables
         var index = 0
