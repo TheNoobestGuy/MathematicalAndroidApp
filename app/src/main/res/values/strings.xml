@@ -104,6 +104,8 @@
     <string name="FirstEquation" translatable="false">First equation:</string>
     <string name="SecondEquation" translatable="false">Second equation:</string>
     <string name="ThirdEquation" translatable="false">Third equation:</string>
+    <string name="EqAdd" translatable="false">EQ+</string>
+    <string name="EqSubtract" translatable="false">EQ-</string>
 
     // Statistics
     <string name="StatisticsOverview" translatable="false">Statistics Overview</string>

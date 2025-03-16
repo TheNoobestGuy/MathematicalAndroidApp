@@ -24,9 +24,11 @@ class UnknownsCalculatorActivity : ComponentActivity() {
         firstEquation.inputType = InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
         val secondEquation: EditText = findViewById(R.id.SecondEquation)
         secondEquation.inputType = InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+        val thirdEquation: EditText = findViewById(R.id.ThirdEquation)
+        thirdEquation.inputType = InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
 
         val blank: TextView = findViewById(R.id.Blank)
-        val equalSigns = booleanArrayOf(false, false)
+        val equalSigns = booleanArrayOf(false, false, false)
         var equationIdx = 0
         actualEquation = firstEquation
 
@@ -44,6 +46,14 @@ class UnknownsCalculatorActivity : ComponentActivity() {
                 equalSigns[equationIdx] = true
             }
             else if (equationIdx == 1 && !keyboard.getEqualSign()) {
+                equalSigns[equationIdx] = false
+            }
+
+            if (equationIdx == 2 && keyboard.getEqualSign()) {
+                keyboard.unsetEqualSign()
+                equalSigns[equationIdx] = true
+            }
+            else if (equationIdx == 2 && !keyboard.getEqualSign()) {
                 equalSigns[equationIdx] = false
             }
 
@@ -65,7 +75,41 @@ class UnknownsCalculatorActivity : ComponentActivity() {
                 equalSigns[equationIdx] = false
             }
 
+            if (equationIdx == 2 && keyboard.getEqualSign()) {
+                keyboard.unsetEqualSign()
+                equalSigns[equationIdx] = true
+            }
+            else if (equationIdx == 2 && !keyboard.getEqualSign()) {
+                equalSigns[equationIdx] = false
+            }
+
             equationIdx = 1
+            if (equalSigns[equationIdx]) {
+                keyboard.setEqualSign()
+            }
+            keyboard.refreshAllClickListeners(actualEquation, blank)
+        }
+
+        thirdEquation.setOnClickListener {
+            actualEquation = thirdEquation
+
+            if (equationIdx == 0 && keyboard.getEqualSign()) {
+                keyboard.unsetEqualSign()
+                equalSigns[equationIdx] = true
+            }
+            else if (equationIdx == 0 && !keyboard.getEqualSign()) {
+                equalSigns[equationIdx] = false
+            }
+
+            if (equationIdx == 1 && keyboard.getEqualSign()) {
+                keyboard.unsetEqualSign()
+                equalSigns[equationIdx] = true
+            }
+            else if (equationIdx == 1 && !keyboard.getEqualSign()) {
+                equalSigns[equationIdx] = false
+            }
+
+            equationIdx = 2
             if (equalSigns[equationIdx]) {
                 keyboard.setEqualSign()
             }
@@ -79,17 +123,12 @@ class UnknownsCalculatorActivity : ComponentActivity() {
 
         checkButton.setOnClickListener {
             checkButton.setBackgroundResource(clickedButtonStyle)
-            val equationsList = mutableListOf(firstEquation.text.toString(), secondEquation.text.toString())
+            val equationsList = mutableListOf(firstEquation.text.toString(), secondEquation.text.toString()
+                , thirdEquation.text.toString())
             val value = keyboard.solveEquationsWithUnknowns(equationsList)
 
             if (value != null) {
-                if (value.size == 1) {
-                    println("${value[0].first}: ${value[0].second}")
-                }
-                else {
-                    println(value)
-                    println("${value[0].first}: ${value[0].second}, ${value[1].first}: ${value[1].second}")
-                }
+                println(value)
             }
             else {
                 println("No solutions")

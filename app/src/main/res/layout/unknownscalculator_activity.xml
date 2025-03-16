@@ -63,6 +63,38 @@
         android:textAlignment="center"
         android:cursorVisible="false"
         android:focusable="false"
+        app:layout_constraintBottom_toTopOf="@+id/ThirdEquationLabel"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintWidth_percent="0.85" />
+
+    <TextView
+        android:id="@+id/ThirdEquationLabel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="@string/ThirdEquation"
+        android:textSize="15sp"
+        android:maxLength="45"
+        android:gravity="start"
+        android:focusable="false"
+        app:layout_constraintBottom_toTopOf="@+id/ThirdEquation"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintWidth_percent="0.85">
+    </TextView>
+
+    <EditText
+        android:id="@+id/ThirdEquation"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:text=""
+        android:textSize="30sp"
+        android:maxLength="45"
+        android:inputType="text"
+        android:cursorVisible="false"
+        android:focusable="false"
+        android:textAlignment="center"
         app:layout_constraintBottom_toTopOf="@+id/Keyboard"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
