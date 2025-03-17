@@ -54,25 +54,7 @@ class FunctionChartActivity : ComponentActivity() {
         val keyboard: AdvancedKeyboard = findViewById(R.id.Keyboard)
         keyboard.setFunctionChartMode()
 
-        keyboard.numberButtonClick(equation, blank)
-        keyboard.basicCalcButtonClick(equation)
-        keyboard.functionButtonClick(equation)
-        keyboard.openBracketButtonClick(equation)
-        keyboard.closeBracketButtonClick(equation)
-        keyboard.powerButtonClick(equation)
-        keyboard.dotButtonClick(equation)
-        keyboard.rootButtonClick(equation)
-        keyboard.factorialButtonClick(equation, blank)
-        keyboard.numberPIButtonClick(equation, blank)
-        keyboard.numberEulerButtonClick(equation, blank)
-        keyboard.percentButtonClick(equation, blank)
-        keyboard.fractionButtonClick(equation)
-        keyboard.variableButtonClick(equation)
-
-        keyboard.deleteButtonClick(equation, blank)
-        keyboard.clearButtonClick(equation, blank, blank)
-        keyboard.degreeButtonClick()
-        keyboard.changeFunctionsButtonClick()
+        keyboard.setAllClickListenersForFunctionChar(equation, blank)
 
         // Slide button
         val clickedButtonStyle = R.drawable.menubutton_background_clicked
@@ -88,7 +70,7 @@ class FunctionChartActivity : ComponentActivity() {
                 slideButton.text = "↑"
 
                 // Draw a function
-                functionChart.drawAFunction(equation.text.toString(), keyboard)
+                functionChart.drawAFunction(equation.text.toString())
                 functionChart.updateInformation(zeroPlacesText, asymptotesText, horizontalAsymptote)
             }
 

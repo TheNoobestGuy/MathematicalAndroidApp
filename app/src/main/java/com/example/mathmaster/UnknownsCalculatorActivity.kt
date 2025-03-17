@@ -12,8 +12,12 @@ import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import com.example.mathmaster.customviews.AdvancedKeyboard
+import com.example.mathmaster.customviews.Calculator
 
 class UnknownsCalculatorActivity : ComponentActivity() {
+
+    private val calculator = Calculator()
+
     private lateinit var actualEquation: EditText
     private var equationAmount = 1
 
@@ -59,7 +63,7 @@ class UnknownsCalculatorActivity : ComponentActivity() {
         // Keyboard
         val keyboard: AdvancedKeyboard = findViewById(R.id.Keyboard)
         keyboard.setUnknownsCalculatorMode()
-        keyboard.refreshAllClickListeners(actualEquation, blank)
+        keyboard.refreshAllClickListenersForUnknownsCalculator(actualEquation, blank)
 
         // Select equations listeners
         var equationIdx = 0
@@ -79,7 +83,7 @@ class UnknownsCalculatorActivity : ComponentActivity() {
                 if (equalSigns[index]) {
                     keyboard.setEqualSign()
                 }
-                keyboard.refreshAllClickListeners(actualEquation, blank)
+                keyboard.refreshAllClickListenersForUnknownsCalculator(actualEquation, blank)
             }
         }
 
@@ -97,7 +101,7 @@ class UnknownsCalculatorActivity : ComponentActivity() {
                 }
             }
 
-            val value = keyboard.solveEquationsWithUnknowns(equationsList)
+            val value = calculator.solveEquationsWithUnknowns(equationsList)
 
             if (value != null) {
                 println(value)

@@ -262,7 +262,4 @@ class MatrixCalculator {
 
         return rank
     }
-
-
-
 }

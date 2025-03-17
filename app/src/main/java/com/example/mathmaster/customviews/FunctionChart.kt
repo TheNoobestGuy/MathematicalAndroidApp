@@ -17,6 +17,8 @@ class FunctionChart @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
+    private val calculator = Calculator()
+
     private val paint = Paint()
     private var points: MutableList<Pair<Float, Float>> = mutableListOf()
     private var verticalAsymptotes: MutableList<Pair<Float, Float>> = mutableListOf()
@@ -273,7 +275,7 @@ class FunctionChart @JvmOverloads constructor(
         }
     }
 
-    fun drawAFunction(input: String, calculator: AdvancedKeyboard) {
+    fun drawAFunction(input: String) {
         zeroPlaces.clear()
         verticalAsymptotes.clear()
         horizontalAsymptote.clear()
@@ -301,10 +303,10 @@ class FunctionChart @JvmOverloads constructor(
                 // Find Y value for X
                 val equationAfterSubstitution = substituteVariable(equation, x.toDouble())
                 val bufferX = width/2f + (x * gridSpacing)
-                val y = calculator.calculate(equationAfterSubstitution, 0)
+                val y = calculator.calculateEquation(equationAfterSubstitution, 0)
 
                 // Check is it a zero place
-                if (abs(zeroPlaceLastPoint) > abs(y.first) && round(y.first*100)/100 >= -0.01 && round(y.first*100)/100 <= 0.01) {
+                if (abs(zeroPlaceLastPoint) > abs(y.first) && round(y.first*100)/100 >= -0.02 && round(y.first*100)/100 <= 0.02) {
                     zeroPlace = x
                     addZeroPlace = true
                 }

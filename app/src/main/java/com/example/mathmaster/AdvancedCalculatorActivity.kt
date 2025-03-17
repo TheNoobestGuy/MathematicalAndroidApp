@@ -23,25 +23,7 @@ class AdvancedCalculatorActivity : ComponentActivity() {
         val keyboard: AdvancedKeyboard = findViewById(R.id.Keyboard)
 
         // Keyboard
-        keyboard.numberButtonClick(equation, result)
-        keyboard.basicCalcButtonClick(equation)
-        keyboard.functionButtonClick(equation)
-        keyboard.openBracketButtonClick(equation)
-        keyboard.closeBracketButtonClick(equation)
-        keyboard.powerButtonClick(equation)
-        keyboard.dotButtonClick(equation)
-        keyboard.rootButtonClick(equation)
-        keyboard.factorialButtonClick(equation, result)
-        keyboard.numberPIButtonClick(equation, result)
-        keyboard.numberEulerButtonClick(equation, result)
-        keyboard.percentButtonClick(equation, result)
-        keyboard.fractionButtonClick(equation)
-
-        keyboard.enterButtonClick(equation, result, history)
-        keyboard.deleteButtonClick(equation,result)
-        keyboard.clearButtonClick(equation, result, history)
-        keyboard.degreeButtonClick()
-        keyboard.changeFunctionsButtonClick()
+        keyboard.setAllClickListenersForAdvanceCalculator(equation, result, history)
 
         // Handle the back button press
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
