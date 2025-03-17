@@ -98,7 +98,7 @@
         android:gravity="center"
         android:maxLength="90"
         android:text=""
-        android:textSize="15sp"
+        android:textSize="25sp"
         app:layout_constraintBottom_toTopOf="@+id/Keyboard"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHeight_percent="0.07"

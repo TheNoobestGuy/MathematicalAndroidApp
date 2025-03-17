@@ -3686,6 +3686,14 @@ class AdvancedKeyboard @JvmOverloads constructor(
         return null
     }
 
+    private fun solveQuadraticEquation(coefficients: MutableList<MutableList<Triple<String, Double, Double>>>): MutableList<Pair<Char, Double>>? {
+        val result: MutableList<Pair<Char, Double>> = mutableListOf()
+        
+
+
+        return null
+    }
+
     fun solveEquationsWithUnknowns(equationsList: MutableList<String>): MutableList<Pair<Char, Double>>? {
         val listOfEquations = transformEquationsForSolve(equationsList)
 

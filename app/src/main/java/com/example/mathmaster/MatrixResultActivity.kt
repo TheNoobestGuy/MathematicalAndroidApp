@@ -12,8 +12,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import com.example.mathmaster.customviews.Matrix
 import com.example.mathmaster.customviews.MatrixResultMenu
+import com.example.mathmaster.customviews.MatrixCalculator
 
 class MatrixResultActivity : ComponentActivity() {
+
+    private val matrixCalculator = MatrixCalculator()
 
     private var sign = "="
     private var showSignCounter = 1
@@ -29,7 +32,7 @@ class MatrixResultActivity : ComponentActivity() {
             intent.putExtra("show", true)
             intent.putExtra("sign", sign)
             intent.putExtra("matrixCounter", 2)
-            intent.putExtra("resultMatrix", resultMatrix)
+            intent.putExtra("resultMatrix",  resultMatrix)
             intent.putExtra("resultMatrixRows", resultMatrixRows)
             intent.putExtra("resultMatrixColumns", resultMatrixColumns)
 
@@ -89,7 +92,7 @@ class MatrixResultActivity : ComponentActivity() {
         val resultMatrix: DoubleArray = intent.getDoubleArrayExtra("resultMatrix")!!
         val resultMatrixRows: Int = intent.getIntExtra("resultMatrixRows", 0)
         val resultMatrixColumns: Int = intent.getIntExtra("resultMatrixColumns", 0)
-        matrix.setResultMatrix(resultMatrix, resultMatrixRows, resultMatrixColumns, false)
+        matrix.setResultMatrix(matrixCalculator.convertToMatrix(resultMatrix, resultMatrixRows, resultMatrixColumns), resultMatrixRows, resultMatrixColumns, false)
 
         // Menu buttons
         val matrixMenu: MatrixResultMenu = findViewById(R.id.MenuBlock)

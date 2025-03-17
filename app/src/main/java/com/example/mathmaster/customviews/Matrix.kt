@@ -237,23 +237,26 @@ class Matrix @JvmOverloads constructor(
         return num % 1.0 != 0.0
     }
 
-    fun setResultMatrix(resultMatrix: DoubleArray, rows: Int, columns: Int, clickable: Boolean) {
+    fun setResultMatrix(resultMatrix: Array<DoubleArray>, rows: Int, columns: Int, clickable: Boolean) {
         // Fill matrix
         cellsArray.clear()
-        for(i in resultMatrix) {
-            val cell = createCell()
 
-            if (hasDecimal(i)) {
-                cell.cell.setText(i.toString())
-            }
-            else {
-                cell.cell.setText(i.toInt().toString())
-            }
+        for (row in resultMatrix.indices) {
+            for (col in resultMatrix[row].indices) {
+                val cell = createCell()
 
-            if(!clickable) {
-                cell.cell.isClickable = false
+                if (hasDecimal(resultMatrix[row][col])) {
+                    cell.cell.setText(resultMatrix[row][col].toString())
+                }
+                else {
+                    cell.cell.setText(resultMatrix[row][col].toInt().toString())
+                }
+
+                if(!clickable) {
+                    cell.cell.isClickable = false
+                }
+                cellsArray.add(cell)
             }
-            cellsArray.add(cell)
         }
 
         // Change matrix properties
@@ -276,20 +279,28 @@ class Matrix @JvmOverloads constructor(
         this.layoutParams = params
     }
 
-    fun getMatrixValues(): MutableList<Double> {
-        val listOfValues: MutableList<Double> = mutableListOf()
+    fun getMatrixValues(): Array<DoubleArray> {
+        val matrix = Array(gridLayout.rowCount) { DoubleArray(gridLayout.columnCount) }
 
+        var row = 0
+        var col = 0
         for (cell in cellsArray) {
             val value = cell.cell.text.toString()
             if (value == "") {
-                listOfValues.add(0.0)
+                matrix[row][col] = 0.0
             }
             else {
-                listOfValues.add(value.toDouble())
+                matrix[row][col] = value.toDouble()
+            }
+            col++
+
+            if (col >= gridLayout.columnCount) {
+                col = 0
+                row++
             }
         }
 
-        return listOfValues
+        return matrix
     }
 
     fun getClickedMatrixCell() {

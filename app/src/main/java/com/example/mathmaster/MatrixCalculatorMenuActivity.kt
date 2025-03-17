@@ -13,17 +13,13 @@ class MatrixCalculatorMenuActivity : ComponentActivity() {
         button.setOnClickListener {
             button.setBackgroundResource(drawable)
 
-            val resultMatrix = DoubleArray(0)
-            val resultMatrixRows = 0
-            val resultMatrixColumns = 0
-
             val intent = Intent(this, view::class.java)
             intent.putExtra("show", show)
             intent.putExtra("sign", sign)
             intent.putExtra("matrixCounter", 1)
-            intent.putExtra("resultMatrix", resultMatrix)
-            intent.putExtra("resultMatrixRows", resultMatrixRows)
-            intent.putExtra("resultMatrixColumns", resultMatrixColumns)
+            intent.putExtra("resultMatrix", DoubleArray(0))
+            intent.putExtra("resultMatrixRows", 0)
+            intent.putExtra("resultMatrixColumns", 0)
 
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             val options = ActivityOptions.makeCustomAnimation(

@@ -12,18 +12,21 @@ import androidx.activity.OnBackPressedCallback
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.example.mathmaster.customviews.Matrix
 import com.example.mathmaster.customviews.MatrixKeyboard
+import com.example.mathmaster.customviews.MatrixCalculator
 
 class MatrixCalculatorActivity : ComponentActivity() {
+
+    private val matrixCalculator = MatrixCalculator()
 
     // Variables
     private var showSignCounter = 1
     private val handler = Handler(Looper.getMainLooper())
 
     // Matrix
-    private var firstMatrix: MutableList<Double> = mutableListOf()
+    private lateinit var firstMatrix: Array<DoubleArray>
+    private lateinit var secondMatrix: Array<DoubleArray>
     private var firstMatrixRows: Int = 0
     private var firstMatrixColumns: Int = 0
-    private var secondMatrix: MutableList<Double> = mutableListOf()
 
     // Counter function to show equation sign after pressing enter
     private val showSign = object : Runnable {
@@ -70,9 +73,10 @@ class MatrixCalculatorActivity : ComponentActivity() {
         val matrix: Matrix = findViewById(R.id.Matrix)
 
         var matrixCounter = intent.getIntExtra("matrixCounter", 1)
-        var resultMatrix: DoubleArray = intent.getDoubleArrayExtra("resultMatrix")!!
+        val originalMatrix = intent.getDoubleArrayExtra("resultMatrix")!!
         var resultMatrixRows: Int = intent.getIntExtra("resultMatrixRows", 0)
         var resultMatrixColumns: Int = intent.getIntExtra("resultMatrixColumns", 0)
+        var resultMatrix: Array<DoubleArray>
 
         // Interactive menu
         val keyboard: MatrixKeyboard = findViewById(R.id.Keyboard)
@@ -88,9 +92,7 @@ class MatrixCalculatorActivity : ComponentActivity() {
 
         // Calculate matrix that was before calculated
         if (matrixCounter >= 2) {
-            for (i in resultMatrix) {
-                firstMatrix.add(i)
-            }
+            firstMatrix = matrixCalculator.convertToMatrix(originalMatrix, resultMatrixRows, resultMatrixColumns)
             firstMatrixRows = resultMatrixRows
             firstMatrixColumns = resultMatrixColumns
 
@@ -198,9 +200,10 @@ class MatrixCalculatorActivity : ComponentActivity() {
                     keyboard.visibility = View.INVISIBLE
                     handler.post(showSign)
 
-                    firstMatrix = matrix.getMatrixValues()
                     firstMatrixRows = matrix.getMatrixRows()
                     firstMatrixColumns = matrix.getMatrixColumns()
+                    firstMatrix = matrix.getMatrixValues()
+
                     matrix.clearMatrix()
 
                     // Remove redundant buttons and change size of keyboard
@@ -261,74 +264,45 @@ class MatrixCalculatorActivity : ComponentActivity() {
                     secondMatrix = matrix.getMatrixValues()
 
                     // Make calculations
-                    var scalar = false
+                    var scalarFirst = false
+                    var scalarSecond = false
                     if (firstMatrixRows == 1 && firstMatrixColumns == 1) {
-                        resultMatrixRows = matrix.getMatrixRows()
-                        resultMatrixColumns = matrix.getMatrixColumns()
-                        val resultMatrixSize = resultMatrixRows * resultMatrixColumns
-                        resultMatrix = DoubleArray(resultMatrixSize)
-                        scalar = true
+                        scalarFirst = true
                     }
-                    else {
-                        resultMatrixRows = matrix.getMatrixRows()
-                        resultMatrixColumns = matrix.getMatrixColumns()
-                        val resultMatrixSize = resultMatrixRows * resultMatrixColumns
-                        resultMatrix = DoubleArray(resultMatrixSize)
+                    if (matrix.getMatrixRows() == 1 && matrix.getMatrixColumns() == 1) {
+                        scalarSecond = true
                     }
 
-                    if (sign == "+") {
-                        for (i in firstMatrix.indices) {
-                            resultMatrix[i] = firstMatrix[i] + secondMatrix[i]
+                    when (sign) {
+                        "+" -> {
+                            resultMatrix = matrixCalculator.addition(firstMatrix, secondMatrix)
                         }
-                    } else if (sign == "-") {
-                        for (i in firstMatrix.indices) {
-                            resultMatrix[i] = firstMatrix[i] - secondMatrix[i]
+                        "-" ->  {
+                            resultMatrix = matrixCalculator.subtraction(firstMatrix, secondMatrix)
                         }
-                    }
-                    // Handle information about matrix
-                    else if (sign == "i") {
-                        for (i in secondMatrix.indices) {
-                            resultMatrix[i] = secondMatrix[i]
+                        "i" -> {
+                            resultMatrix = secondMatrix
                         }
-                    }
-                    // Handle multiplication
-                    else {
-                        if (!scalar) {
-                            var resultMatrixIndex = 0
-                            var row = 0
-                            while (resultMatrixIndex < resultMatrix.size) {
-                                var leapLimit = 0
-
-                                while (leapLimit < matrix.getMatrixColumns()) {
-                                    var leap = leapLimit
-                                    var equation = 0.0
-                                    var col = 0
-
-                                    while (col < firstMatrixColumns) {
-                                        val index = (row * firstMatrixColumns) + col
-                                        equation += firstMatrix[index] * secondMatrix[leap]
-                                        leap += matrix.getMatrixColumns()
-                                        col++
-                                    }
-
-                                    resultMatrix[resultMatrixIndex] = equation
-                                    resultMatrixIndex++
-                                    leapLimit++
+                        // Handle multiplication
+                        else -> {
+                            resultMatrix = if (!scalarFirst && !scalarSecond) {
+                                matrixCalculator.multiplicationWithMatrix(firstMatrix, secondMatrix)
+                            } else {
+                                if (scalarFirst) {
+                                    matrixCalculator.multiplicationWithScalar(secondMatrix, firstMatrix[0][0])
+                                } else {
+                                    matrixCalculator.multiplicationWithScalar(firstMatrix, secondMatrix[0][0])
                                 }
-
-                                row++
-                            }
-                        }
-                        else {
-                            for ((index, cell) in secondMatrix.withIndex()) {
-                                resultMatrix[index] = cell * firstMatrix[0]
                             }
                         }
                     }
+
+                    resultMatrixRows = resultMatrix.size
+                    resultMatrixColumns = resultMatrix[0].size
 
                     // Go to end page
                     val intent = Intent(this, MatrixResultActivity()::class.java)
-                    intent.putExtra("resultMatrix", resultMatrix)
+                    intent.putExtra("resultMatrix", matrixCalculator.convertTo1D(resultMatrix))
                     intent.putExtra("resultMatrixRows", resultMatrixRows)
                     intent.putExtra("resultMatrixColumns", resultMatrixColumns)
 

@@ -94,6 +94,7 @@
     <string name="FunctionChart" translatable="false">Function chart</string>
     <string name="Information" translatable="false">Information</string>
     <string name="HorizontalAsymptote" translatable="false">Horizontal asymptote:</string>
+    <string name="HorizontalAsymptotes" translatable="false">Horizontal asymptotes:</string>
     <string name="VerticalAsymptotes" translatable="false">Vertical asymptotes:</string>
     <string name="VerticalAsymptote" translatable="false">Vertical asymptote:</string>
     <string name="ZeroPlaces" translatable="false">Zero places:</string>

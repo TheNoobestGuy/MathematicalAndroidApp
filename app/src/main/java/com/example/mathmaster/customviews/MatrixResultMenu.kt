@@ -11,7 +11,6 @@ import android.widget.GridLayout
 import android.widget.LinearLayout
 import android.widget.Toast
 import com.example.mathmaster.R
-import kotlin.math.*
 
 class MatrixResultMenu @JvmOverloads constructor(
     context: Context,
@@ -19,31 +18,33 @@ class MatrixResultMenu @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : LinearLayout(context, attrs, defStyleAttr) {
 
-    private var quadraticMatrix: Boolean = false
+    // Matrix calculator
+    private val matrixCalculator = MatrixCalculator()
 
     // Base matrix data
     private lateinit var matrix: Matrix
-    private lateinit var backupMatrix: DoubleArray
+    private lateinit var backupMatrix: Array<DoubleArray>
+    private var quadraticMatrix: Boolean = false
     private var backupMatrixRows: Int = 0
     private var backupMatrixColumns: Int = 0
-    private lateinit var resultMatrix: DoubleArray
+    private lateinit var resultMatrix: Array<DoubleArray>
     private var resultMatrixRows: Int = 0
     private var resultMatrixColumns: Int = 0
 
     // Transpose
-    private lateinit var transposeMatrix: DoubleArray
+    private lateinit var transposeMatrix: Array<DoubleArray>
 
     // Complements
-    private lateinit var complementsMatrix: DoubleArray
+    private lateinit var complementsMatrix: Array<DoubleArray>
 
     // Power to
-    private lateinit var matrixBeforePowerTo: DoubleArray
-    private lateinit var resultMatrixBuffer: DoubleArray
-    private lateinit var resultMatrixBeforeExp: DoubleArray
-    private lateinit var resultMatrixAfterExp: DoubleArray
+    private lateinit var matrixBeforePowerTo: Array<DoubleArray>
+    private lateinit var resultMatrixBuffer: Array<DoubleArray>
+    private lateinit var resultMatrixBeforeExp: Array<DoubleArray>
+    private lateinit var resultMatrixAfterExp: Array<DoubleArray>
 
     // Inverse
-    private lateinit var inverseMatrix: DoubleArray
+    private lateinit var inverseMatrix: Array<DoubleArray>
 
     private val multiplyButton: Button
     private val addButton: Button
@@ -100,17 +101,17 @@ class MatrixResultMenu @JvmOverloads constructor(
 
     fun setMatrix(obj: Matrix, array: DoubleArray, rows: Int, columns:Int) {
         matrix = obj
-        backupMatrix = array.copyOf()
+        backupMatrix = matrixCalculator.convertToMatrix(array, rows, columns)
         backupMatrixRows = rows
         backupMatrixColumns = columns
 
-        resultMatrix = array.copyOf()
+        resultMatrix = matrixCalculator.convertToMatrix(array, rows, columns)
         resultMatrixRows = rows
         resultMatrixColumns = columns
 
-        resultMatrixBuffer = array.copyOf()
-        resultMatrixBeforeExp = array.copyOf()
-        matrixBeforePowerTo = array.copyOf()
+        resultMatrixBuffer = matrixCalculator.convertToMatrix(array, rows, columns)
+        resultMatrixBeforeExp = matrixCalculator.convertToMatrix(array, rows, columns)
+        matrixBeforePowerTo = matrixCalculator.convertToMatrix(array, rows, columns)
     }
 
     fun matrixIsQuadratic() {
@@ -146,139 +147,12 @@ class MatrixResultMenu @JvmOverloads constructor(
         return subtractButton
     }
 
-    private fun transpose(array: DoubleArray, dimension: Int): DoubleArray {
-        val bufferArray = DoubleArray(array.size)
-
-        var index = 0
-        var iterator = 0
-        var currentCol = 1
-        while (iterator < array.size) {
-            bufferArray[iterator] = array[index]
-
-            index += dimension
-            iterator++
-
-            if (index >= array.size) {
-                index = currentCol
-                currentCol++
-            }
-        }
-
-        return bufferArray
-    }
-
-    private fun subMatrix(array: DoubleArray, dimension: Int, row: Int, col: Int): DoubleArray {
-        val subMatrix = DoubleArray(dimension*dimension)
-
-        var iterator = 0
-        var leapRow = row * (dimension+1)
-        var leapCol = col
-
-        for (cell in array.indices) {
-            var found = false
-
-            if (cell == leapRow && leapRow < ((row+1) * (dimension+1))) {
-                leapRow++
-                found = true
-            }
-
-            if (cell == leapCol) {
-                leapCol += dimension+1
-                found = true
-            }
-
-            if (!found) {
-                subMatrix[iterator] = array[cell]
-                iterator++
-            }
-        }
-
-        return subMatrix
-    }
-
-    private fun determinant(array: DoubleArray, dimension: Int): Double {
-        if (dimension == 1) {
-            return array[0]
-        }
-        if (dimension == 2) {
-            return (array[0] * array[3]) - (array[1] * array[2])
-        }
-
-        var result = 0.0
-        var rowIndex = 0
-        var colIndex = 0
-        while (rowIndex < dimension) {
-            if (array[colIndex] != 0.0) {
-                val subMatrix = subMatrix(array, dimension-1, rowIndex, colIndex)
-                val firstEquationPart = (-1.0).pow(colIndex+rowIndex)*array[colIndex]
-                result += firstEquationPart * determinant(subMatrix, dimension-1)
-            }
-
-            colIndex++
-
-            if (colIndex >= dimension) {
-                rowIndex++
-                colIndex = 0
-            }
-        }
-
-        return result
-    }
-
-    private fun complementsMatrix(array: DoubleArray, dimension: Int) {
-        complementsMatrix = DoubleArray(dimension*dimension)
-
-        var rowIndex = 0
-        var colIndex = 0
-        for (cell in array.indices) {
-            val subMatrix = subMatrix(array, dimension-1, rowIndex, colIndex)
-            val firstEquationPart = (-1.0).pow(colIndex+rowIndex)
-            complementsMatrix[cell] = firstEquationPart * determinant(subMatrix, dimension-1)
-
-            colIndex++
-
-            if (colIndex >= dimension) {
-                rowIndex++
-                colIndex = 0
-            }
-        }
-    }
-
-    private fun inverseMatrix(array: DoubleArray, dimension: Int): Boolean {
-        val determinant = determinant(array, dimension)
-
-        if (determinant == 0.0) {
-            Toast.makeText(context, "Det(A) = 0, so inverse matrix doesn't exist!", Toast.LENGTH_LONG).show()
-            return false
-        }
-        else {
-            inverseMatrix = DoubleArray(dimension*dimension)
-
-            complementsMatrix(array, dimension)
-            complementsMatrix = transpose(complementsMatrix, dimension).copyOf()
-
-            val inverseDeterminant = 1/determinant
-            for (cell in complementsMatrix.indices) {
-                inverseMatrix[cell] = inverseDeterminant * complementsMatrix[cell]
-            }
-
-            complementsMatrix = resultMatrix.copyOf()
-
-            return true
-        }
-    }
-
     fun clickTransposeButton() {
         transposeButton.setOnClickListener {
             transposeButton.setBackgroundResource(clickedButtonStyle)
 
             // Transpose rows and columns
-            transposeMatrix = DoubleArray(resultMatrixRows * resultMatrixColumns)
-            transposeMatrix = if (resultMatrixRows == 1) {
-                transpose(resultMatrix, resultMatrixRows).copyOf()
-            } else {
-                transpose(resultMatrix, resultMatrixColumns).copyOf()
-            }
+            transposeMatrix = matrixCalculator.transpose(resultMatrix)
 
             // Set new matrix
             val buffer = resultMatrixRows
@@ -350,37 +224,12 @@ class MatrixResultMenu @JvmOverloads constructor(
             powerButtonsArray[i].setOnClickListener {
                 powerButtonsArray[i].setBackgroundResource(clickedButtonStyle)
 
-                resultMatrixAfterExp = DoubleArray(resultMatrixRows*resultMatrixColumns)
-
-                val powerTo = i + 1
-                var iterator = 0
-                while (iterator < powerTo) {
-                    var resultMatrixIndex = 0
-                    var row = 0
-                    while (resultMatrixIndex < resultMatrix.size) {
-                        var leapLimit = 0
-
-                        while (leapLimit < resultMatrixColumns) {
-                            var leap = leapLimit
-                            var equation = 0.0
-                            var col = 0
-
-                            while (col < resultMatrixColumns) {
-                                val index = (row * resultMatrixColumns) + col
-                                equation += resultMatrixBeforeExp[index] * resultMatrixBuffer[leap]
-                                leap += resultMatrixColumns
-                                col++
-                            }
-
-                            resultMatrixAfterExp[resultMatrixIndex] = equation
-                            resultMatrixIndex++
-                            leapLimit++
-                        }
-
-                        row++
-                    }
-
-                    iterator++
+                if (i == 1) {
+                    resultMatrixAfterExp = matrixCalculator.multiplicationWithMatrix(resultMatrixBeforeExp, resultMatrixBeforeExp)
+                    resultMatrixAfterExp = matrixCalculator.multiplicationWithMatrix(resultMatrixAfterExp, resultMatrixBeforeExp)
+                }
+                else {
+                    resultMatrixAfterExp = matrixCalculator.multiplicationWithMatrix(resultMatrixBeforeExp, resultMatrixBeforeExp)
                 }
 
                 resultMatrixBeforeExp = resultMatrixAfterExp.copyOf()
@@ -401,6 +250,7 @@ class MatrixResultMenu @JvmOverloads constructor(
 
             matrix.setResultMatrix(matrixBeforePowerTo, resultMatrixRows, resultMatrixColumns, false)
 
+            resultMatrix = matrixBeforePowerTo.copyOf()
             resultMatrixBuffer = matrixBeforePowerTo.copyOf()
             resultMatrixBeforeExp = matrixBeforePowerTo.copyOf()
 
@@ -445,10 +295,10 @@ class MatrixResultMenu @JvmOverloads constructor(
     fun clickComplementButton() {
         complementButton.setOnClickListener {
             complementButton.setBackgroundResource(clickedButtonStyle)
-            val determinant = determinant(resultMatrix, resultMatrixRows)
+            val determinant = matrixCalculator.determinant(resultMatrix)
 
             if (determinant != 0.0) {
-                complementsMatrix(resultMatrix, resultMatrixRows)
+                complementsMatrix = matrixCalculator.complementsMatrix(resultMatrix)
                 matrix.setResultMatrix(complementsMatrix, resultMatrixRows, resultMatrixColumns, false)
                 resultMatrix = complementsMatrix.copyOf()
 
@@ -471,8 +321,14 @@ class MatrixResultMenu @JvmOverloads constructor(
         inverseButton.setOnClickListener {
             inverseButton.setBackgroundResource(clickedButtonStyle)
 
-            val run = inverseMatrix(resultMatrix, resultMatrixRows)
-            if (run) {
+            val determinant = matrixCalculator.determinant(resultMatrix)
+
+            if (determinant == 0.0) {
+                Toast.makeText(context, "Det(A) = 0, so inverse matrix doesn't exist!", Toast.LENGTH_LONG).show()
+            }
+            else {
+                inverseMatrix = matrixCalculator.inverseMatrix(resultMatrix)
+
                 matrix.setResultMatrix(inverseMatrix, resultMatrixRows, resultMatrixColumns,false)
                 resultMatrix = inverseMatrix.copyOf()
 
@@ -487,155 +343,18 @@ class MatrixResultMenu @JvmOverloads constructor(
         }
     }
 
-    private fun subMatrixForRank(array: DoubleArray, dimension: Int, row: Int, col: Int, columns: Int, flag: Boolean): DoubleArray {
-        val subMatrix = DoubleArray(dimension*dimension)
-
-        var iterator = 0
-        var columnLimit = 1
-        var rowLimit = 0
-
-        var currentRow = row
-        var currentColumn = col
-        for (cell in array.indices) {
-            if (iterator > subMatrix.size) {
-                return subMatrix
-            }
-
-            if (columnLimit > dimension) {
-                rowLimit++
-                if (rowLimit == dimension) {
-                    break
-                }
-
-                currentColumn = if (flag) {
-                    (++currentRow * columns) + (col % columns)
-                } else {
-                    (++currentRow * (dimension+1)) + (col % (dimension+1))
-                }
-
-                columnLimit = 1
-            }
-
-            if (cell == currentColumn) {
-                subMatrix[iterator] = array[cell]
-                currentColumn++
-                columnLimit++
-                iterator++
-            }
-        }
-
-        return subMatrix
-    }
-
-    private fun checkSubMatricesForRank(array: DoubleArray, dimension: Int, columns: Int, flag: Boolean): Int {
-        var rank = 0
-        var row = 0
-        var column = 0
-        var columnLimit = 0
-        val dimensionLimit = if (flag) {
-            dimension-1
-        }
-        else {
-            if (dimension == columns) dimension-1 else dimension
-        }
-
-        for (cell in array.indices) {
-            // Move column index if reached end of possibilities of creating a new sub arrays
-            if ((columnLimit + dimensionLimit) > columns) {
-                row++
-                column = if (flag) {
-                    row*columns
-                }
-                else {
-                    row*dimension
-                }
-                columnLimit = 0
-
-                // Check does new sub matrix can exist
-                var counter = 1
-                var rowBuffer = row
-                var run = false
-                while(counter < dimension) {
-                    rowBuffer++
-
-                    val columnBuffer = if (flag) {
-                        if (columns == dimension-1) {
-                            rowBuffer*columns
-                        }
-                        else {
-                            rowBuffer*dimension
-                        }
-                    }
-                    else {
-                        rowBuffer*dimension
-                    }
-
-                    if (columnBuffer > array.size) {
-                        run = true
-                        break
-                    }
-
-                    counter++
-                }
-
-                if (run) {
-                    break
-                }
-            }
-
-            // Create new sub matrix for every possibilities of creating it
-            if (cell == column) {
-                if (rank < dimension-1) {
-                    val subMatrix = subMatrixForRank(array, dimension-1, row, column, columns, flag)
-                    val determinant = determinant(subMatrix, dimension-1)
-
-                    if (determinant != 0.0) {
-                        rank = if (dimension-1 > rank) dimension-1 else rank
-                    }
-                    else {
-                        val buffer = checkSubMatricesForRank(subMatrix, dimension-1, dimension, false)
-                        rank = if (buffer > rank) buffer else rank
-                    }
-                }
-                else {
-                    return rank
-                }
-
-                column++
-                columnLimit++
-            }
-        }
-
-        return rank
-    }
-
-    private fun findRank(flag: Boolean): Int {
-        if (resultMatrixRows == resultMatrixColumns) {
-            val determinant = determinant(resultMatrix, resultMatrixRows)
-
-            if (determinant != 0.0) {
-                return resultMatrixRows
-            }
-        }
-
-        // Find rank of matrix
-        val dimension = if (flag) {
-            if (resultMatrixRows > resultMatrixColumns) resultMatrixColumns else resultMatrixRows
-        }
-        else {
-            resultMatrixColumns-1
-        }
-        val rank = checkSubMatricesForRank(resultMatrix, dimension+1, resultMatrixColumns, flag)
-
-        return rank
-    }
-
     fun clickRankButton() {
         rankButton.setOnClickListener {
             rankButton.setBackgroundResource(clickedButtonStyle)
 
-            val rank = findRank(true)
+            val dimension = if (resultMatrix.size > resultMatrix[0].size) {
+                resultMatrix[0].size
+            }
+            else {
+                resultMatrix.size
+            }
 
+            val rank = matrixCalculator.findRankForNonQuadraticMatrix(resultMatrix, dimension)
             Toast.makeText(context, "Rank(A) = $rank", Toast.LENGTH_LONG).show()
 
             Handler(Looper.getMainLooper()).postDelayed({
@@ -648,11 +367,16 @@ class MatrixResultMenu @JvmOverloads constructor(
         detRankButton.setOnClickListener {
             detRankButton.setBackgroundResource(clickedButtonStyle)
 
-            val determinant = determinant(resultMatrix, resultMatrixRows)
+            val determinant = matrixCalculator.determinant(resultMatrix)
 
             if (determinant == 0.0) {
-                val rank = findRank(false)
-                Toast.makeText(context, "Det(A) = 0! But Rank(A) = $rank", Toast.LENGTH_LONG).show()
+                val rank = matrixCalculator.findRank(resultMatrix)
+                if (rank != 0) {
+                    Toast.makeText(context, "Det(A) = 0! But Rank(A) = $rank", Toast.LENGTH_LONG).show()
+                }
+                else {
+                    Toast.makeText(context, "Det(A) = 0! So is Rank(A) = $rank", Toast.LENGTH_LONG).show()
+                }
             }
             else {
                 Toast.makeText(context, "Det(A) = $determinant", Toast.LENGTH_LONG).show()
