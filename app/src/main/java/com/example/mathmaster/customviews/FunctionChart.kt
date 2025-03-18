@@ -181,28 +181,6 @@ class FunctionChart @JvmOverloads constructor(
         canvas.drawLine(width.toFloat(),  0f, width.toFloat(),  height.toFloat(), paint)
     }
 
-    private fun substituteVariable(equation: MutableList<Any>, variable: Double): MutableList<Any> {
-        val result = mutableListOf<Any>()
-
-        for (element in equation) {
-            when (element) {
-                is Char -> {
-                    if (element == 'x') {
-                        result.add(variable)
-                    }
-                    else {
-                        result.add(element)
-                    }
-                }
-                else -> {
-                    result.add(element)
-                }
-            }
-        }
-
-        return result
-    }
-
     private fun noDecimalPoint(number: Float): Boolean {
         return number % 1 == 0f
     }
@@ -301,7 +279,7 @@ class FunctionChart @JvmOverloads constructor(
             var iterator = 0f
             while (iterator <= width) {
                 // Find Y value for X
-                val equationAfterSubstitution = substituteVariable(equation, x.toDouble())
+                val equationAfterSubstitution = calculator.substituteVariable(equation, x.toDouble())
                 val bufferX = width/2f + (x * gridSpacing)
                 val y = calculator.calculateEquation(equationAfterSubstitution, 0)
 

@@ -127,7 +127,50 @@ class MatrixCalculator {
         return subMatrix
     }
 
+    private fun subMatrix(matrix: MutableList<MutableList<Double>>, rowIndex: Int, colIndex: Int): Array<DoubleArray> {
+        val subMatrix = Array(matrix.size-1) { DoubleArray(matrix.size-1) {0.0} }
+
+        var newRow = 0
+        for (row in matrix.indices) {
+            if (row == rowIndex) {
+                continue
+            }
+            var newCol = 0
+            for (col in matrix[row].indices) {
+                if (col == colIndex) {
+                    continue
+                }
+                subMatrix[newRow][newCol] = matrix[row][col]
+                newCol++
+            }
+            newRow++
+        }
+
+        return subMatrix
+    }
+
     fun determinant(matrix: Array<DoubleArray>): Double {
+        if (matrix.size == 1) {
+            return matrix[0][0]
+        }
+        if (matrix.size == 2) {
+            return (matrix[0][0] * matrix[1][1]) - (matrix[0][1] * matrix[1][0])
+        }
+
+        var result = 0.0
+        for (row in matrix.indices) {
+            for (col in matrix[row].indices) {
+                if (matrix[row][col] != 0.0) {
+                    val subMatrix = subMatrix(matrix, row, col)
+                    val firstEquationPart = (-1.0).pow(row+col)*matrix[row][col]
+                    result += firstEquationPart * determinant(subMatrix)
+                }
+            }
+        }
+        return result
+    }
+
+    fun determinant(matrix: MutableList<MutableList<Double>>): Double {
         if (matrix.size == 1) {
             return matrix[0][0]
         }
