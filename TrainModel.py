@@ -5,11 +5,8 @@ import gzip
 import time
 import traceback
 from torch.optim import AdamW
-from torch.utils.data import Dataset, DataLoader
 from transformers import T5ForConditionalGeneration
-
-# Check if CUDA is available, and move tensor to GPU if so
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+import gc
 
 # Class for dataloader
 class QADataset():
@@ -22,7 +19,7 @@ class QADataset():
 
     def __iter__(self):
         index = 0
-        while index < len(self.answers):
+        while index < batch_size:
             yield self.__getitem__(index)
             index += 1
 
@@ -38,17 +35,8 @@ class QADataset():
         }
         
 
-# Load model
-model = T5ForConditionalGeneration.from_pretrained('my_model_1.0').to(device)
-
-# Disable caching during training
-model.config.use_cache = False
-
-# Disable fragmentation
-os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
-
-# Optimizer
-optimizer = AdamW(model.parameters(), lr=5e-5, weight_decay=0.01)
+# Check if CUDA is available, and move tensor to GPU if so
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Training variables
 tokenized_questions_path = "vectorized_questions.pkl.gz"
@@ -56,46 +44,49 @@ tokenized_answers_path = "vectorized_answers.pkl.gz"
 dimension = 768
 batch_size = 1
 
-# Error handling
-start = 0
-errors = []
-error_index = 0
-
-# Eopoches variables
-epoches = 1
-limit = 7000000
+# Epoches variables
+start_epoch = 0
+epoches = 140
+step = 50000
+limit = 0
 questions_amount = 6
-accumulation_steps = 5
 
 # Training loop
-for epoch in range(epoches):
-    with gzip.open(tokenized_answers_path, 'rb') as tkn_answers:
-        with gzip.open(tokenized_questions_path, 'rb') as tkn_questions:
+with gzip.open(tokenized_answers_path, 'rb') as tkn_answers:
+    with gzip.open(tokenized_questions_path, 'rb') as tkn_questions:
+        for epoch in range(epoches):
+            # Load model
+            if epoch >= start_epoch:
+                model = T5ForConditionalGeneration.from_pretrained(f"my_model_{epoch}").to(device)
+                model.gradient_checkpointing_enable()
 
-            model.train()
-            iterator = 0
+                # Disable caching during training
+                model.config.use_cache = False
 
-            print(f"Start, Time: {time.strftime("%H:%M:%S")}")
+                # Optimizer
+                optimizer = AdamW(model.parameters(), lr=2e-5, weight_decay=0.001)
+                model.train()
+
+                print(f"Start, Epoch: {epoch}, Time: {time.strftime("%H:%M:%S")}")
+
+            iterator = step * epoch
+            limit += step
 
             while iterator < limit:
-                # Repeat errors and ommit done records
-                if start > iterator and not (error_index < len(errors) and iterator == errors[error_index]):
+                # Ommit done records
+                if start_epoch > epoch:
                     tokenized_answer = pickle.load(tkn_answers)
-                    tokenized_question = pickle.load(tkn_questions)
-
+                    for question in range(questions_amount):
+                        tokenized_question = pickle.load(tkn_questions)
+                        del tokenized_question
                     del tokenized_answer
-                    del tokenized_question
-
                     iterator += 1
                     continue
-                elif error_index < len(errors) and iterator == errors[error_index]:
-                    error_index += 1
 
                 try:
                     # Batches for datasets
                     answers_batch = []
                     anwser_attention_mask_batch = []
-
                     questions_batch = []
                     questions_attention_masks_batch = []
 
@@ -114,10 +105,8 @@ for epoch in range(epoches):
                         for question in range(questions_amount):
                             tokenized_question = pickle.load(tkn_questions).to(device)
                             seq_len = max(seq_len, answer.shape[1], tokenized_question.shape[1])
-
                             if tokenized_question.shape[1] > tokenized_question_size:
                                 tokenized_question_size = tokenized_question.shape[1]
-
                             current_questions_batch.append(tokenized_question)
                             del tokenized_question
 
@@ -130,7 +119,9 @@ for epoch in range(epoches):
                             elif seq_len == tokenized_answer.shape[1]:
                                 anwser = tokenized_answer[:, :dimension]
                                 for i in range(questions_amount):
+                                    old_tensor = current_questions_batch[i]
                                     current_questions_batch[i] = torch.nn.functional.pad(current_questions_batch[i], (0, dimension-current_questions_batch[i].shape[1]), value=0)
+                                    del old_tensor
                             else:
                                 answer = torch.nn.functional.pad(tokenized_answer, (0, dimension-tokenized_answer.shape[1]), value=0)
                                 for i in range(questions_amount):
@@ -138,19 +129,21 @@ for epoch in range(epoches):
                         else:
                             answer = torch.nn.functional.pad(tokenized_answer, (0, seq_len-tokenized_answer.shape[1]), value=0)
                             for i in range(questions_amount):
-                                current_questions_batch[i] = torch.nn.functional.pad(current_questions_batch[i], (0, seq_len-current_questions_batch[i].shape[1]), value=0)
-
+                                old_tensor = current_questions_batch[i]
+                                current_questions_batch[i] = torch.nn.functional.pad(old_tensor, (0, seq_len-old_tensor.shape[1]), value=0)
+                                del old_tensor
+                                
                         # Make attention masks
                         for question in current_questions_batch:
                             current_questions_attention_masks_batch.append((question != 0).int())
                         current_answer_attention_mask = (answer != 0).int()
-
+                        
                         # Push everything to proper batches
                         answers_batch.append(answer)
                         anwser_attention_mask_batch.append(current_answer_attention_mask)
                         questions_batch.append(current_questions_batch)
                         questions_attention_masks_batch.append(current_questions_attention_masks_batch)
-
+                        
                         # Free memory
                         del answer
                         del current_questions_batch
@@ -176,17 +169,14 @@ for epoch in range(epoches):
                             labels=labels,
                             past_key_values = None
                             )
-                        
-                        # Handle loss
+                            
+                            # Handle loss
                         if outputs.loss is not None:
                             loss = outputs.loss
                             loss.backward()
 
-                            # Accumulate gradients
-                            if (iterator + 1) % accumulation_steps == 0:
-                                optimizer.step()
-                                optimizer.zero_grad()
-
+                            optimizer.step()
+                            optimizer.zero_grad()
                         del input_ids
                         del attention_mask
                         del decoder_attention_mask
@@ -194,6 +184,8 @@ for epoch in range(epoches):
 
                     # Free memory
                     del tokenized_answer
+                    del answers_batch
+                    del anwser_attention_mask_batch
                     del questions_batch
                     del questions_attention_masks_batch
 
@@ -203,24 +195,24 @@ for epoch in range(epoches):
                     filename, lineno, func, text = tb[-1]
                     print(f"Exception in {filename}, line {lineno}, in {func}")
                     print(f"Code: {text}")
-                    print(f"Error: {e}, Iteration: {iterator}")
-
+                    print(f"Error: {e}, Epoch: {epoch}")
+                    break
+                
                 iterator += 1
 
                 # Print time and save model
-                if iterator > start:
-                    if iterator % 100000 == 0:
-                        print(f"Iteration: {iterator}, Time: {time.strftime("%H:%M:%S")}")
-                        model.save_pretrained(f"my_model_{iterator/100000}")
-                        torch.cuda.empty_cache()
-                    elif iterator % 10000 == 0:
-                        print(f"Iteration: {iterator}, Time: {time.strftime("%H:%M:%S")}")
-                        torch.cuda.empty_cache()
-                    elif iterator % 1000 == 0:
-                        print(f"Memory allocated: {torch.cuda.memory_allocated(device) / 1024 ** 2:.2f} MB")
-                        torch.cuda.empty_cache()
-                
+                if iterator % 1000 == 0:
+                    torch.cuda.empty_cache()
+
+            if epoch >= start_epoch:   
+                # Save model
+                model.save_pretrained(f"my_model_{epoch+1}")
+                print(f"End, Epoch: {epoch}, Time: {time.strftime("%H:%M:%S")}")
+
+                # Free memory
+                del model
+                torch.cuda.empty_cache()
+                gc.collect()
 
 # Done
 print(f"Done, End time: {time.strftime("%H:%M:%S")}")
-model.save_pretrained(f"my_model")

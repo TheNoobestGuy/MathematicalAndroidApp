@@ -1,6 +1,5 @@
 /venv
-/my_model
-/my_model_1.0
+/my_model_0
 QA_database_EN.json
 QA_database_EN.json:Zone.Identifier
 vectorized_questions.pkl.gz
