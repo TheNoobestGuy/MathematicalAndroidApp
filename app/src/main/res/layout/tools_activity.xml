@@ -63,6 +63,18 @@
             app:layout_constraintTop_toBottomOf="@+id/MatrixCalculator"
             app:layout_constraintWidth_percent="0.7" />
 
+        <Button
+            android:id="@+id/DerivativeCalculator"
+            style="@style/MenuButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:text="@string/DerivativeCalculator"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/UnknownsCalculator"
+            app:layout_constraintWidth_percent="0.7" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -171,6 +171,15 @@
             android:screenOrientation="portrait">
         </activity>
 
+        <!-- Derivative calculator -->
+        <activity
+            android:name=".DerivativeCalculatorActivity"
+            android:exported="true"
+            android:label="Math Master"
+            android:theme="@style/Theme.MathMaster"
+            android:screenOrientation="portrait">
+        </activity>
+
         <!-- Statistics -->
         <activity
             android:name=".StatisticsActivity"

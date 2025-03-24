@@ -101,6 +101,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
     // Optional variable button
     private var functionChartMode: Boolean = false
     private var unknownsCalculatorMode: Boolean = false
+    private var derivativeCalculatorMode: Boolean = false
     private var variableButton: Button
     private var equalSign: Boolean = false
 
@@ -320,7 +321,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 }
 
                 if (addedNumber) {
-                    if (!functionChartMode && !unknownsCalculatorMode) {
+                    if (!functionChartMode && !unknownsCalculatorMode && !derivativeCalculatorMode) {
                         resultOfCalculate(textView, resultTextView)
                     }
                 }
@@ -506,7 +507,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
             }
 
             if (appendedFactorial) {
-                if (!functionChartMode && !unknownsCalculatorMode) {
+                if (!functionChartMode && !unknownsCalculatorMode && !derivativeCalculatorMode) {
                     resultOfCalculate(textView, resultTextView)
                 }
             }
@@ -568,7 +569,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
             }
 
             if (appendedPercent) {
-                if (!functionChartMode && !unknownsCalculatorMode) {
+                if (!functionChartMode && !unknownsCalculatorMode && !derivativeCalculatorMode) {
                     resultOfCalculate(textView, resultTextView)
                 }
             }
@@ -598,7 +599,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
             }
 
             if (addedNumber) {
-                if (!functionChartMode && !unknownsCalculatorMode) {
+                if (!functionChartMode && !unknownsCalculatorMode && !derivativeCalculatorMode) {
                     resultOfCalculate(textView, resultTextView)
                 }
             }
@@ -628,7 +629,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
             }
 
             if (addedNumber) {
-                if (!functionChartMode && !unknownsCalculatorMode) {
+                if (!functionChartMode && !unknownsCalculatorMode && !derivativeCalculatorMode) {
                     resultOfCalculate(textView, resultTextView)
                 }
             }
@@ -656,12 +657,15 @@ class AdvancedKeyboard @JvmOverloads constructor(
             equalSign = false
             textView.text = ""
 
-            if (!functionChartMode && !unknownsCalculatorMode) {
+            if (!functionChartMode && !unknownsCalculatorMode && !derivativeCalculatorMode) {
                 if (clearButton.text == "AC") {
                     historyTextView.text = ""
                 }
 
                 clearButton.text = context.getString(R.string.AC)
+                resultTextView.text = ""
+            }
+            if (derivativeCalculatorMode) {
                 resultTextView.text = ""
             }
 
@@ -804,7 +808,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 }
             }
 
-            if (!functionChartMode && !unknownsCalculatorMode) {
+            if (!functionChartMode && !unknownsCalculatorMode && !derivativeCalculatorMode) {
                 if (textView.text.isNotEmpty()) {
                     resultOfCalculate(textView, resultTextView)
                 } else {
@@ -974,7 +978,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
 
             if (textView.text.isNotEmpty()) {
                 if (textView.text.last() != '.' && textView.text.last() != 'x'
-                    && textView.text.last() != 'y' || textView.text.last() != 'z'
+                    && textView.text.last() != 'y' &&  textView.text.last() != 'z'
                 ) {
                     textView.append(variableButton.text.toString())
                 }
@@ -988,7 +992,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
         }
     }
 
-    fun setAllClickListenersForFunctionChar(equation: TextView, blank: TextView) {
+    fun setAllClickListenersForFunctionChart(equation: TextView, blank: TextView) {
         numberButtonClick(equation, blank)
         basicCalcButtonClick(equation)
         functionButtonClick(equation)
@@ -1198,5 +1202,49 @@ class AdvancedKeyboard @JvmOverloads constructor(
         yVariableClick(textView)
         zVariableClick(textView)
         enterWhenInUnknownsCalculatorMode(textView)
+    }
+
+    // Derivative calculator
+    fun setDerivativeCalculatorMode() {
+        derivativeCalculatorMode = true
+
+        variableButton.text = "x"
+        enterButton.text = "✓"
+    }
+
+    fun setAllClickListenersForDerivativeCalculator(equation: TextView, derivative: TextView, blank: TextView) {
+        numberButtonClick(equation, blank)
+        basicCalcButtonClick(equation)
+        functionButtonClick(equation)
+        openBracketButtonClick(equation)
+        closeBracketButtonClick(equation)
+        powerButtonClick(equation)
+        dotButtonClick(equation)
+        rootButtonClick(equation)
+        factorialButtonClick(equation, blank)
+        numberPIButtonClick(equation, blank)
+        numberEulerButtonClick(equation, blank)
+        percentButtonClick(equation, blank)
+        fractionButtonClick(equation)
+        variableButtonClick(equation)
+
+        deleteButtonClick(equation, blank)
+        clearButtonClick(equation, derivative, blank)
+        degreeButtonClick()
+        changeFunctionsButtonClick()
+    }
+
+    fun getEnterButton(): Button {
+        return enterButton
+    }
+
+    fun clickEnterButton() {
+        enterButton.setBackgroundResource(clickedButtonStyle)
+    }
+
+    fun unClickEnterButton() {
+        Handler(Looper.getMainLooper()).postDelayed({
+            enterButton.setBackgroundResource(unClickedButtonStyle)
+        }, 100)
     }
 }

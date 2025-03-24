@@ -35,6 +35,7 @@ class ToolsActivity : ComponentActivity() {
         val advancedCalcButton: Button = findViewById(R.id.AdvancedCalculator)
         val functionChartButton: Button = findViewById(R.id.FunctionChart)
         val unknownsCalculatorButton: Button = findViewById(R.id.UnknownsCalculator)
+        val derivativeCalculatorButton: Button = findViewById(R.id.DerivativeCalculator)
 
         // Style of clicked button
         val clickedButtonStyle = R.drawable.menubutton_background_clicked
@@ -44,6 +45,7 @@ class ToolsActivity : ComponentActivity() {
         clickFunction(advancedCalcButton, clickedButtonStyle, AdvancedCalculatorActivity())
         clickFunction(functionChartButton, clickedButtonStyle, FunctionChartActivity())
         clickFunction(unknownsCalculatorButton, clickedButtonStyle, UnknownsCalculatorActivity())
+        clickFunction(derivativeCalculatorButton, clickedButtonStyle, DerivativeCalculatorActivity())
 
         // Handle the back button press
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {

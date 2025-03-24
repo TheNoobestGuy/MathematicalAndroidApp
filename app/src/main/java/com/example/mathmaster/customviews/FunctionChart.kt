@@ -156,13 +156,19 @@ class FunctionChart @JvmOverloads constructor(
         // Draw zero places
         if (showZeroPlaces) {
             val circleSize = 8f
+            var bias = 15f
             for (point in zeroPlaces) {
                 val xValue = width/2f + (point.first * gridSpacing)
 
                 // Draw label
+                bias = if (bias == 30f) {
+                    -15f
+                } else {
+                    30f
+                }
                 paint.style = Paint.Style.FILL
                 paint.color = axisColor
-                canvas.drawText(point.first.toString(), xValue+5f, point.second-15f, paint)
+                canvas.drawText(point.first.toString(), xValue+5f, point.second+bias, paint)
 
                 // Draw a point
                 paint.style = Paint.Style.FILL

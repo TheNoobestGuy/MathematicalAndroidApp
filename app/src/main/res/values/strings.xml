@@ -42,9 +42,11 @@
     <string name="FinishedMaster" translatable="false">Total finished master:</string>
 
     // Tools
+    <string name="FunctionChart" translatable="false">Function chart</string>
     <string name="MatrixCalculator" translatable="false">Matrix calculator</string>
     <string name="AdvancedCalculator" translatable="false">Advanced calculator</string>
     <string name="UnknownsCalculator" translatable="false">Unknowns calculator</string>
+    <string name="DerivativeCalculator" translatable="false">Derivative calculator</string>
 
     // Advance calculator
     <string name="FirstCalc" translatable="false">1st</string>
@@ -91,7 +93,6 @@
     <string name="Undo" translatable="false">Undo</string>
 
     // Function chart
-    <string name="FunctionChart" translatable="false">Function chart</string>
     <string name="Information" translatable="false">Information</string>
     <string name="HorizontalAsymptote" translatable="false">Horizontal asymptote:</string>
     <string name="HorizontalAsymptotes" translatable="false">Horizontal asymptotes:</string>
@@ -107,6 +108,10 @@
     <string name="ThirdEquation" translatable="false">Third equation:</string>
     <string name="EqAdd" translatable="false">EQ+</string>
     <string name="EqSubtract" translatable="false">EQ-</string>
+
+    // Derivative calculator
+    <string name="DerivativeResult" translatable="false">Derivative:</string>
+    <string name="DerivativeInput" translatable="false">Equation:</string>
 
     // Statistics
     <string name="StatisticsOverview" translatable="false">Statistics Overview</string>

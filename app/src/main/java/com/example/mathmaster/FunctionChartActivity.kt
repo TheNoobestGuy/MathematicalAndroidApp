@@ -54,7 +54,7 @@ class FunctionChartActivity : ComponentActivity() {
         val keyboard: AdvancedKeyboard = findViewById(R.id.Keyboard)
         keyboard.setFunctionChartMode()
 
-        keyboard.setAllClickListenersForFunctionChar(equation, blank)
+        keyboard.setAllClickListenersForFunctionChart(equation, blank)
 
         // Slide button
         val clickedButtonStyle = R.drawable.menubutton_background_clicked

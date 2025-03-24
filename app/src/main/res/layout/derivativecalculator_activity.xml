@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/ResultEquationLabel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="@string/DerivativeResult"
+        android:textSize="15sp"
+        android:maxLength="45"
+        android:gravity="start"
+        android:focusable="false"
+        app:layout_constraintBottom_toTopOf="@+id/ResultEquation"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintWidth_percent="0.85">
+    </TextView>
+
+    <TextView
+        android:id="@+id/ResultEquation"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:text=""
+        android:textSize="30sp"
+        android:maxLength="45"
+        android:textAlignment="center"
+        android:focusable="false"
+        app:layout_constraintBottom_toTopOf="@+id/EquationLabel"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintWidth_percent="0.85" />
+
+    <TextView
+        android:id="@+id/EquationLabel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="@string/DerivativeInput"
+        android:textSize="15sp"
+        android:maxLength="45"
+        android:gravity="start"
+        android:focusable="false"
+        app:layout_constraintBottom_toTopOf="@+id/Equation"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintWidth_percent="0.85">
+    </TextView>
+
+    <EditText
+        android:id="@+id/Equation"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:text=""
+        android:textSize="30sp"
+        android:maxLength="45"
+        android:inputType="text"
+        android:cursorVisible="false"
+        android:focusable="false"
+        android:textAlignment="center"
+        app:layout_constraintBottom_toTopOf="@+id/Keyboard"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintWidth_percent="0.85" />
+
+    <com.example.mathmaster.customviews.AdvancedKeyboard
+        android:id="@+id/Keyboard"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginBottom="64dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_percent="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintWidth_percent="0.95" />
+
+    <TextView
+        android:id="@+id/Blank"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
