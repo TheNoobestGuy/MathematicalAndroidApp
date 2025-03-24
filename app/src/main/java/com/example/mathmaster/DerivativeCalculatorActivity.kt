@@ -45,7 +45,7 @@ class DerivativeCalculatorActivity : ComponentActivity() {
                     } else {
                         val buffer = element.toInt()
 
-                        if (buffer == 1 && output.last() == '^') {
+                        if (buffer == 1 && output.isNotEmpty() && output.last() == '^') {
                             delete = true
                             ""
                         }
