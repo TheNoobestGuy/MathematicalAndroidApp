@@ -20,18 +20,52 @@ data class UnknownEntity(var multiplier: Double?, var variable: Char?, var power
         return multiplier != null && variable != null && powerTo != null
     }
 
-    fun getOriginal(): MutableList<Any> {
+    fun isEmpty(): Boolean {
+        return multiplier == null && variable == null && powerTo == null
+    }
+
+    fun getOriginal(negative: Boolean = false): MutableList<Any> {
         val original = mutableListOf<Any>()
 
         if (isNotEmpty()) {
-            original.add(multiplier!!)
-            original.add(variable!!)
-            original.add('^')
-            original.add(powerTo!!)
+            if (powerTo!! == 0.0) {
+                if (negative) {
+                    original.add(-multiplier!!)
+                }
+                else {
+                    original.add(multiplier!!)
+                }
+            }
+            else {
+                if (negative) {
+                    original.add(-multiplier!!)
+                }
+                else {
+                    original.add(multiplier!!)
+                }
+                original.add(variable!!)
+                original.add('^')
+                original.add(powerTo!!)
+            }
         }
         else {
             if (multiplier != null) {
-                original.add(multiplier!!)
+                if (negative) {
+                    original.add(-multiplier!!)
+                }
+                else {
+                    original.add(multiplier!!)
+                }
+
+                if (powerTo != null) {
+                    original.clear()
+                    if (negative) {
+                        original.add((-multiplier!!).pow(powerTo!!))
+                    }
+                    else {
+                        original.add(multiplier!!.pow(powerTo!!))
+                    }
+                }
             }
         }
 
@@ -61,6 +95,55 @@ data class UnknownEntity(var multiplier: Double?, var variable: Char?, var power
         multiplier = null
         variable = null
         powerTo = null
+    }
+
+    operator fun times(other: UnknownEntity): UnknownEntity {
+        return if (this.isNotEmpty() && other.isNotEmpty()) {
+            UnknownEntity(this.multiplier!! * other.multiplier!!, this.variable, this.powerTo!! + other.powerTo!!)
+        } else if (this.onlyNumber() && other.isNotEmpty()) {
+            UnknownEntity(this.multiplier!! * other.multiplier!!, other.variable, other.powerTo)
+        } else if (this.isNotEmpty() && other.onlyNumber()) {
+            UnknownEntity(this.multiplier!! * other.multiplier!!, this.variable, this.powerTo)
+        } else if (this.onlyNumber() && other.onlyNumber()) {
+            UnknownEntity(this.multiplier!! * other.multiplier!!, null, null)
+        } else if (this.isEmpty() && other.isNotEmpty()) {
+            UnknownEntity(other.multiplier, other.variable, other.powerTo)
+        } else if (this.isNotEmpty() && other.isEmpty()) {
+            UnknownEntity(this.multiplier, this.variable, this.powerTo)
+        } else if (this.isEmpty() && other.onlyNumber()) {
+            UnknownEntity(other.multiplier, other.variable, other.powerTo)
+        } else if (this.onlyNumber() && other.isEmpty()) {
+            UnknownEntity(this.multiplier, this.variable, this.powerTo)
+        } else {
+            UnknownEntity(null, null, null)
+        }
+    }
+
+    operator fun div(other: UnknownEntity): UnknownEntity {
+        return if (this.isNotEmpty() && other.isNotEmpty()) {
+            if (this.powerTo!! - other.powerTo!! == 0.0) {
+                UnknownEntity(this.multiplier!! / other.multiplier!!, null, null)
+            }
+            else {
+                UnknownEntity(this.multiplier!! / other.multiplier!!, this.variable, this.powerTo!! - other.powerTo!!)
+            }
+        } else if (this.onlyNumber() && other.isNotEmpty()) {
+            UnknownEntity(this.multiplier!! / other.multiplier!!, other.variable, -(other.powerTo!!))
+        } else if (this.isNotEmpty() && other.onlyNumber()) {
+            UnknownEntity(this.multiplier!! / other.multiplier!!, this.variable, this.powerTo!!)
+        } else if (this.onlyNumber() && other.onlyNumber()) {
+            UnknownEntity(this.multiplier!! / other.multiplier!!, null, null)
+        } else if (this.isEmpty() && other.isNotEmpty()) {
+            UnknownEntity(other.multiplier, other.variable, other.powerTo)
+        } else if (this.isNotEmpty() && other.isEmpty()) {
+            UnknownEntity(this.multiplier, this.variable, this.powerTo)
+        } else if (this.isEmpty() && other.onlyNumber()) {
+            UnknownEntity(other.multiplier, other.variable, other.powerTo)
+        } else if (this.onlyNumber() && other.isEmpty()) {
+            UnknownEntity(this.multiplier, this.variable, this.powerTo)
+        } else {
+            UnknownEntity(null, null, null)
+        }
     }
 }
 
@@ -106,37 +189,25 @@ class Calculator {
         return outputNumber
     }
 
-    private fun findNewBracketIndex(transformedEquation: MutableList<Any>, flag: Boolean = false): Int {
+    private fun findNewBracketIndex(transformedEquation: MutableList<Any>, variable: Boolean = false): Int {
         var openBrackets = 0
         var closeBrackets = 0
-        var brackets = flag
+        var brackets = false
 
         val range = transformedEquation.size - 1 downTo 0
-
         for (i in range) {
             if (transformedEquation[i] == ')') {
-                if (i != transformedEquation.size - 1 && !brackets) {
-                    return i+2
-                }
-
                 closeBrackets++
                 brackets = true
             }
             else if (transformedEquation[i] == '(') {
-                if (!brackets) {
-                    break
+                if (closeBrackets == 0) {
+                    return i
                 }
                 openBrackets++
 
                 if (closeBrackets == openBrackets) {
-                    if (i > 0) {
-                        if (transformedEquation[i-1].toString()[0].isLetter()) {
-                            if (transformedEquation[i] != 'x' && transformedEquation[i] != 'y'
-                                && transformedEquation[i] != 'z') {
-                                return i - 1
-                            }
-                        }
-                    }
+                    return i
                 }
             }
             else if (transformedEquation[i] == '√') {
@@ -152,12 +223,20 @@ class Calculator {
                     return i+1
                 }
             }
-
-            if (closeBrackets == openBrackets && brackets) {
-                return i
-            }
-            if (transformedEquation[i] == '=') {
+            else if (transformedEquation[i] == '=') {
                 return i+1
+            }
+            else if (variable && transformedEquation[i] == '/') {
+                if (closeBrackets == openBrackets) {
+                    return i+1
+                }
+            }
+            else if (transformedEquation[i] is Char && (transformedEquation[i] as Char).isLetter()) {
+                if (transformedEquation[i] != 'x' && transformedEquation[i] != 'y' && transformedEquation[i] != 'z') {
+                    if (closeBrackets == openBrackets) {
+                        return i
+                    }
+                }
             }
         }
 
@@ -329,7 +408,7 @@ class Calculator {
                                 }
                             }
 
-                            addBracketIndex = findNewBracketIndex(transformedEquation, flag = true)
+                            addBracketIndex = findNewBracketIndex(transformedEquation)
                             transformedEquation.add(addBracketIndex, '(')
                             additionalOpenedBrackets.last().add(')')
                             transformedEquation.add('×')
@@ -421,7 +500,7 @@ class Calculator {
                         if (powerToOpenedBrackets.isNotEmpty()) {
                             while (powerToOpenedBrackets.isNotEmpty() &&
                                 powerToOpenedBrackets.last() >= additionalOpenedBrackets.size-1) {
-                                if (additionalOpenedBrackets.last().isNotEmpty()) {
+                                while (additionalOpenedBrackets.last().isNotEmpty()) {
                                     transformedEquation.add(additionalOpenedBrackets.last().removeLast())
                                 }
                                 powerToOpenedBrackets.removeLast()
@@ -436,9 +515,15 @@ class Calculator {
                         }
 
                         if (!multiplyOrDivide.last()) {
-                            addBracketIndex = findNewBracketIndex(transformedEquation, flag = true)
+                            addBracketIndex = findNewBracketIndex(transformedEquation)
                             transformedEquation.add(addBracketIndex, '(')
                             additionalOpenedBrackets.last().add(')')
+                        }
+
+                        if (element == '/') {
+                            addBracketIndex = findNewBracketIndex(transformedEquation)
+                            transformedEquation.add(addBracketIndex, '(')
+                            transformedEquation.add(')')
                         }
                         transformedEquation.add(element)
 
@@ -461,7 +546,7 @@ class Calculator {
                             addDegree = true
                         }
 
-                        addBracketIndex = findNewBracketIndex(transformedEquation, flag = true)
+                        addBracketIndex = findNewBracketIndex(transformedEquation)
                         transformedEquation.add(addBracketIndex, '(')
 
                         if (negativeNumber) {
@@ -495,7 +580,7 @@ class Calculator {
                         }
 
                         if (transformedEquation.isNotEmpty()) {
-                            if (transformedEquation.last().toString()[0].isDigit()) {
+                            if (transformedEquation.last() is Double) {
                                 transformedEquation.add('×')
                             }
                         }
@@ -505,33 +590,31 @@ class Calculator {
                         inDegree = false
                     }
                     'x', 'y', 'z' -> {
-                        if (!multiplyOrDivide.last()) {
-                            addBracketIndex = findNewBracketIndex(transformedEquation, true)
-                            transformedEquation.add(addBracketIndex, '(')
-                            additionalOpenedBrackets.last().add(')')
-                            multiplyOrDivide[multiplyOrDivide.size-1] = true
-                        }
-
-                        if (powerToOpenedBrackets.isNotEmpty()) {
-                            while (powerToOpenedBrackets.isNotEmpty() &&
-                                powerToOpenedBrackets.last() >= additionalOpenedBrackets.size - 1
-                            ) {
-                                if (additionalOpenedBrackets.last().isNotEmpty()) {
-                                    transformedEquation.add(
-                                        additionalOpenedBrackets.last().removeLast()
-                                    )
-                                }
-                                powerToOpenedBrackets.removeLast()
-                            }
-                        }
-
+                        var add = false
                         if (transformedEquation.isNotEmpty()) {
-                            if (transformedEquation.last() is Double || transformedEquation.last() == ')') {
-                                addBracketIndex = findNewBracketIndex(transformedEquation, true)
-                                transformedEquation.add(addBracketIndex, '(')
-                                transformedEquation.add(')')
+                            if (transformedEquation.last() is Double) {
+                                if (transformedEquation.isNotEmpty() && transformedEquation.last() != '(') {
+                                    if (!multiplyOrDivide.last()) {
+                                        addBracketIndex = findNewBracketIndex(transformedEquation)
+                                        transformedEquation.add(addBracketIndex, '(')
+                                        additionalOpenedBrackets.last().add(')')
+
+                                        addBracketIndex = findNewBracketIndex(transformedEquation, variable = true)
+                                        transformedEquation.add(addBracketIndex, '(')
+                                        add = true
+                                    }
+                                }
+
+                                if (add) {
+                                    transformedEquation.add(')')
+                                }
+
                                 transformedEquation.add('×')
+                                multiplyOrDivide[multiplyOrDivide.size-1] = true
                             }
+                        }
+                        else {
+                            additionalOpenedBrackets.last().removeLast()
                         }
 
                         transformedEquation.add(element)
@@ -858,1424 +941,505 @@ class Calculator {
     }
 
     // Solve equations with unknowns calculator
-    private fun connectUnknowns(unknowns: MutableList<Char>,
-                                multipliers: MutableList<Double>, flag: Boolean): MutableList<Any> {
+    private fun getEntitiesOfEquation(equation: MutableList<Any>): MutableList<UnknownEntity> {
+        val entities = mutableListOf<UnknownEntity>()
+
+        val entity = UnknownEntity(null, null, null)
+        var power = false
+        var operator = '0'
+        for (element in equation) {
+            when(element) {
+                '=' -> {
+                    if (entity.isNotEmpty()) {
+                        entities.add(entity.copy())
+                    }
+
+                    return entities
+                }
+                '+', '-' -> {
+                    if (entity.multiplier != null) {
+                        entities.add(entity.copy())
+                    }
+
+                    power = false
+                    entity.clear()
+                    operator = element as Char
+                }
+                '^' -> power = true
+                is Double -> {
+                    if (power) {
+                        entity.powerTo = element
+                    }
+                    else {
+                        if (operator == '-') {
+                            entity.multiplier = -element
+                        }
+                        else {
+                            entity.multiplier = element
+                        }
+                    }
+                }
+                is Char -> {
+                    entity.variable = element
+                }
+            }
+        }
+        if (entity.multiplier != null) {
+            entities.add(entity.copy())
+        }
+
+        return entities
+    }
+
+    private fun multiplyTwoEquations(f: MutableList<Any>, g: MutableList<Any>, divide: Boolean = false): MutableList<Any> {
+        if (f.isEmpty() && g.isNotEmpty()) {
+            return g
+        }
+        else if (g.isEmpty() && f.isNotEmpty()) {
+            return f
+        }
         val result = mutableListOf<Any>()
 
-        if (multipliers.isNotEmpty()) {
-            var numberBuffer = multipliers[0]
-            for (i in  1 until multipliers.size) {
-                if (flag) {
-                    numberBuffer *= multipliers[i]
+        val entitiesF = getEntitiesOfEquation(f)
+        val entitiesG = getEntitiesOfEquation(g)
+
+        println("multiplyTwoEquations")
+        println(f)
+        println(g)
+        println(entitiesF)
+        println(entitiesG)
+
+        for (entityF in entitiesF) {
+            for (entityG in entitiesG) {
+                val entity = if (divide) {
+                    entityF / entityG
+                } else {
+                    entityF * entityG
+                }
+
+                // Recreate operators
+                var negative = false
+                if (entity.multiplier!! < 0) {
+                    negative = true
+                }
+
+                if (negative) {
+                    if (result.isNotEmpty()) {
+                        result.add('-')
+                    }
+                    result.addAll(entity.getOriginal(negative = true))
                 }
                 else {
-                    numberBuffer /= multipliers[i]
+                    if (result.isNotEmpty()) {
+                        result.add('+')
+                    }
+                    result.addAll(entity.getOriginal())
                 }
             }
-            result.add(numberBuffer)
         }
 
-        if (unknowns.isNotEmpty()) {
-            for (letter in unknowns) {
-                result.add(letter)
-            }
-        }
-
+        println("TwoEquations")
+        println(result)
         return result
     }
 
-    private fun getUnknown(unknowns: MutableList<Char>,
-                           stack: MutableList<Char>?, negativeMul: Boolean, negativeStack: Boolean): MutableList<Any> {
-        val result = mutableListOf<Any>()
-        val unknown = mutableListOf<Char>()
+    private fun checkIsEquationCalculable(equation: MutableList<Any>) : Boolean {
+        for (element in equation) {
+            if (element is Char) {
+                if (element.isLetter()) {
+                    return false
+                }
+            }
+        }
+        return true
+    }
 
-        unknown.addAll(unknowns)
+    private fun appendWhatLasts(resultI: MutableList<Any>, noComputeIndex: Int?,
+                                entity: UnknownEntity, multipliers: MutableList<UnknownEntity>, dividers: MutableList<UnknownEntity>,
+                                multiply: Boolean, divide: Boolean, divideEquation: Boolean): MutableList<Any> {
+        if (noComputeIndex == null) {
+            println("RETURN")
+            return resultI
+        }
 
-        // Count unknowns
-        val map = HashMap<Char, Int>()
-        for (letter in unknown) {
-            if (negativeMul) {
-                map[letter] = map.getOrDefault(letter, 0) - 1
+        var result = resultI
+
+        var empty = false
+        var additionalEntity = if (!entity.isEmpty()) {
+            entity
+        } else {
+            empty = true
+            UnknownEntity(null, null, null)
+        }
+
+        var divider = UnknownEntity(null, null, null)
+        var multiplier = UnknownEntity(null, null, null)
+
+        if (multipliers.isNotEmpty() || dividers.isNotEmpty()) {
+            for (div in dividers) {
+                divider *= div
+            }
+            for (mul in multipliers) {
+                multiplier *= mul
+            }
+
+            if (empty) {
+                additionalEntity = multiplier / divider
             }
             else {
-                map[letter] = map.getOrDefault(letter, 0) + 1
+                additionalEntity *= multiplier
+                additionalEntity /= divider
             }
         }
 
-        // Divide by unknowns
-        if (stack != null) {
-            for (letter in stack) {
-                if (negativeStack) {
-                    map[letter] = map.getOrDefault(letter, 0) - 1
-                }
-                else {
-                    map[letter] = map.getOrDefault(letter, 0) + 1
-                }
-            }
+        val buffer: MutableList<Any>
+        if (noComputeIndex != result.size && noComputeIndex != 0 && (multiply || divide)) {
+            buffer = multiplyTwoEquations(result.subList(noComputeIndex+1, result.size), additionalEntity.getOriginal(), !empty && divideEquation)
+            result = result.subList(0, noComputeIndex)
+            result.addAll(buffer)
         }
-
-        // Prepare form of x^2y^3...
-        for ((key, value) in map) {
-            if (value != 0) {
-                result.add(key)
-                result.add('^')
-                result.add(value.toDouble())
+        else if (noComputeIndex == 0) {
+            println("BAD")
+            buffer = multiplyTwoEquations(result, additionalEntity.getOriginal(), !empty && divideEquation)
+            return buffer
+        }
+        else {
+            if (divide) {
+                result.add('/')
             }
+            else if (multiply) {
+                result.add('×')
+            }
+
+            result.addAll(additionalEntity.getOriginal())
         }
 
         return result
     }
 
-    private fun calculateUnknownsPreparation(equation: MutableList<Any>,
-                                             unknowns: MutableList<Char>,
-                                             multipliers: MutableList<Double>,
-                                             multiply: Boolean): MutableList<Any> {
-        val result = mutableListOf<Any>()
-        val subEquation = connectUnknowns(unknowns, multipliers, true)
-        var flag = false
-        if (!multiply) {
-            flag = true
-        }
-
-        // Get multipliers
-        val multiplierNumber = if (subEquation.isEmpty()) {
-            1.0
-        }else {
-            when (subEquation[0]) {
-                is Double -> subEquation[0] as Double
-                else -> {1.0}
-            }
-        }
-
-        val multiplierUnknowns = mutableListOf<Char>()
-        for (i in 1 until subEquation.size) {
-            multiplierUnknowns.add(subEquation[i] as Char)
-        }
-
-        var powerTo = false
-        var negative = false
-        val stack = mutableListOf<Char>()
-        for (element in equation) {
-            when (element) {
-                is Double -> {
-                    if (!powerTo) {
-                        if (!flag) {
-                            result.add(element * multiplierNumber)
-                        }
-                        else {
-                            result.add(element / multiplierNumber)
-                        }
-                    }
-                    else {
-                        if (element < 0) {
-                            negative = true
-                        }
-
-                        if (stack.isNotEmpty()) {
-                            for (i in 1 until abs(element.toInt())) {
-                                stack.add(stack.last())
-                            }
-                        }
-                    }
-                }
-                '^' -> {
-                    powerTo = true
-                }
-                '+', '-' -> {
-                    // Append unknown in form of x^1y^2..
-                    if (stack.isNotEmpty()) {
-                        if (negative) {
-                            val unknown = getUnknown(multiplierUnknowns, stack, flag, true)
-                            result.addAll(unknown)
-                            stack.clear()
-                        }
-                        else {
-                            val unknown = getUnknown(multiplierUnknowns, stack, flag, false)
-                            result.addAll(unknown)
-                            stack.clear()
-                        }
-                    }
-                    else {
-                        if (negative) {
-                            val unknown = getUnknown(multiplierUnknowns, null, flag, true)
-                            result.addAll(unknown)
-                        }
-                        else {
-                            val unknown = getUnknown(multiplierUnknowns, null, flag, false)
-                            result.addAll(unknown)
-                        }
-                    }
-
-                    result.add(element)
-                    powerTo = false
-                    negative = false
-                }
-                else -> {
-                    stack.add(element as Char)
-                    powerTo = false
-                    negative = false
-                }
-            }
-        }
-        if (result.isNotEmpty()) {
-            if (stack.isNotEmpty()) {
-                if (negative) {
-                    val unknown = getUnknown(multiplierUnknowns, stack, flag, true)
-                    result.addAll(unknown)
-                    stack.clear()
-                }
-                else {
-                    val unknown = getUnknown(multiplierUnknowns, stack, flag, false)
-                    result.addAll(unknown)
-                    stack.clear()
-                }
-            }
-            else if (result.last() is Double && !powerTo) {
-                if (negative) {
-                    val unknown = getUnknown(multiplierUnknowns, null,
-                        negativeMul = flag,
-                        negativeStack = true
-                    )
-                    result.addAll(unknown)
-                    stack.clear()
-                }
-                else {
-                    val unknown = getUnknown(multiplierUnknowns, null,
-                        negativeMul = flag,
-                        negativeStack = true
-                    )
-                    result.addAll(unknown)
-                    stack.clear()
-                }
-            }
-        }
-
-        return result
-    }
-
-    private fun getUnknowns(equation: MutableList<Any>): MutableList<Char> {
-        val result = mutableListOf<Char>()
-
-        var lastUnknown = '0'
-        for (element in equation) {
-            when (element) {
-                is Char -> {
-                    if (element.isLetter()) {
-                        lastUnknown = element
-                    }
-                }
-                is Double -> {
-                    if (lastUnknown != '0') {
-                        for (i in 0 until element.toInt()) {
-                            result.add(lastUnknown)
-                        }
-                    }
-                    lastUnknown = '0'
-                }
-            }
-        }
-
-        return result
-    }
-
-    private fun getMultipliers(equation: MutableList<Any>): MutableList<Double> {
-        val result = mutableListOf<Double>()
-
-        var lastUnknown = '0'
-        for (element in equation) {
-            when (element) {
-                is Char -> {
-                    lastUnknown = element
-                }
-                is Double -> {
-                    if (!lastUnknown.isLetter() && lastUnknown != '^') {
-                        result.add(element)
-                    }
-                }
-            }
-        }
-
-        return result
-    }
-
-    private fun tearIntoPiecesEquation(equation: MutableList<Any>): MutableList<MutableList<Any>> {
-        val result = mutableListOf<MutableList<Any>>()
-        val buffer = mutableListOf<Any>()
-
-        for (i in equation) {
-            when (i) {
-                '+', '-' -> {
-                    val copy = mutableListOf<Any>()
-                    copy.addAll(buffer)
-                    result.add(copy)
-                    buffer.clear()
-                }
-                else -> {
-                    if (i != ')' && i != '(') {
-                        buffer.add(i)
-                    }
-                }
-            }
-        }
-        if (buffer.isNotEmpty()) {
-            result.add(buffer)
-        }
-
-        return result
-    }
-
-    private fun calculateUnknownsAndMultipliers(unknowns: MutableList<Char>,
-                                                multipliers: MutableList<Double>, flag: Boolean): MutableList<Any> {
-        val result = mutableListOf<Any>()
-        val subEquation = connectUnknowns(unknowns, multipliers, flag)
-        var number = 1.0
-        var first = true
-
-        val stack = mutableListOf<Char>()
-        for (element in subEquation) {
-            when (element) {
-                is Double -> {
-                    if (first) {
-                        number = element
-                        first = false
-                    }
-                    else if (!flag) {
-                        number *= element
-                    }
-                    else {
-                        number /= element
-                    }
-                }
-                is Char -> {
-                    stack.add(element)
-                }
-            }
-        }
-
-        result.add(number)
-        result.addAll(getUnknown(stack, null, !flag, false))
-        return result
-    }
-
-    private fun calculateTwoEquations(first: MutableList<Any>, second: MutableList<Any>, flag: Boolean): MutableList<Any> {
-        val result = mutableListOf<Any>()
-
-        // Get every piece of first and second equation
-        val firstPieces = tearIntoPiecesEquation(first)
-        val secondPieces = tearIntoPiecesEquation(second)
-
-        // Get operators from first equation
-        val stack = mutableListOf<Char>()
-        for (operator in second) {
-            when (operator) {
-                '+', '-' -> stack.add(operator as Char)
-            }
-        }
-
-        // Calculate equations
-        for (element in firstPieces) {
-            for (tab in secondPieces) {
-                val unknowns = getUnknowns(tab)
-                val multipliers = getMultipliers(tab)
-
-                result.addAll(calculateUnknownsPreparation(element, unknowns, multipliers, flag))
-                if (stack.isNotEmpty()) {
-                    result.add(stack.removeFirst())
-                }
-                else {
-                    result.add('+')
-                }
-            }
-        }
-        if (result.isNotEmpty()) {
-            if (result.last() == '+') {
-                result.removeLast()
-            }
-        }
-
-        return result
-    }
-
-    private fun transformEquationForSolvingUnknowns(equation: MutableList<Any>, index: Int, flag: Boolean, subtract: Boolean = false): TripleSolve<MutableList<Any>, Int, Int?> {
+    private fun transformEquationForSolvingUnknowns(equation: MutableList<Any>, index: Int): TripleSolve<MutableList<Any>, Int, Int?> {
         // Variables
         var result = mutableListOf<Any>()
-        val unknowns = mutableListOf<Char>()
-        val multipliers = mutableListOf<Double>()
+        var noComputeIndex: Int? = 0
+        var compute = true
 
-        var lastElement: Any = '0'
-        var multiply = false
         var divide = false
-        val specialOperatorsStack = mutableListOf<Char>()
-        var keepMultiply = false
-        var compute = flag
-        var noComputeIndex: Int? = null
+        var divideEquation = false
+        var multiply = false
 
-        var number = false
+        val entity = UnknownEntity(null, null, null)
+
+        val dividers = mutableListOf<UnknownEntity>()
+        val multipliers = mutableListOf<UnknownEntity>()
+
         var iterator = index
         while (iterator < equation.size) {
+            println(equation[iterator])
             when (equation[iterator]) {
                 // Check special chars
                 '(' -> {
-                    if (result.isNotEmpty()) {
-                        if (result.last() == '×') {
-                            result.removeLast()
-                        }
-                    }
-
-                    var subtraction = false
-                    if (lastElement == '-') {
-                        subtraction = true
-                    }
-
-                    val subEquation = transformEquationForSolvingUnknowns(equation, iterator+1, true, subtraction)
+                    val subEquation = transformEquationForSolvingUnknowns(equation, iterator+1)
                     iterator = subEquation.iterator
-                    println(")")
-                    println(result)
-                    println(subEquation)
-                    if (result.isNotEmpty()) {
-                        if (result.last() == '+' || result.last() == '-') {
-                            keepMultiply = false
+
+                    var value = 0.0
+                    if (checkIsEquationCalculable(subEquation.list)) {
+                        value = calculateEquation(subEquation.list, 0).first
+                        if (divide) {
+                            dividers.last().multiplier = value
                         }
-                    }
-
-                    // Turn off compute if brackets are non computable
-                    if (compute) {
-                        compute = subEquation.compute == null
-                    }
-
-                    // Check for keep going divide
-                    if (divide) {
-                        if (subEquation.list.size <= 4){
-                            if (subEquation.compute == null) {
-                                if (!compute){
-                                    val buffer = if (noComputeIndex != null) {
-                                        transformEquationForSolvingUnknowns(result.subList(noComputeIndex, result.size), 0, flag = true, subtract = false)
-                                    }
-                                    else {
-                                        transformEquationForSolvingUnknowns(result, 0, flag = true, subtract = false)
-                                    }
-
-                                    compute = buffer.compute == null
-                                }
-                            }
-                            else {
-                                compute = false
-                            }
+                        else if (multiply) {
+                            multipliers.last().multiplier = value
                         }
                         else {
-                            compute = false
-                        }
-                    }
-
-                    // Check for brackets multiplication or division
-                    if (compute) {
-                        if (!keepMultiply) {
-                            if (unknowns.isNotEmpty() || multipliers.isNotEmpty()) {
-                                if (divide) {
-                                    val buffer = calculateTwoEquations(calculateUnknownsAndMultipliers(unknowns, multipliers, true), subEquation.list, false)
-                                    result.addAll(buffer)
-
-                                    unknowns.clear()
-                                    multipliers.clear()
-                                }
-                                else if (multiply){
-                                    val buffer = calculateTwoEquations(calculateUnknownsAndMultipliers(unknowns, multipliers, true), subEquation.list, true)
-                                    result.addAll(buffer)
-                                    unknowns.clear()
-                                    multipliers.clear()
-                                }
-                                else {
-                                    result.addAll(subEquation.list)
-                                }
+                            if (entity.multiplier != null) {
+                                entity.multiplier = entity.multiplier!! + value - 1
                             }
                             else {
-                                result.addAll(subEquation.list)
+                                entity.multiplier = value
                             }
                         }
-                        else {
-                            if (unknowns.isNotEmpty() || multipliers.isNotEmpty()) {
-                                if (result.isNotEmpty() && specialOperatorsStack.isNotEmpty()) {
-                                    result.add(specialOperatorsStack.removeFirst())
-                                }
-
-                                result.addAll(
-                                    calculateUnknownsAndMultipliers(
-                                        unknowns,
-                                        multipliers,
-                                        true
-                                    )
-                                )
-                                unknowns.clear()
-                                multipliers.clear()
-                            }
-
-                            val buffer: MutableList<Any>
-                            if (divide) {
-                                buffer = if (noComputeIndex == null) {
-                                    calculateTwoEquations(result, subEquation.list, false)
-                                }
-                                else {
-                                    if (noComputeIndex+1 < result.size) {
-                                        calculateTwoEquations(result.subList(noComputeIndex+1, result.size), subEquation.list, false)
-                                    }
-                                    else {
-                                        subEquation.list
-                                    }
-                                }
-
-                                if (noComputeIndex != null)  {
-                                    if (noComputeIndex != result.size) {
-                                        result = result.subList(0, noComputeIndex)
-                                        buffer.add(0, '(')
-                                        buffer.add(0, '/')
-                                        buffer.add(')')
-                                    }
-                                    else {
-                                        buffer.add(0, '/')
-                                    }
-                                }
-                                else {
-                                    result.clear()
-                                }
-                            }
-                            else {
-                                buffer = if (noComputeIndex == null) {
-                                    calculateTwoEquations(result, subEquation.list, true)
-                                } else {
-                                    if (noComputeIndex+1 < result.size) {
-                                        calculateTwoEquations(result.subList(noComputeIndex+1, result.size), subEquation.list, true)
-                                    }
-                                    else {
-                                        subEquation.list
-                                    }
-                                }
-
-                                if (noComputeIndex != null)  {
-                                    if (noComputeIndex != result.size) {
-                                        result = result.subList(0, noComputeIndex)
-                                        buffer.add(0, '(')
-                                        buffer.add(0, '×')
-                                        buffer.add(')')
-                                    }
-                                    else {
-                                        buffer.add(0, '×')
-                                    }
-                                }
-                                else {
-                                    result.clear()
-                                }
-                            }
-
-                            result.addAll(buffer)
-                            buffer.clear()
-                        }
-
-                        if (iterator < equation.size) {
-                            if (equation[iterator] == '×') {
-                                multiply = true
-                                keepMultiply = true
-                                divide = false
-                            }
-                            else if (equation[iterator] == '/') {
-                                divide = true
-                                keepMultiply = true
-                                multiply = false
-                                compute = false
-                            }
-                        }
-
-                        unknowns.clear()
-                        multipliers.clear()
                     }
                     else {
-                        if (unknowns.isNotEmpty() || multipliers.isNotEmpty()) {
-                            var add = false
-                            if (result.isNotEmpty() && specialOperatorsStack.isNotEmpty()) {
-                                result.add(specialOperatorsStack.removeFirst())
-                                result.add('(')
-                                add = true
-                            }
-                            result.addAll(
-                                calculateUnknownsAndMultipliers(
-                                    unknowns,
-                                    multipliers,
-                                    true
-                                )
-                            )
-                            unknowns.clear()
-                            multipliers.clear()
-                            if (add) {
-                                result.add(')')
-                            }
+                        if (subEquation.compute == null) {
+                            noComputeIndex = result.size
+                            compute = false
+                        }
+                        else if (subEquation.list.size > 4 && divideEquation) {
+                            noComputeIndex = result.size
                         }
 
-                        if (result.isNotEmpty()) {
-                            if (result.last() is Double) {
+                        println("subEquation.list")
+                        println(subEquation.list)
+
+                        val buffer: MutableList<Any>
+                        if (noComputeIndex != result.size) {
+                            buffer = multiplyTwoEquations(result.subList(noComputeIndex!!, result.size), subEquation.list, divideEquation)
+                            result = result.subList(0, noComputeIndex)
+                        }
+                        else {
+                            buffer = subEquation.list
+                        }
+
+                        if (noComputeIndex == result.size && noComputeIndex != 0) {
+                            if (result.last() != ')' && result.last() != '+' && result.last() != '-') {
                                 result.add(0, '(')
                                 result.add(')')
                             }
 
-                            if (result.last() == ')') {
-                                if (divide) {
-                                    result.add('/')
-                                }
-                                else {
-                                    result.add('×')
-                                }
+                            if (divide) {
+                                result.add('/')
+                                compute = false
+                            }
+                            else if (multiply) {
+                                result.add('×')
+                                noComputeIndex = result.size
+                            }
+
+                            if (result.last() != '+' && result.last() != '-') {
+                                buffer.add(0, '(')
+                                buffer.add(')')
                             }
                         }
 
-                        if (result.isNotEmpty()) {
-                            subEquation.list.add(0, '(')
-                            subEquation.list.add(')')
-                        }
+                        result.addAll(buffer)
 
-                        result.addAll(subEquation.list)
-
-                        if (iterator < equation.size) {
-                            if (equation[iterator] == '×') {
-                                multiply = true
-                                divide = false
-                            }
-                            else if (equation[iterator] == '/') {
-                                divide = true
-                                multiply = false
-                            }
+                        if (!compute) {
+                            noComputeIndex = result.size
                         }
                     }
 
-                    println("AFTER )")
-                    println(result)
-                    println(subEquation)
-                    number = false
+                    multiply = false
+                    divide = false
                     continue
                 }
                 ')' -> {
-                    println("BEFORE")
-                    println(result)
-                    // Append multiplication or division
-                    if (!keepMultiply) {
-                        if (unknowns.isNotEmpty() || multipliers.isNotEmpty()) {
-                            if (divide) {
-                                result.addAll(calculateUnknownsAndMultipliers(unknowns, multipliers, false))
-                            }
-                            else {
-                                result.addAll(calculateUnknownsAndMultipliers(unknowns, multipliers, true))
-                            }
-                        }
-                    }
-                    else if (!compute) {
-                        if (unknowns.isNotEmpty() || multipliers.isNotEmpty()) {
-                            if (divide) {
-                                result.add('/')
-                                result.addAll(calculateUnknownsAndMultipliers(unknowns, multipliers, false))
-                            }
-                            else {
-                                result.add('×')
-                                result.addAll(calculateUnknownsAndMultipliers(unknowns, multipliers, true))
-                            }
-                        }
-                    }
-                    else {
-                        if (unknowns.isNotEmpty() || multipliers.isNotEmpty()) {
-                            if (divide) {
-                                val buffer = calculateTwoEquations(result, calculateUnknownsAndMultipliers(unknowns, multipliers, true), false)
-                                result.clear()
-                                result.addAll(buffer)
-                            }
-                            else if (multiply){
-                                val buffer = calculateTwoEquations(result, calculateUnknownsAndMultipliers(unknowns, multipliers, true), true)
-                                result.clear()
-                                result.addAll(buffer)
-                            }
-                        }
-                    }
+                    result = appendWhatLasts(result, noComputeIndex, entity, multipliers, dividers,
+                        multiply, divide, divideEquation)
 
-                    println("AFTER")
-                    println(result)
                     if (!compute) {
-                        noComputeIndex = result.size
+                        noComputeIndex = null
                     }
 
                     return TripleSolve(result, iterator+1, noComputeIndex)
                 }
                 '+', '-' -> {
-                    if (unknowns.isNotEmpty() || multipliers.isNotEmpty()) {
-                        if (divide) {
-                            result.addAll(calculateUnknownsAndMultipliers(unknowns, multipliers, false))
-                        }
-                        else {
-                            result.addAll(calculateUnknownsAndMultipliers(unknowns, multipliers, true))
-                        }
+                    result = appendWhatLasts(result, noComputeIndex, entity, multipliers, dividers,
+                        multiply, divide, divideEquation)
 
-                        unknowns.clear()
-                        multipliers.clear()
-                    }
+                    multipliers.clear()
+                    dividers.clear()
 
+                    result.add(equation[iterator])
+                    noComputeIndex = result.size
                     multiply = false
                     divide = false
-                    number = false
-                    compute = true
+                    divideEquation = false
                 }
                 '×' -> {
-                    if ((divide || !multiply) && !keepMultiply) {
-                        unknowns.clear()
-                        multipliers.clear()
-
-                        if (result.isNotEmpty()) {
-                            if (result.last() != ')') {
-                                result.removeLast()
-                            }
-                        }
-
-                        // Find number that should be multiply
-                        var step = iterator-1
-                        while (step >= 0) {
-                            if (equation[step] != '+' && equation[step] != '-'
-                                && equation[step] != '/' &&  equation[step] != '(' &&  equation[step] != ')') {
-                                when (equation[step]) {
-                                    is Double -> multipliers.add(equation[step] as Double)
-                                    is Char -> unknowns.add(equation[step] as Char)
-                                }
-                            }
-                            else {
-                                break
-                            }
-                            step--
-                        }
-                    }
-
-                    if (!compute) {
-                        noComputeIndex = result.size
-                        compute = true
-                    }
-
-                    if (specialOperatorsStack.size == 2) {
-                        specialOperatorsStack.removeFirst()
-                    }
-                    specialOperatorsStack.add(equation[iterator] as Char)
-
+                    multipliers.add(UnknownEntity(null, null, null))
                     multiply = true
-                    number = false
+                    divide = false
                 }
                 '/' -> {
-                    if ((multiply || !divide) && !keepMultiply) {
-                        unknowns.clear()
-                        multipliers.clear()
-
-                        if (result.isNotEmpty()) {
-                            if (result.last() != ')') {
-                                result.removeLast()
-                            }
-                        }
-
-                        // Find number that should be divided
-                        var step = iterator-1
-                        while (step >= 0) {
-                            if (equation[step] != '+' && equation[step] != '-'
-                                && equation[step] != '/' &&  equation[step] != '(' &&  equation[step] != ')')  {
-                                when (equation[step]) {
-                                    is Double -> multipliers.add(equation[step] as Double)
-                                    is Char -> {
-                                        if (equation[step] != '×') {
-                                            unknowns.add(equation[step] as Char)
-                                        }
-                                    }
-                                }
-                            }
-                            else {
-                                break
-                            }
-                            step--
-                        }
-                    }
-
-                    // Add brackets for divide
-                    if (iterator+1 < equation.size && equation[iterator+1] != '(') {
-                        var i = iterator+1
-                        var brackets = 0
-                        var iteratorBefore = 0
-                        var multiplication = false
-                        var variable = false
-                        var bracket = false
-                        while (i < equation.size) {
-                            when (equation[i]) {
-                                '+', '-' -> {
-                                    if (brackets == 0) {
-                                        i++
-                                        break
-                                    }
-                                }
-                                '/' -> {
-                                    if (brackets == 0) {
-                                        i++
-                                        break
-                                    }
-                                }
-                                '×' -> {
-                                    if (!variable) {
-                                        iteratorBefore = i + 1
-                                    }
-                                    multiplication = true
-                                }
-                                '(' -> {
-                                    bracket = true
-                                    brackets++
-                                }
-                                ')' -> brackets--
-                                is Char -> {
-                                    if ((equation[i] as Char).isLetter()) {
-                                        variable = true
-                                    }
-                                }
-                            }
-                            if ((brackets == 0 && bracket) || brackets < 0) {
-                                i++
-                                break
-                            }
-
-                            i++
-                        }
-
-                        equation.add(iterator+1, '(')
-                        if (!variable && multiplication) {
-                            equation.add(iteratorBefore, ')')
-                        }
-                        else {
-                            if (i >= equation.size-1) {
-                                equation.add(')')
-                            }
-                            else {
-                                equation.add(i, ')')
-                            }
-                        }
-                    }
-
-                    if (specialOperatorsStack.size == 2) {
-                        specialOperatorsStack.removeFirst()
-                    }
-                    specialOperatorsStack.add(equation[iterator] as Char)
-
+                    dividers.add(UnknownEntity(null, null, null))
                     divide = true
-                    number = false
+                    multiply = false
+                    divideEquation = true
                 }
                 '^', '√' -> {
-                    var subtraction = false
-                    if (lastElement == '-') {
-                        subtraction = true
-                    }
+                    // Add bracket for power
+                    var newBracketIndex = equation.size-1
+                    var brackets = 0
+                    var i = iterator+1
+                    while (i < equation.size) {
+                        when (equation[i]) {
+                            '(' -> brackets++
+                            ')' -> {
+                                brackets--
 
-                    // Add brackets for power
-                    if (iterator+1 < equation.size) {
-                        var i = iterator+1
-                        var brackets = 1
-                        while (i < equation.size) {
-                            when (equation[i]) {
-                                '(' -> brackets++
-                                ')' -> brackets--
-                            }
-                            if (brackets == 0) {
-                                break
-                            }
-
-                            i++
-                        }
-                        equation.add(i, ')')
-                    }
-                    val subEquation = transformEquationForSolvingUnknowns(equation, iterator+1, flag)
-                    iterator = subEquation.iterator
-                    val additionalEquation = mutableListOf<Any>()
-
-                    // If power to is equal 0
-                    var appended = false
-                    if (unknowns.isNotEmpty()) {
-                        if (subEquation.list.size == 1) {
-                            if (subEquation.list.last() is Double) {
-                                if (subEquation.list.first() == 0.0) {
-                                    unknowns.clear()
-                                    multipliers.add(1.0)
-                                    appended = true
-                                }
-                            }
-                        }
-                    }
-
-                    // Append unknowns with multipliers
-                    if (unknowns.isNotEmpty() || multipliers.isNotEmpty()) {
-                        additionalEquation.addAll(
-                            calculateUnknownsAndMultipliers(
-                                unknowns,
-                                multipliers,
-                                true
-                            )
-                        )
-                        unknowns.clear()
-                        multipliers.clear()
-                    }
-
-                    // Handle root and power
-                    if (subEquation.list.size == 1 && !appended) {
-                        if (subEquation.list.last() is Double) {
-                            if (additionalEquation.isNotEmpty() && additionalEquation.last() is Double) {
-                                if (divide) {
-                                    additionalEquation[additionalEquation.size-1] = additionalEquation[additionalEquation.size-1] as Double - subEquation.list.last() as Double + 1
-                                    appended = true
-                                }
-                                else {
-                                    additionalEquation[additionalEquation.size-1] = additionalEquation[additionalEquation.size-1] as Double + subEquation.list.last() as Double - 1
-                                    appended = true
-                                }
-                            }
-                        }
-                    }
-
-                    if (subEquation.compute == null) {
-                        var add = true
-
-                        for (element in subEquation.list) {
-                            if (element is Char) {
-                                if (element.isLetter()) {
-                                    add = false
+                                if (brackets <= 0) {
+                                    newBracketIndex = i
                                     break
                                 }
                             }
                         }
+                        i++
+                    }
+                    equation.add(newBracketIndex, ')')
 
-                        if (add && additionalEquation.isEmpty() && result.size == 1) {
-                            if (result.last() is Double) {
-                                result[result.size-1] = ((result.last() as Double).pow(calculateEquation(subEquation.list, 0).first))
-                                appended = true
-                            }
+                    // Power recurrent call
+                    val subEquation = transformEquationForSolvingUnknowns(equation, iterator+1)
+                    iterator = subEquation.iterator
+
+                    var powerTo = 0.0
+                    if (checkIsEquationCalculable(subEquation.list)) {
+                        powerTo = calculateEquation(subEquation.list, 0).first
+                        if (divide) {
+                            dividers.last().powerTo = powerTo
                         }
-                        else if (add && additionalEquation.isNotEmpty() && additionalEquation.last() is Double) {
-                            result.clear()
-                            additionalEquation[additionalEquation.size-1] = calculateEquation(subEquation.list, 0).first
-                            result.addAll(additionalEquation)
-                            appended = true
+                        else if (multiply) {
+                            multipliers.last().powerTo = powerTo
+                        }
+                        else {
+                            entity.powerTo = powerTo
                         }
                     }
-
-                    if (!appended && additionalEquation.isNotEmpty()) {
-                        result.clear()
-                        if (subtraction) {
-                            additionalEquation.add(0, '-')
-                        }
-                        additionalEquation.add(0, '(')
-                        additionalEquation.add(0, '(')
-                        additionalEquation.add(')')
-                        additionalEquation.add('^')
-                        additionalEquation.add('(')
-                        additionalEquation.addAll(subEquation.list)
-                        additionalEquation.add(')')
-                        additionalEquation.add(')')
-                        result.addAll(additionalEquation)
-
-                        noComputeIndex = result.size
-                        keepMultiply = false
-                        compute = false
+                    else {
+                        // BUILD STRING
                     }
-                    println(result)
                     continue
                 }
                 '=' -> {
-                    if (unknowns.isNotEmpty() || multipliers.isNotEmpty()) {
-                        if (divide) {
-                            result.addAll(calculateUnknownsAndMultipliers(unknowns, multipliers, false))
-                        }
-                        else {
-                            result.addAll(calculateUnknownsAndMultipliers(unknowns, multipliers, true))
-                        }
-
-                        unknowns.clear()
-                        multipliers.clear()
-                    }
-
-                    multiply = false
-                    divide = false
-                    number = false
-
                     result.add('=')
                 }
-                // Get unknowns
-                is Char -> {
-                    var added = false
-                    if (!multiply) {
-                        if (result.isNotEmpty()) {
-                            when (lastElement) {
-                                is Double -> multipliers.add(result.removeLast() as Double)
-                                is Char -> unknowns.add(result.removeLast() as Char)
-                            }
-                            added = true
-                        }
-                    }
-
-                    if (multiply || divide) {
-                        if (result.isNotEmpty()) {
-                            if (result.last() == '×') {
-                                result.removeLast()
-                            }
-                        }
-                        unknowns.add(equation[iterator] as Char)
-                        added = true
-                    }
-
-                    if (!added) {
-                        if (equation[iterator] == 'x' || equation[iterator] == 'y' || equation[iterator] == 'z') {
-                            unknowns.add(equation[iterator] as Char)
-                        }
-                    }
-                }
-                // Get numbers
                 is Double -> {
-                    if (multiply || divide) {
-                        multipliers.add(equation[iterator] as Double)
+                    if (divide) {
+                        dividers.last().multiplier = equation[iterator] as Double
                     }
-                    if (!multiply && !divide) {
-                        result.add(equation[iterator] as Double)
+                    else if (multiply) {
+                        multipliers.last().multiplier = equation[iterator] as Double
                     }
-                    number = true
+                    else {
+                        entity.multiplier = equation[iterator] as Double
+                    }
                 }
-            }
-
-            lastElement = equation[iterator]
-
-            if (!multiply && !divide && !number && equation[iterator] != '=') {
-                if (equation[iterator] == '+' && subtract) {
-                    result.add('-')
-                }
-                else if (equation[iterator] == '-' && subtract) {
-                    result.add('+')
-                }
-                else {
-                    result.add(equation[iterator])
+                is Char -> {
+                    if (divide) {
+                        dividers.last().variable = equation[iterator] as Char
+                        if (dividers.last().multiplier == null) {
+                            dividers.last().multiplier = 1.0
+                        }
+                        dividers.last().powerTo = 1.0
+                    }
+                    else if (multiply) {
+                        multipliers.last().variable = equation[iterator] as Char
+                        if (multipliers.last().multiplier == null) {
+                            multipliers.last().multiplier = 1.0
+                        }
+                        multipliers.last().powerTo = 1.0
+                    }
+                    else {
+                        entity.variable = equation[iterator] as Char
+                        if (entity.multiplier == null) {
+                            entity.multiplier = 1.0
+                        }
+                        entity.powerTo = 1.0
+                    }
                 }
             }
 
             iterator++
         }
-        // Append multiplication or division
-        if (!keepMultiply) {
-            if (unknowns.isNotEmpty() || multipliers.isNotEmpty()) {
-                if (divide) {
-                    result.addAll(calculateUnknownsAndMultipliers(unknowns, multipliers, false))
-                }
-                else {
-                    result.addAll(calculateUnknownsAndMultipliers(unknowns, multipliers, true))
-                }
-            }
-        }
-        else if (!compute) {
-            if (unknowns.isNotEmpty() || multipliers.isNotEmpty()) {
-                if (divide) {
-                    result.add('/')
-                    result.addAll(calculateUnknownsAndMultipliers(unknowns, multipliers, false))
-                }
-                else {
-                    result.add('×')
-                    result.addAll(calculateUnknownsAndMultipliers(unknowns, multipliers, true))
-                }
-            }
-        }
-        else {
-            if (unknowns.isNotEmpty() || multipliers.isNotEmpty()) {
-                if (divide) {
-                    val buffer = calculateTwoEquations(result, calculateUnknownsAndMultipliers(unknowns, multipliers, true), false)
-                    result.clear()
-                    result.addAll(buffer)
-                }
-                else if (multiply){
-                    val buffer = calculateTwoEquations(result, calculateUnknownsAndMultipliers(unknowns, multipliers, true), true)
-                    result.clear()
-                    result.addAll(buffer)
-                }
-            }
-        }
+        result = appendWhatLasts(result, noComputeIndex, entity, multipliers, dividers,
+            multiply, divide, divideEquation)
 
         println("transformEquationForSolvingUnknowns:")
         println(result)
         return TripleSolve(result, iterator+1, noComputeIndex)
     }
 
-    private fun appendKeyWithValue(map: LinkedHashMap<MutableList<Any>, Double>, key: MutableList<Any>, value: Double, operator: Char, operatorsIndexes: MutableList<Int>, result: MutableList<Char>, equalSign: Boolean, insideRec: Boolean) {
-        var inserted = false
-        var valueNumber = false
-        if (key.isEmpty()) {
-            key.add("value")
-        }
+    private fun groupUnknowns(equation: MutableList<Any>, eqSign: Boolean = false) : MutableList<Any> {
+        val result = mutableListOf<Any>()
+        val map = LinkedHashMap<MutableList<Any>, Double>()
 
-        if (key.first() == "value") {
-            valueNumber = true
-        }
+        val entities = getEntitiesOfEquation(equation)
 
-        var positive = true
-        val number = map.getOrDefault(key, 0.0)
-        if (number != 0.0) {
-            inserted = true
-
-            if (number < 0) {
-                positive = false
+        var calcResult = 0.0
+        for (entity in entities) {
+            var key = entity.getOriginal()
+            val value = key.removeFirst() as Double
+            if (key.isEmpty()) {
+                key = mutableListOf("v")
+                map[key] = map.getOrDefault(key, 0.0) + value
+            }
+            else {
+                map[key] = map.getOrDefault(key, 0.0) + value
             }
         }
 
-        if (valueNumber) {
-            if (equalSign) {
-                if (operator == '-') {
-                    map[key] = number - value
+        for ((k, v) in map) {
+            if (v != 0.0) {
+                if (result.isNotEmpty()) {
+                    result.add('+')
+                }
+                result.add(v)
+                if (k.first() !is String) {
+                    result.addAll(k)
                 }
                 else {
-                    map[key] = number + value
-                }
-            }
-            else {
-                if (operator == '-') {
-                    map[key] = number + value
-                }
-                else {
-                    map[key] = number - value
-                }
-            }
-        }
-        else if (operator == '-') {
-            if (equalSign && !insideRec) {
-                map[key] = number + value
-            }
-            else {
-                map[key] = number - value
-            }
-
-            if (map[key]!! < 0 && positive) {
-                val index = operatorsIndexes[map.keys.indexOf(key)]
-                if (result[index] == '-') {
-                    result[index] = '+'
-                }
-            }
-        } else {
-            if (equalSign && !insideRec) {
-                map[key] = number - value
-            }
-            else {
-                map[key] = number + value
-            }
-
-            if (map[key]!! > 0 && !positive) {
-                val index = operatorsIndexes[map.keys.indexOf(key)]
-                if (result[index] == '-') {
-                    result[index] = '+'
+                    if (eqSign) {
+                        result.removeLast()
+                        calcResult = -v
+                    }
                 }
             }
         }
 
-        if (map.getOrDefault(key, 0.0) == 0.0 && inserted) {
-            val index = operatorsIndexes[map.keys.indexOf(key)]
-            result.removeAt(index)
-            if (result.isNotEmpty()) {
-                if (result.size == 1) {
-                    result.clear()
-                } else {
-                    result.removeAt(result.size - 2)
-                }
-            }
-
-            map.remove(key)
-        } else if (inserted) {
-            if (result.isNotEmpty()) {
+        if (result.isNotEmpty() && result.last() is Char) {
+            if (result.last() == '+') {
                 result.removeLast()
             }
         }
+
+        if (eqSign) {
+            result.add('=')
+            result.add(calcResult)
+        }
+
+        return result
     }
 
-    private fun appendEquationToResult(result: MutableList<Any>, map :LinkedHashMap<MutableList<Any>, Double>,
-                                       value: Double, key: MutableList<Any>, operator: Char,
-                                       operatorsList: MutableList<Char>, operatorsIndexes: MutableList<Int>,
-                                       closeBracket: Boolean = false, equalSign: Boolean,
-                                       lastAddition: Boolean = false, insideRec: Boolean) {
-        if (key.isNotEmpty() && value != 0.0) {
-            appendKeyWithValue(map, key, value, operator, operatorsIndexes, operatorsList, equalSign, insideRec)
-        }
-        else if (value != 0.0){
-            appendKeyWithValue(map, key, value, operator, operatorsIndexes, operatorsList, equalSign, insideRec)
-        }
-
-        // Get equation with operators
-        val equationWithOperators = mutableListOf<Any>()
-        var i = 0
-        var afterEqualSign = false
-        for ((k, v) in map) {
-            var append = true
-            if (lastAddition && k.first() == "value" && !insideRec) {
-                append = false
-            }
-            else if (v == 0.0) {
-                append = false
-            }
-            // Append operator
-            if (append) {
-                if (i < operatorsList.size) {
-                    if (operatorsList[i] == '=') {
-                        operatorsList.removeAt(i)
-                        afterEqualSign = true
-                        i--
-                    }
-                    equationWithOperators.add(operatorsList[i])
-                }
-
-                // Append value
-                if (afterEqualSign) {
-                    equationWithOperators.add(v)
-                }
-                else {
-                    if (k.first() == "value" && v < 0 && k.size == 1) {
-                        equationWithOperators.add(-v)
-                    }
-                    else {
-                        equationWithOperators.add(v)
-                    }
-                }
-
-                // Check key
-                var addKey = true
-                if (k.first() is String)
-                {
-                    addKey = false
-                }
-
-                if (addKey) {
-                    equationWithOperators.addAll(k)
-                }
-            }
-
-            i++
-        }
-
-        if (!closeBracket) {
-            if (equationWithOperators.isNotEmpty()) {
-                if (equationWithOperators.first() is Char) {
-                    if (result.isNotEmpty()) {
-                        if (result.last() != ')') {
-                            equationWithOperators.removeFirst()
-                        }
-                    }
-                    else {
-                        equationWithOperators.removeFirst()
-                    }
-                }
-            }
-        }
-
-        if (lastAddition) {
-            equationWithOperators.add('=')
-            equationWithOperators.add(map.getOrDefault(mutableListOf("value"), 0.0))
-        }
-
-        result.addAll(equationWithOperators)
-
-        // Clear lists
-        map.clear()
-        key.clear()
-        operatorsList.clear()
-        operatorsIndexes.clear()
-    }
-
-    private fun groupUnknowns(equation: MutableList<Any>, insideRec: Boolean, iterator: Int): Pair<MutableList<Any>, Int> {
-        val result = mutableListOf<Any>()
-        val operatorsList = mutableListOf<Char>()
-
-        val map = LinkedHashMap<MutableList<Any>, Double>()
-        var value = 0.0
-        val key = mutableListOf<Any>()
+    private fun groupEquation(equation: MutableList<Any>, iterator: Int) : Pair<MutableList<Any>, Int> {
+        val resultEquation = mutableListOf<Any>()
+        val stackForEntities = mutableListOf<Any>()
 
         var powerTo = false
-        var operator = '0'
-        val operatorsIndexes = mutableListOf<Int>()
-        var closeBracket = false
-        var numberWas = false
-        var equalSign = false
+
         var i = iterator
         while (i < equation.size) {
-            when (equation[i]) {
-                is Double -> {
-                    if (powerTo) {
-                        key.add(equation[i])
-                    }
-                    else {
-                        value = equation[i] as Double
+            when(equation[i]) {
+                '+', '-' -> {
+                    powerTo = false
+                }
+                '(' -> {
+                    val subEquation = groupEquation(equation, i+1)
+                    i = subEquation.second+1
 
-                        numberWas = true
-                        if (operatorsList.isEmpty()) {
-                            operatorsList.add('+')
-                            operatorsIndexes.add(operatorsList.size-1)
-                        }
+                    if (stackForEntities.isNotEmpty() && stackForEntities.last() == '-') {
+                        resultEquation.add(stackForEntities.removeLast())
+                    }
+
+                    resultEquation.add('(')
+                    resultEquation.addAll(subEquation.first)
+                    resultEquation.add(')')
+                    continue
+                }
+                ')' -> {
+                    resultEquation.addAll(stackForEntities)
+
+                    return if (powerTo) {
+                        Pair(resultEquation, i)
+                    } else {
+                        Pair(groupUnknowns(resultEquation), i)
                     }
                 }
-                is Char -> {
-                    when  (equation[i]) {
-                        '=' -> {
-                            operatorsList.add('=')
-                            operatorsIndexes.add(operatorsList.size-1)
-                            val buffer = mutableListOf<Any>()
-                            buffer.addAll(key)
-                            appendKeyWithValue(map, buffer, value, operator, operatorsIndexes, operatorsList, false, insideRec)
-                            equalSign = true
-                            value = 0.0
-                            key.clear()
-                            powerTo = false
-                            operator = '0'
-                            closeBracket = true
-                        }
-                        '^' -> {
-                            if (powerTo) {
-                                key.add(equation[i])
-                            }
-                            else {
-                                result.add('^')
-                            }
-                        }
-                        '+', '-' -> {
-                            operatorsList.add(equation[i] as Char)
-                            operatorsIndexes.add(operatorsList.size-1)
+                '^' ->  {
+                    powerTo = true
 
-                            if (key.isNotEmpty()) {
-                                val buffer = mutableListOf<Any>()
-                                buffer.addAll(key)
-                                appendKeyWithValue(map, buffer, value, operator, operatorsIndexes, operatorsList, equalSign, insideRec)
-                            }
-                            else if (value != 0.0) {
-                                val buffer = mutableListOf<Any>("value")
-                                appendKeyWithValue(map, buffer, value, operator, operatorsIndexes, operatorsList, equalSign, insideRec)
-                            }
-
-                            operator = equation[i] as Char
-                            key.clear()
-                            powerTo = false
-                            value = 0.0
-                        }
-                        '(' ->  {
-                            if (key.isNotEmpty()) {
-                                val buffer = mutableListOf<Any>()
-                                buffer.addAll(key)
-                                appendKeyWithValue(map, buffer, value, operator, operatorsIndexes, operatorsList, equalSign, insideRec)
-                            }
-                            else if (value != 0.0) {
-                                val buffer = mutableListOf<Any>("value")
-                                appendKeyWithValue(map, buffer, value, operator, operatorsIndexes, operatorsList, equalSign, insideRec)
-                            }
-
-                            // If there is a multiplier for a brackets get it
-                            val list = mutableListOf<Double>()
-                            val operators = mutableListOf<Char>()
-                            var thereIsKey = false
-                            var multiplicand: Double
-
-                            if (key.isNotEmpty()) {
-                                multiplicand = map.getOrDefault(key, 0.0)
-                                if (multiplicand != 0.0) {
-                                    map.remove(key)
-                                    thereIsKey = true
-                                }
-                            }
-                            else {
-                                multiplicand = map.getOrDefault(mutableListOf("multiplication", key), 0.0)
-                                for (j in operatorsList.size-1 downTo 0) {
-                                    if (operatorsList[j] == '×') {
-                                        if (multiplicand != 0.0) {
-                                            operators.add(operatorsList.removeLast())
-                                            list.add(multiplicand)
-                                            map.remove(mutableListOf("multiplication", key))
-                                        }
-                                        else {
-                                            operatorsList.removeLast()
-                                        }
-                                    }
-                                    else if (operatorsList[j] == '/') {
-                                        operatorsList.removeLast()
-                                        map.remove(mutableListOf("division", key))
-                                    }
-                                    else {
-                                        break
-                                    }
-                                }
-                            }
-
-                            val specialAddition = mutableListOf<Any>()
-                            if (thereIsKey) {
-                                if (operator == '-' && multiplicand < 0) {
-                                    specialAddition.add(-multiplicand)
-                                }
-                                else {
-                                    specialAddition.add(multiplicand)
-                                }
-                                specialAddition.addAll(key)
-                                key.clear()
-                            }
-                            else {
-                                if (list.isNotEmpty()) {
-                                    var k = 0
-                                    while (k < operators.size) {
-                                        specialAddition.add(operators[k])
-                                        specialAddition.add(list[k])
-                                        k++
-                                    }
-                                }
-                            }
-
-                            if (thereIsKey && specialAddition.isNotEmpty()) {
-                                result.addAll(specialAddition)
-                                specialAddition.clear()
-                            }
-
-                            // Put results together
-                            val bufferEquation = groupUnknowns(equation, insideRec = true, i+1)
-                            bufferEquation.first.add(0, '(')
-                            if (operator != '0' && result.isNotEmpty()) {
-                                result.add(operator)
-                            }
-
-                            result.addAll(bufferEquation.first)
-                            if (specialAddition.isNotEmpty()) {
-                                specialAddition.add(1, '(')
-                                specialAddition.add(')')
-                                result.addAll(specialAddition)
-                            }
-                            i = bufferEquation.second
-                            value = 0.0
-                            key.clear()
-                            powerTo = false
-                            operator = '0'
-                            closeBracket = true
-                            continue
-                        }
-                        ')' -> {
-                            appendEquationToResult(result, map, value, key, operator, operatorsList, operatorsIndexes, closeBracket, numberWas, equalSign, insideRec = insideRec)
-                            result.add(')')
-                            return Pair(result, i+1)
-                        }
-                        '×' -> {
-                            operatorsList.add(equation[i] as Char)
-                            operatorsIndexes.add(operatorsList.size-1)
-                            value = 0.0
-                            operator = equation[i] as Char
-                        }
-                        '/' -> {
-                            operatorsList.add(equation[i] as Char)
-                            operatorsIndexes.add(operatorsList.size-1)
-                            value = 0.0
-
-                            operator = equation[i] as Char
-                        }
-                        else -> {
-                            powerTo = true
-                            key.add(equation[i])
-                        }
+                    if (stackForEntities.isEmpty()) {
+                        resultEquation.add(equation[i])
+                        i++
+                        continue
                     }
                 }
             }
+            stackForEntities.add(equation[i])
             i++
         }
-        appendEquationToResult(result, map, value, key, operator, operatorsList, operatorsIndexes, closeBracket, equalSign, lastAddition = true, insideRec = insideRec)
+        resultEquation.add('+')
+        resultEquation.addAll(groupUnknowns(stackForEntities, eqSign = true))
 
-        println("groupUnknowns:")
-        println(result)
-        return Pair(result, i+1)
+        return Pair(resultEquation, 0)
     }
 
     private fun calcPowerForStandardEquations(equation: MutableList<Any>, iterator: Int, subtract: Boolean = false, amountOfVariables: MutableList<Char>): Triple<Char?, Double, Int> {
@@ -2426,8 +1590,8 @@ class Calculator {
         val list = mutableListOf<MutableList<Any>>()
 
         for (equation in equationsList) {
-            val eq = groupUnknowns(transformEquationForSolvingUnknowns(transformEquation(equation), 0 ,true).list, insideRec = false,0).first
-            list.add(eq)
+            val eq = groupEquation(transformEquationForSolvingUnknowns(transformEquation(equation), 0).list, iterator = 0)
+            list.add(eq.first)
         }
 
         return list
@@ -2812,7 +1976,7 @@ class Calculator {
                 is Char -> {
                     if (element == 'x') {
                         // Start bracket
-                        val bracketIndex = findNewBracketIndex(result, flag = true)
+                        val bracketIndex = findNewBracketIndex(result)
                         result.add(bracketIndex, '(')
                         additionalBrackets++
 
@@ -2884,150 +2048,6 @@ class Calculator {
     }
 
     // Derivatives calculator
-    private fun getEntitiesOfEquation(equation: MutableList<Any>): MutableList<UnknownEntity> {
-        val entities = mutableListOf<UnknownEntity>()
-
-        val entity = UnknownEntity(null, null, null)
-        var power = false
-        var operator = '0'
-        for (element in equation) {
-            when(element) {
-                '=' -> {
-                    if (entity.isNotEmpty()) {
-                        entities.add(entity.copy())
-                    }
-
-                    return entities
-                }
-                '+', '-' -> {
-                    if (entity.multiplier != null) {
-                        entities.add(entity.copy())
-                    }
-
-                    power = false
-                    entity.clear()
-                    operator = element as Char
-                }
-                '^' -> power = true
-                is Double -> {
-                    if (power) {
-                        entity.powerTo = element
-                    }
-                    else {
-                        if (operator == '-') {
-                            entity.multiplier = -element
-                        }
-                        else {
-                            entity.multiplier = element
-                        }
-                    }
-                }
-                is Char -> {
-                    entity.variable = element
-                }
-            }
-        }
-        if (entity.multiplier != null) {
-            entities.add(entity.copy())
-        }
-
-        return entities
-    }
-
-    private fun multiplyTwoEquations(f: MutableList<Any>, g: MutableList<Any>): MutableList<Any> {
-        val result = mutableListOf<Any>()
-
-        val entitiesF = getEntitiesOfEquation(f)
-        val entitiesG = getEntitiesOfEquation(g)
-
-        for (entityF in entitiesF) {
-            for (entityG in entitiesG) {
-                val entity = UnknownEntity(null, null, null)
-
-                // Multiplier
-                if (entityF.multiplier != null && entityG.multiplier != null) {
-                    entity.multiplier = entityF.multiplier!! * entityG.multiplier!!
-                }
-                else if (entityF.multiplier != null) {
-                    entity.multiplier = entityF.multiplier!!
-                }
-                else if (entityG.multiplier != null) {
-                    entity.multiplier = entityG.multiplier!!
-                }
-
-                // Variable
-                if (entityF.variable != null) {
-                    entity.variable = entityF.variable!!
-                }
-                else if (entityG.variable != null) {
-                    entity.variable = entityG.variable!!
-                }
-
-                // Power
-                if (entityF.powerTo != null && entityG.powerTo != null) {
-                    entity.powerTo = entityF.powerTo!! + entityG.powerTo!!
-                }
-                else if (entityF.powerTo != null) {
-                    entity.powerTo = entityF.powerTo!!
-                }
-                else if (entityG.powerTo != null) {
-                    entity.powerTo = entityG.powerTo!!
-                }
-
-                // Recreate operators
-                var negative = false
-                if (entity.multiplier!! < 0) {
-                    negative = true
-                }
-
-                if (negative) {
-                    if (result.isNotEmpty()) {
-                        result.add('-')
-                    }
-                    result.addAll(entity.getOriginal())
-                }
-                else {
-                    if (result.isNotEmpty()) {
-                        result.add('+')
-                    }
-                    result.addAll(entity.getOriginal())
-                }
-            }
-        }
-
-        return result
-    }
-
-    private fun groupUnknownsForDerivatives(equation: MutableList<Any>) : MutableList<Any> {
-        val result = mutableListOf<Any>()
-        val map = LinkedHashMap<MutableList<Any>, Double>()
-
-        val entities = getEntitiesOfEquation(equation)
-
-        for (entity in entities) {
-            var key = entity.getOriginal()
-            val value = key.removeFirst() as Double
-            if (key.isEmpty()) {
-                key = mutableListOf("v")
-                map[key] = map.getOrDefault(key, 0.0) + value
-            }
-            else {
-                map[key] = map.getOrDefault(key, 0.0) + value
-            }
-        }
-
-        for ((k, v) in map) {
-            if (result.isNotEmpty()) {
-                result.add('+')
-            }
-            result.add(v)
-            if (k.first() !is String) {
-                result.addAll(k)
-            }
-        }
-        return result
-    }
-
     private fun calculateFunctionDerivative(wholeExpression: MutableList<Pair<MutableList<Any>, Boolean>>, f: MutableList<Any>): Equations {
         val equations = Equations(null, null)
         var functionF = f
@@ -3061,7 +2081,6 @@ class Calculator {
             if (divided.isNotEmpty()) {
                 functionF = multiplyTwoEquations(findDerivative(divided, 0).first, f)
                 derivativeF = findDerivative(functionF, 0).second
-                println(functionF)
             }
             functionG = divider
             derivativeG = findDerivative(divider, 0).second
@@ -3071,8 +2090,8 @@ class Calculator {
         val sspecialOperator = '/'
         when(sspecialOperator) {
             '×' -> {
-                val dFxG = groupUnknownsForDerivatives(multiplyTwoEquations(derivativeF, functionG))
-                val dGxF = groupUnknownsForDerivatives(multiplyTwoEquations(derivativeG, functionF))
+                val dFxG = groupUnknowns(multiplyTwoEquations(derivativeF, functionG))
+                val dGxF = groupUnknowns(multiplyTwoEquations(derivativeG, functionF))
 
                 val result = mutableListOf<Any>()
                 result.add('(')
@@ -3090,9 +2109,9 @@ class Calculator {
                 equations.original = result
             }
             '/' -> {
-                val dFxG = groupUnknownsForDerivatives(multiplyTwoEquations(derivativeF, functionG))
-                val dGxF = groupUnknownsForDerivatives(multiplyTwoEquations(derivativeG, functionF))
-                val gx2 = groupUnknownsForDerivatives(multiplyTwoEquations(functionG, functionG))
+                val dFxG = groupUnknowns(multiplyTwoEquations(derivativeF, functionG))
+                val dGxF = groupUnknowns(multiplyTwoEquations(derivativeG, functionF))
+                val gx2 = groupUnknowns(multiplyTwoEquations(functionG, functionG))
 
                 val result = mutableListOf<Any>()
 
@@ -3267,7 +2286,10 @@ class Calculator {
     }
 
     fun solveDerivative(equation: String): MutableList<Any> {
-        val transformedEquation = groupUnknowns(transformEquationForSolvingUnknowns(transformEquation(equation), 0 ,true).list, insideRec = false,0).first
+        val transformedEquation = groupEquation(transformEquationForSolvingUnknowns(transformEquation(equation), 0).list, iterator = 0).first
+
+        println("groupEquation")
+        println(transformedEquation)
 
         println("Derivative")
         val derivative = findDerivative(transformedEquation, iterator = 0)
