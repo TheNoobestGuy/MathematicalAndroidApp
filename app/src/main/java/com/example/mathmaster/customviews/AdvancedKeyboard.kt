@@ -352,7 +352,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
                             if (bracketsLevel.last()) {
                                 operatorsOccurrence.addLast(
                                     Operators(
-                                        textView.text.length - 1, false,
+                                        textView.text.length - 1, true,
                                         functionLevel, functionIndex
                                     )
                                 )
@@ -498,8 +498,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
             var appendedFactorial = false
             if (textView.text.isNotEmpty()) {
                 if (textView.text.last().isDigit() || textView.text.last() == ')'
-                    || textView.text.last() == 'x' || textView.text.last() == '°'
-                    || textView.text.last() == 'y' || textView.text.last() == 'z'
+                    || textView.text.last() == 'x' || textView.text.last() == 'y'
+                    || textView.text.last() == 'z'
                 ) {
                     textView.append("!")
                     appendedFactorial = true
@@ -526,10 +526,9 @@ class AdvancedKeyboard @JvmOverloads constructor(
                 if (textView.text.last().isDigit() || textView.text.last() == ')'
                     || textView.text.last() == 'π' || textView.text.last() == 'e'
                     || textView.text.last() == 'x' || textView.text.last() == 'y'
-                    || textView.text.last() == 'z'
+                    || textView.text.last() == 'z' || textView.text.last() == '°'
                 ) {
                     textView.append("^(-")
-                    bracketsCounter++
 
                     if (!radians && functionLevel > 0) {
                         if (bracketsLevel.last()) {
@@ -541,9 +540,10 @@ class AdvancedKeyboard @JvmOverloads constructor(
                             )
                             addDegree = true
                         }
-                    } else {
-                        bracketsLevel.addLast(false)
                     }
+
+                    bracketsCounter++
+                    bracketsLevel.addLast(false)
                 }
             }
 
@@ -979,6 +979,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
             if (textView.text.isNotEmpty()) {
                 if (textView.text.last() != '.' && textView.text.last() != 'x'
                     && textView.text.last() != 'y' &&  textView.text.last() != 'z'
+                    && textView.text.last() != '°'
                 ) {
                     textView.append(variableButton.text.toString())
                 }
@@ -1089,6 +1090,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
             if (textView.text.isNotEmpty()) {
                 if (textView.text.last() != '.' && textView.text.last() != 'x'
                     && textView.text.last() != 'y' && textView.text.last() != 'z'
+                    && textView.text.last() != '°'
                 ) {
                     textView.append(logarithmButton.text.toString())
                 }
@@ -1109,6 +1111,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
             if (textView.text.isNotEmpty()) {
                 if (textView.text.last() != '.' && textView.text.last() != 'x'
                     && textView.text.last() != 'y' && textView.text.last() != 'z'
+                    && textView.text.last() != '°'
                 ) {
                     textView.append(naturalLogarithmButton.text.toString())
                 }
@@ -1129,6 +1132,7 @@ class AdvancedKeyboard @JvmOverloads constructor(
             if (textView.text.isNotEmpty()) {
                 if (textView.text.last() != '.' && textView.text.last() != 'x'
                     && textView.text.last() != 'y' && textView.text.last() != 'z'
+                    && textView.text.last() != '°'
                 ) {
                     textView.append(degreeButton.text.toString())
                 }

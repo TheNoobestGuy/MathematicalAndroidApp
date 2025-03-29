@@ -499,9 +499,8 @@ class Calculator {
                         }
 
                         if (powerToOpenedBrackets.isNotEmpty()) {
-                            while (powerToOpenedBrackets.isNotEmpty() &&
-                                powerToOpenedBrackets.last() >= additionalOpenedBrackets.size-1) {
-                                while (additionalOpenedBrackets.last().isNotEmpty()) {
+                            if (powerToOpenedBrackets.last() >= additionalOpenedBrackets.size-1) {
+                                if (additionalOpenedBrackets.last().isNotEmpty()) {
                                     transformedEquation.add(additionalOpenedBrackets.last().removeLast())
                                 }
                                 powerToOpenedBrackets.removeLast()
@@ -598,6 +597,13 @@ class Calculator {
                     'x', 'y', 'z' -> {
                         if (transformedEquation.isNotEmpty()) {
                             if (transformedEquation.last() is Double || transformedEquation.last() == ')') {
+                                if (powerToOpenedBrackets.isNotEmpty() &&
+                                    powerToOpenedBrackets.last() >= additionalOpenedBrackets.size-1) {
+                                    if (additionalOpenedBrackets.last().isNotEmpty()) {
+                                        transformedEquation.add(additionalOpenedBrackets.last().removeLast())
+                                    }
+                                    powerToOpenedBrackets.removeLast()
+                                }
                                 transformedEquation.add('×')
                             }
                         }
@@ -1032,15 +1038,31 @@ class Calculator {
         return result
     }
 
-    private fun checkIsEquationCalculable(equation: MutableList<Any>) : Boolean {
-        for (element in equation) {
-            if (element is Char) {
-                if (element == 'x' || element == 'y' || element == 'z') {
-                    return false
+    private fun checkIsEquationCalculable(equation: MutableList<Any>, iterator: Int) : Pair<MutableList<Any>, Int?> {
+        val result = mutableListOf<Any>()
+        var i = iterator
+        var brackets = 0
+        while (i < equation.size) {
+            when (equation[i]) {
+                '(' -> brackets++
+                ')' -> {
+                    brackets--
+                    if (brackets == 0) {
+                        result.add(equation[i])
+                        return Pair(result, i+1)
+                    }
+                }
+                is Char -> {
+                    if (equation[i] == 'x' || equation[i] == 'y' || equation[i] == 'z') {
+                        return Pair(result, null)
+                    }
                 }
             }
+
+            result.add(equation[i])
+            i++
         }
-        return true
+        return Pair(result, --i)
     }
 
     private fun getMultiplier(entity: UnknownEntity, multipliers: MutableList<UnknownEntity>, dividers: MutableList<UnknownEntity>): MutableList<Any> {
@@ -1088,20 +1110,18 @@ class Calculator {
         if (noComputeIndex == null) {
             return input
         }
-        var result = input
-
-        println("getMultiplier")
-        println(getMultiplier(entity, multipliers, dividers))
-        // Append multiplication of entity with sub string of result that is computable
-        val buffer: MutableList<Any>
-
-        if (function == '!') {
-            val factorial = getMultiplier(entity, multipliers, dividers)
-            factorial.add(0, '(')
-            factorial.add(0,'(')
-            factorial.add('!')
-            factorial.add(')')
-            factorial.add(')')
+        else if (function == '!' || function == '°') {
+            val operation = getMultiplier(entity, multipliers, dividers)
+            operation.add(0, '(')
+            operation.add(0,'(')
+            if (function == '°') {
+                operation.add('°')
+            }
+            else {
+                operation.add('!')
+            }
+            operation.add(')')
+            operation.add(')')
 
             if (clear) {
                 entity.clear()
@@ -1109,10 +1129,18 @@ class Calculator {
                 dividers.clear()
             }
 
-            return factorial
+            return operation
         }
 
-        if (noComputeIndex != result.size && noComputeIndex != 0 && function == null) {
+        var result = input
+
+        println("getMultiplier")
+        println(getMultiplier(entity, multipliers, dividers))
+        println(result)
+        // Append multiplication of entity with sub string of result that is computable
+        val buffer: MutableList<Any>
+
+        if (result.isNotEmpty() && noComputeIndex != result.size && noComputeIndex != 0 && function == null) {
             println(result)
             buffer = multiplyTwoEquations(result.subList(noComputeIndex, result.size), getMultiplier(entity, multipliers, dividers))
             result = result.subList(0, noComputeIndex)
@@ -1137,7 +1165,7 @@ class Calculator {
 
             result.addAll(buffer)
         }
-        else if (noComputeIndex == 0 && function == null) {
+        else if (result.isNotEmpty() && noComputeIndex == 0 && function == null) {
             println("SWAP")
             buffer = multiplyTwoEquations(result.subList(noComputeIndex, result.size), getMultiplier(entity, multipliers, dividers))
             println(buffer)
@@ -1244,7 +1272,7 @@ class Calculator {
                             result, noComputeIndex, entity, multipliers, dividers,
                             multiply, divide = true, divideEquation, function, clear = true
                         )
-                        dividersInput.add(UnknownEntity(null, null, null))
+                        dividers.add(UnknownEntity(null, null, null))
                     }
 
                     if (!entity.isEmpty()) {
@@ -1271,66 +1299,75 @@ class Calculator {
                         dividers.clear()
                     }
 
-                    val subEquation = transformEquationForSolvingUnknowns(
-                        equation,
-                        multipliers,
-                        dividers,
-                        iterator + 1,
-                        keepMultiply
-                    )
-                    iterator = subEquation.iterator
-
-                    // Check is there minus before equation
-                    if (result.isNotEmpty() && result.last() == '-') {
-                        var brackets = 0
-                        var step = 0
-                        while (step < subEquation.list.size) {
-                            when (subEquation.list[step]) {
-                                '+' -> if (brackets == 0) subEquation.list[step] = '-'
-                                '-' -> if (brackets == 0) subEquation.list[step] = '+'
-                                '(' -> brackets++
-                                ')' -> brackets--
-                            }
-                            step++
-                        }
+                    // Check are brackets calculable
+                    var calculable = false
+                    val checkIsItCalculable = checkIsEquationCalculable(equation, iterator)
+                    if (checkIsItCalculable.second != null) {
+                        iterator = checkIsItCalculable.second!!
+                        calculable = true
                     }
 
-                    // If sub-equation is calculable just append result of calculations
-                    if (checkIsEquationCalculable(subEquation.list)) {
-                        subEquation.list.add(0, '(')
-                        subEquation.list.add(')')
-                        println(subEquation.list)
-                        val value = calculateEquation(subEquation.list).first
+                    // If sub-equation is calculable just append result of calculations=
+                    if (calculable) {
+                        println(checkIsItCalculable.first)
+                        val value = calculateEquation(checkIsItCalculable.first).first
                         println("CALCULABLE")
                         if (function == null) {
                             if (divide) {
+                                dividers.add(UnknownEntity(null, null, null))
                                 dividers.last().multiplier = value
                             }
                             else if (multiply) {
+                                multipliers.add(UnknownEntity(null, null, null))
                                 multipliers.last().multiplier = value
                             }
                             else {
-                                if (entity.multiplier != null) {
-                                    entity.multiplier = entity.multiplier!! + value - 1
-                                }
-                                else {
-                                    entity.multiplier = value
-                                    println(" entity.multiplier ")
-                                    println(entity.multiplier)
-                                }
+                                entity.multiplier = value
                             }
+
+                            if(entity.isEmpty()) {
+                                println("WHAT THE GELL IS GELL HOING ON")
+                                entity.multiplier = 1.0
+                            }
+                            println(" entity.multiplier ")
+                            println(multipliers)
                         }
                         else {
                             val functionEquation = mutableListOf<Any>()
                             functionEquation.add(function)
                             functionEquation.add('(')
-                            functionEquation.addAll(subEquation.list)
+                            functionEquation.add(value)
                             functionEquation.add(')')
 
                             entity.multiplier = calculateEquation(functionEquation).first
                         }
                     }
                     else {
+                        // Get equation
+                        val subEquation = transformEquationForSolvingUnknowns(
+                            equation,
+                            multipliers,
+                            dividers,
+                            iterator + 1,
+                            keepMultiply
+                        )
+                        iterator = subEquation.iterator
+
+                        // Check is there minus before equation
+                        if (result.isNotEmpty() && result.last() == '-') {
+                            var brackets = 0
+                            var step = 0
+                            while (step < subEquation.list.size) {
+                                when (subEquation.list[step]) {
+                                    '+' -> if (brackets == 0) subEquation.list[step] = '-'
+                                    '-' -> if (brackets == 0) subEquation.list[step] = '+'
+                                    '(' -> brackets++
+                                    ')' -> brackets--
+                                }
+                                step++
+                            }
+                        }
+
                         // Handle compute
                         if (subEquation.compute == null) {
                             noComputeIndex = result.size
@@ -1342,13 +1379,9 @@ class Calculator {
 
                         // Append multiplication or division of found equations
                         var buffer: MutableList<Any>
-                        if (noComputeIndex != result.size && function == null) {
+                        if (result.isNotEmpty() && noComputeIndex != result.size && function == null) {
                             buffer = multiplyTwoEquations(result.subList(noComputeIndex!!, result.size), subEquation.list, divideEquation)
                             result = result.subList(0, noComputeIndex)
-                        }
-                        else if (noComputeIndex == result.size && noComputeIndex == 0 && function == null) {
-                            buffer = multiplyTwoEquations(result, subEquation.list, divideEquation)
-                            result.clear()
                         }
                         else {
                             buffer = subEquation.list
@@ -1521,17 +1554,16 @@ class Calculator {
                     }
                     equation.add(newBracketIndex, ')')
 
-                    // Power recurrent call
-                    val subEquation = transformEquationForSolvingUnknowns(
-                        equation,
-                        multipliers,
-                        dividers,
-                        iterator + 1
-                    )
-                    iterator = subEquation.iterator
+                    // Check are brackets calculable
+                    var calculable = false
+                    val checkIsItCalculable = checkIsEquationCalculable(equation, iterator+1)
+                    if (checkIsItCalculable.second != null) {
+                        iterator = checkIsItCalculable.second!!
+                        calculable = true
+                    }
 
-                    if (checkIsEquationCalculable(subEquation.list)) {
-                        val powerTo = calculateEquation(subEquation.list).first
+                    if (calculable) {
+                        val powerTo = calculateEquation(checkIsItCalculable.first).first
                         if (divide) {
                             dividers.last().powerTo = powerTo
                         }
@@ -1543,6 +1575,15 @@ class Calculator {
                         }
                     }
                     else {
+                        // Power recurrent call
+                        val subEquation = transformEquationForSolvingUnknowns(
+                            equation,
+                            multipliers,
+                            dividers,
+                            iterator + 1
+                        )
+                        iterator = subEquation.iterator
+
                         // BUILD STRING
                     }
                     continue
@@ -1556,6 +1597,10 @@ class Calculator {
                     }
                     else {
                         entity.multiplier = equation[iterator] as Double
+                    }
+
+                    if (entity.isEmpty()) {
+                        entity.multiplier = 1.0
                     }
                 }
                 '!' -> {
@@ -1571,11 +1616,26 @@ class Calculator {
                         dividers.addAll(dividersInput)
                     }
                 }
+                '°' -> {
+                    result = appendWhatLasts(
+                        result, noComputeIndex, entity, multipliers, dividers,
+                        multiply, divide, divideEquation, '°', clear = true
+                    )
+                    println(result)
+                    if (keepMultiplyInput) {
+                        multipliers.addAll(multipliersInput)
+                        println("mul")
+                        println(multipliersInput)
+                        dividers.addAll(dividersInput)
+                    }
+                }
                 is Char -> {
                     if ((equation[iterator] as Char).isLetter()) {
                         // Handle unknowns
                         if (equation[iterator] == 'x' || equation[iterator] == 'y' || equation[iterator] == 'z') {
                             if (divide) {
+                                dividers.add(UnknownEntity(null, null, null))
+
                                 dividers.last().variable = equation[iterator] as Char
                                 if (dividers.last().multiplier == null) {
                                     dividers.last().multiplier = 1.0
@@ -1587,16 +1647,13 @@ class Calculator {
                                 }
                             }
                             else if (multiply) {
+                                multipliers.add(UnknownEntity(null, null, null))
+
                                 multipliers.last().variable = equation[iterator] as Char
                                 if (multipliers.last().multiplier == null) {
                                     multipliers.last().multiplier = 1.0
                                 }
                                 multipliers.last().powerTo = 1.0
-
-                                if(entity.isEmpty()) {
-                                    println("WHAT THE GELL")
-                                    entity.multiplier = 1.0
-                                }
                             }
                             else {
                                 entity.variable = equation[iterator] as Char
@@ -1604,6 +1661,11 @@ class Calculator {
                                     entity.multiplier = 1.0
                                 }
                                 entity.powerTo = 1.0
+                            }
+
+                            if(entity.isEmpty()) {
+                                println("WHAT THE GELL")
+                                entity.multiplier = 1.0
                             }
                         }
                         // Handle functions
