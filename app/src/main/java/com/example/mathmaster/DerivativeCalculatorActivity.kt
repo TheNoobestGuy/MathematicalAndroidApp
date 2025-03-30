@@ -34,35 +34,7 @@ class DerivativeCalculatorActivity : ComponentActivity() {
         enterButton.setOnClickListener {
             keyboard.clickEnterButton()
 
-            val gotDerivative = calculator.solveDerivative(input.text.toString())
-            var output = ""
-
-            for (element in gotDerivative) {
-                var delete = false
-                output += if (element is Double) {
-                    if (calculator.hasDecimal(element)) {
-                        element.toString()
-                    } else {
-                        val buffer = element.toInt()
-
-                        if (buffer == 1 && output.isNotEmpty() && output.last() == '^') {
-                            delete = true
-                            ""
-                        }
-                        else {
-                            buffer.toString()
-                        }
-                    }
-                } else {
-                    element.toString()
-                }
-
-                if (delete) {
-                    output = output.dropLast(1)
-                }
-            }
-
-            derivative.text = output
+            derivative.text = calculator.solveDerivative(input.text.toString())
 
             keyboard.unClickEnterButton()
         }

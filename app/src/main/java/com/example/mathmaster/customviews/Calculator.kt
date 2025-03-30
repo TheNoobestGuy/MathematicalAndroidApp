@@ -151,7 +151,7 @@ class Calculator {
     private val matrixCalculator = MatrixCalculator()
 
     // Advance calculator
-    fun hasDecimal(num: Double): Boolean {
+    private fun hasDecimal(num: Double): Boolean {
         return num % 1.0 != 0.0
     }
 
@@ -175,9 +175,7 @@ class Calculator {
             else if (transformedEquation[i] == '√') {
                 openBrackets++
                 if (closeBrackets == openBrackets && brackets) {
-                    if (i > 0) {
-                        return i - 1
-                    }
+                    return i
                 }
             }
             else if (transformedEquation[i] == '+' || transformedEquation[i] == '-') {
@@ -202,6 +200,11 @@ class Calculator {
             }
 
             if (closeBrackets == openBrackets) {
+                if (i > 0 && transformedEquation[i-1] is Char && (transformedEquation[i-1] as Char).isLetter()) {
+                    if (transformedEquation[i-1] != 'x' && transformedEquation[i-1] != 'y' && transformedEquation[i-1] != 'z') {
+                        return i-1
+                    }
+                }
                 return i
             }
         }
@@ -440,7 +443,9 @@ class Calculator {
                     }
                     '×', '/' -> {
                         if (inRoot) {
-                            transformedEquation.add(additionalOpenedBrackets.last().removeLast())
+                            if (additionalOpenedBrackets.last().isNotEmpty()) {
+                                transformedEquation.add(additionalOpenedBrackets.last().removeLast())
+                            }
                         }
 
                         if (powerToOpenedBrackets.isNotEmpty()) {
@@ -560,7 +565,8 @@ class Calculator {
                             multiplyOrDivide[multiplyOrDivide.size-1] = true
                         }
 
-                        if (transformedEquation.isNotEmpty() && transformedEquation.last() != '(') {
+                        if (transformedEquation.isNotEmpty() && transformedEquation.last() != '('
+                            && transformedEquation.last() != '×') {
                             transformedEquation.add('×')
                         }
 
@@ -1456,6 +1462,26 @@ class Calculator {
                     function = null
                 }
                 '^', '√' -> {
+                    // Add bracket for power
+                    var newBracketIndex = equation.size-1
+                    var brackets = 0
+                    var i = iterator+1
+                    while (i < equation.size) {
+                        when (equation[i]) {
+                            '(' -> brackets++
+                            ')' -> {
+                                brackets--
+
+                                if (brackets <= 0) {
+                                    newBracketIndex = i
+                                    break
+                                }
+                            }
+                        }
+                        i++
+                    }
+                    equation.add(newBracketIndex, ')')
+
                     // Check are brackets calculable
                     val checkIsItCalculable = checkIsEquationCalculable(equation, iterator+1)
 
@@ -1473,26 +1499,6 @@ class Calculator {
                         iterator = checkIsItCalculable.second!!
                     }
                     else {
-                        // Add bracket for power
-                        var newBracketIndex = equation.size-1
-                        var brackets = 0
-                        var i = iterator+1
-                        while (i < equation.size) {
-                            when (equation[i]) {
-                                '(' -> brackets++
-                                ')' -> {
-                                    brackets--
-
-                                    if (brackets <= 0) {
-                                        newBracketIndex = i
-                                        break
-                                    }
-                                }
-                            }
-                            i++
-                        }
-                        equation.add(newBracketIndex, ')')
-
                         // Power recurrent call
                         val subEquation = transformEquationForSolvingUnknowns(
                             equation,
@@ -1501,8 +1507,6 @@ class Calculator {
                             iterator + 1
                         )
                         iterator = subEquation.iterator
-
-                        // BUILD STRING
                     }
                     continue
                 }
@@ -2531,35 +2535,47 @@ class Calculator {
         result.original!!.addAll(equation)
         result.original!!.add(')')
 
+        // Derivative of nested function
+        result.derivative!!.addAll(findDerivative(equation).second)
+        if (result.derivative!!.isNotEmpty()) {
+            result.derivative!!.add('×')
+        }
+
+        // Convert equation to string
+        val stringEquation = convertDerivativeForOutput(equation)
+
         // Recognize function and apply proper derivative transformation
         when (function) {
             's' -> {
-                result.derivative!!.add('c')
-                result.derivative!!.add('(')
-                result.derivative!!.addAll(equation)
-                result.derivative!!.add(')')
+                val buffer = mutableListOf('c', '(', stringEquation, ')')
+                result.derivative!!.addAll(buffer)
             }
             'c' -> {
-                result.derivative!!.add('-')
-                result.derivative!!.add('s')
-                result.derivative!!.add('(')
-                result.derivative!!.addAll(equation)
-                result.derivative!!.add(')')
+                val buffer = mutableListOf('(', '-', 's', '(', stringEquation, ')', ')')
+                result.derivative!!.addAll(buffer)
             }
             't' -> {
-                val buffer = mutableListOf(1.0, '/', '(', 's', '(', 'x', ')', '^', 2.0, ')')
+                val buffer = mutableListOf(1.0, '/', '(', 's', '(', stringEquation, ')', '^', 2.0, ')')
                 result.derivative!!.addAll(buffer)
             }
             'i' -> {
-                val buffer = mutableListOf(1.0, '/', '(', '√', 1.0, '-', '(', 'x', '^', 2.0, ')', ')', ')')
+                val buffer = mutableListOf(1.0, '/', '(', '√', '(', 1.0, '-', '(', stringEquation, ')', '^', 2.0, ')', ')')
                 result.derivative!!.addAll(buffer)
             }
             'o' -> {
-                val buffer = mutableListOf(-1.0, '/', '(', '√', 1.0, '-', '(', 'x', '^', 2.0, ')', ')', ')')
+                val buffer = mutableListOf(-1.0, '/', '(', '√', '(', 1.0, '-', '(', stringEquation, ')', '^', 2.0, ')', ')')
                 result.derivative!!.addAll(buffer)
             }
             'a' -> {
-                val buffer = mutableListOf(1.0, '/', '(', '√', 1.0, '+', '(', 'x', '^', 2.0, ')', ')', ')')
+                val buffer = mutableListOf(1.0, '/', '(', '√', '(',  1.0, '+',  '(', stringEquation, ')', '^', 2.0, ')', ')')
+                result.derivative!!.addAll(buffer)
+            }
+            'n' -> {
+                val buffer = mutableListOf("lg", '(', 'e', ')', '/', '(', stringEquation, ')')
+                result.derivative!!.addAll(buffer)
+            }
+            'g' -> {
+                val buffer = mutableListOf(1.0, '/', stringEquation)
                 result.derivative!!.addAll(buffer)
             }
         }
@@ -2704,7 +2720,78 @@ class Calculator {
         return Triple(original, derivative, i+1)
     }
 
-    fun solveDerivative(equation: String): MutableList<Any> {
+    private fun convertDerivativeForOutput(equation: MutableList<Any>): String {
+        var output = ""
+
+        var passOne = false
+        var lastNum = 0.0
+
+        var append: Any = 0
+        for (element in equation) {
+            when (element) {
+                is Double -> {
+                    if (passOne && element == 1.0) {
+                        output = output.dropLast(1)
+                        continue
+                    }
+
+                    append = if (hasDecimal(element)) {
+                        element
+                    } else {
+                        element.toInt()
+                    }
+
+                    lastNum = element
+                    passOne = false
+                }
+                else -> {
+                    passOne = false
+
+                    when(element) {
+                        's' -> append = "sin"
+                        'c' -> append = "cos"
+                        't' -> append = "tan"
+                        'a' -> append = "arcsin"
+                        'i' -> append = "arccos"
+                        'o' -> append = "arctan"
+                        'n' -> append = "ln"
+                        'g' -> append = "lg"
+                    }
+
+                    when (element) {
+                        '^' -> passOne = true
+                        is Char -> {
+                            if (element.isLetter() || element == '×') {
+                                if (lastNum == 1.0) {
+                                    if (append == 0) {
+                                        output = output.dropLast(1)
+                                    }
+                                    lastNum = 0.0
+
+                                    if (element != '×') {
+                                        output += element
+                                    }
+                                    continue
+                                }
+                            }
+                        }
+                    }
+
+                    if (append == 0) {
+                        append = element
+                    }
+                    lastNum = 0.0
+                }
+            }
+
+            output += append
+            append = 0
+        }
+
+        return output
+    }
+
+    fun solveDerivative(equation: String): String {
         val transformedEquation = groupEquation(transformEquationForSolvingUnknowns(transformEquation(equation)).list).first
 
         println("groupEquation")
@@ -2726,6 +2813,6 @@ class Calculator {
         val calc2 = calculateEquation(substitute2)
         println(calc2)
 
-        return derivative.second
+        return convertDerivativeForOutput(derivative.second)
     }
 }
