@@ -6,7 +6,6 @@ import kotlin.math.acos
 import kotlin.math.asin
 import kotlin.math.atan
 import kotlin.math.cos
-import kotlin.math.exp
 import kotlin.math.ln
 import kotlin.math.log
 import kotlin.math.pow
@@ -1032,13 +1031,7 @@ class Calculator {
     }
 
     private fun getMultiplier(entity: UnknownEntity, multipliers: MutableList<UnknownEntity>, dividers: MutableList<UnknownEntity>): MutableList<Any> {
-        var empty = false
-        var additionalEntity = if (!entity.isEmpty()) {
-            entity.copy()
-        } else {
-            empty = true
-            UnknownEntity(null, null, null)
-        }
+        var additionalEntity = entity.copy()
 
         // Calculate multipliers and dividers
         var divider = UnknownEntity(null, null, null)
@@ -1052,20 +1045,8 @@ class Calculator {
                 multiplier *= mul
             }
 
-            if (empty) {
-                if (multiplier.multiplier == null) {
-                    multiplier.multiplier = 1.0
-                }
-                additionalEntity = multiplier / divider
-
-                if (additionalEntity.multiplier == 1.0 && additionalEntity.variable == null) {
-                    additionalEntity.clear()
-                }
-            }
-            else {
-                additionalEntity *= multiplier
-                additionalEntity /= divider
-            }
+            additionalEntity *= multiplier
+            additionalEntity /= divider
         }
 
         if(additionalEntity.multiplier == null && additionalEntity.variable == null && additionalEntity.powerTo != null) {
@@ -1109,15 +1090,10 @@ class Calculator {
         if (result.isNotEmpty() && noComputeIndex != result.size && noComputeIndex != 0 && function == null) {
             val buffer = multiplyTwoEquations(result.subList(noComputeIndex, result.size), getMultiplier(entity, multipliers, dividers))
             result = result.subList(0, noComputeIndex)
-
             if (result.last() != '+' && result.last() != '-'
                 && result.last() != '×' && result.last() != '/') {
                 var add = false
-                if (divideEquation) {
-                    result.add(0, '/')
-                    add = true
-                }
-                else if (multiply) {
+                if (multiply || divideEquation || divide) {
                     result.add(0, '×')
                     add = true
                 }
@@ -1168,31 +1144,14 @@ class Calculator {
                                 }
 
                                 if (result.last() != '×' && result.last() != '/') {
-                                    if (divide) {
-                                        result.add(0, '/')
-                                        add = true
-                                    }
-                                    else {
-                                        result.add(0, '×')
-                                        add = true
-                                    }
+                                    result.add(0, '×')
+                                    add = true
                                 }
                             }
 
                             if (add) {
                                 entityBuffer.add(0, '(')
                                 entityBuffer.add(')')
-                            }
-
-                            if (function != null && divide) {
-                                if (add) {
-                                    entityBuffer.add(result.removeLast())
-                                }
-                                else {
-                                    entityBuffer.add(0, '(')
-                                    entityBuffer.add(')')
-                                    entityBuffer.add('/')
-                                }
                             }
 
                             if (add) {
@@ -1221,31 +1180,14 @@ class Calculator {
                             }
 
                             if (result.last() != '×' && result.last() != '/') {
-                                if (divide) {
-                                    result.add(0, '/')
-                                    add = true
-                                }
-                                else {
-                                    result.add(0, '×')
-                                    add = true
-                                }
+                                result.add(0, '×')
+                                add = true
                             }
                         }
 
                         if (add) {
                             e.add(0, '(')
                             e.add(')')
-                        }
-
-                        if (function != null && divide) {
-                            if (add) {
-                                e.add(result.removeLast())
-                            }
-                            else {
-                                e.add(0, '(')
-                                e.add(')')
-                                e.add('/')
-                            }
                         }
 
                         if (add) {
@@ -1440,7 +1382,6 @@ class Calculator {
 
                         // Append result
                         var add = false
-
                         if (noComputeIndex == result.size && noComputeIndex != 0 && result.isNotEmpty()) {
                             if (result.last() != '+' && result.last() != '-') {
                                 if ((result.first() != '(' || result.last() != ')') && result.last() != '×' && result.last() != '/') {
@@ -1489,6 +1430,7 @@ class Calculator {
                         if (!compute || function != null) {
                             noComputeIndex = result.size
                         }
+
                         appended = true
 
                         if (function == null) {
@@ -1496,11 +1438,21 @@ class Calculator {
                             multipliers.clear()
                             dividers.clear()
                         }
+
+                        // Handle compute
+                        if (subEquation.compute == null) {
+                            noComputeIndex = result.size
+                            compute = false
+                        }
                     }
 
                     if (function == null) {
                         multiply = false
                         divide = false
+                    }
+                    else {
+                        noComputeIndex = result.size
+                        compute = false
                     }
 
                     computedIndex = result.size
@@ -1524,7 +1476,6 @@ class Calculator {
                     if (!compute) {
                         noComputeIndex = null
                     }
-
                     return TripleSolve(result, iterator+1, noComputeIndex)
                 }
                 '=' -> {
@@ -1682,7 +1633,6 @@ class Calculator {
                                 result.add('×')
                                 result.addAll(multiplication)
                             }
-                            compute = false
                         }
                     }
                     else {
@@ -1737,7 +1687,6 @@ class Calculator {
                                 result.add('×')
                                 result.addAll(multiplication)
                             }
-                            compute = false
                         }
                         // If it is power of some function
                         else {
@@ -1791,13 +1740,13 @@ class Calculator {
                                 result.add('×')
                                 result.addAll(multiplication)
                             }
-                            compute = false
                         }
                     }
 
                     computedIndex = result.size
                     noComputeIndex = result.size
                     function = null
+                    compute = false
                     continue
                 }
                 is Double -> {
@@ -2755,10 +2704,22 @@ class Calculator {
                 break
             }
         }
-
         if (divide) {
             val functionF = expressions.removeFirst().first
             val functionG = Equations(null, null)
+
+            // Check does functionF is a function or not
+            var functionFIsFunction = false
+            for (element in functionF.original!!) {
+                if (element is Char) {
+                    if (element.isLetter() || element == '√') {
+                        if (element != 'x' && element != 'y' && element != 'z') {
+                            functionFIsFunction = true
+                            break
+                        }
+                    }
+                }
+            }
 
             // Calculate divided and divider
             var divided = mutableListOf<Any>()
@@ -2801,7 +2762,7 @@ class Calculator {
                                 divider.addAll(expression.first.original!!)
                             }
                             else {
-                                divider = multiplyTwoEquations(findDerivative(divider).first, expression.first.original!!)
+                                divider = multiplyTwoEquations(divider, expression.first.original!!)
                             }
                         }
                         else {
@@ -2816,30 +2777,31 @@ class Calculator {
                 }
 
                 // Function F
-                functionF.original = multiplyTwoEquations(divided, functionF.original!!)
+                if (divided.isNotEmpty()) {
+                    functionF.original = multiplyTwoEquations(divided, functionF.original!!)
 
-                if (functionsDivided.isNotEmpty()) {
+                    if (functionsDivided.isNotEmpty()) {
+                        functionF.original!!.addAll(0, functionsDivided)
+                        divided.addAll(0, functionsDivided)
+                    }
+
+                    functionF.derivative = findDerivative(functionF.original!!, 0).second
+                }
+                else if (functionsDivided.isNotEmpty()) {
                     functionF.original!!.addAll(0, functionsDivided)
                     divided.addAll(0, functionsDivided)
-                }
 
-                functionF.derivative = findDerivative(functionF.original!!, 0).second
+                    functionF.derivative = findDerivative(functionF.original!!, 0).second
+                }
 
                 // Function G
                 functionG.original = divider
                 if (functionsDivider.isNotEmpty()) {
                     functionG.original!!.addAll(0,functionsDivider)
+                    divider.addAll(0, functionsDivider)
                 }
 
                 functionG.derivative = findDerivative(divider, 0).second
-
-                // If derivatives equations are empty then it add an additional zeros for proper calculations
-                if (functionF.derivative!!.isEmpty()) {
-                    functionF.derivative!!.add(0.0)
-                }
-                if (functionG.derivative!!.isEmpty()) {
-                    functionG.derivative!!.add(0.0)
-                }
 
                 // Remove redundant multiplication
                 if (functionF.original!!.last() == '×') {
@@ -2853,6 +2815,11 @@ class Calculator {
             // If divided is empty return nothing
             if (divided.isEmpty() && functionF.original!!.isEmpty()) {
                 return equations
+            }
+
+            // If derivatives equations are empty then it add an additional zeros for proper calculations
+            if (functionG.derivative!!.isEmpty()) {
+                functionG.derivative!!.add(0.0)
             }
 
             // Get original an expression
@@ -2872,7 +2839,7 @@ class Calculator {
             val dGxF: MutableList<Any>
             val gx2: MutableList<Any>
 
-            if (functionsDivided.isEmpty() && functionsDivider.isEmpty()) {
+            if (functionsDivided.isEmpty() && functionsDivider.isEmpty() && !functionFIsFunction) {
                 dFxG = groupUnknowns(multiplyTwoEquations(functionF.derivative!!, functionG.original!!))
                 dGxF = groupUnknowns(multiplyTwoEquations(functionG.derivative!!, functionF.original!!), negative = true)
                 gx2 = groupUnknowns(multiplyTwoEquations(functionG.original!!, functionG.original!!))
@@ -2916,7 +2883,7 @@ class Calculator {
             dividedDerivative.addAll(dGxF)
             dividedDerivative.addAll(listOf(')', ')'))
 
-            if (functionsDivided.isEmpty() && functionsDivider.isEmpty()) {
+            if (functionsDivided.isEmpty() && functionsDivider.isEmpty() && !functionFIsFunction) {
                 dividedDerivative = groupUnknowns(dividedDerivative)
             }
 
@@ -3385,7 +3352,6 @@ class Calculator {
             }
             i++
         }
-
         if (expressions.isNotEmpty()) {
             if (entity.isNotEmpty()) {
                 if (specialOperator == '/')  {
