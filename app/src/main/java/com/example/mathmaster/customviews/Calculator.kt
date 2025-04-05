@@ -1558,7 +1558,7 @@ class Calculator {
                         equation.removeAt(newBracketIndex)
                         iterator = checkIsItCalculable.second!!
 
-                        if (function == null) {
+                        if (function == null && !entity.isEmpty()) {
                             val powerTo = calculateEquation(checkIsItCalculable.first, baseOfLogarithm = 10.0).first
 
                             if (divide) {
@@ -1605,7 +1605,6 @@ class Calculator {
 
                             powerTo = subEquation.list
                         }
-
 
                         val power = mutableListOf<Any>('(')
                         if (multiplier.isNotEmpty()) {
