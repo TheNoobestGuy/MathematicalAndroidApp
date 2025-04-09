@@ -19,6 +19,9 @@ data class UnknownEntity(var multiplier: Double? = null, var variable: Char? = n
     private var function: Char? = null
     private var functionContent: MutableList<Any>? = null
 
+    private var complexBase: MutableList<Any>? = null
+    private var complexPower: MutableList<Any>? = null
+
     fun isFunction(): Boolean {
         return function != null && functionContent != null
     }
@@ -30,6 +33,31 @@ data class UnknownEntity(var multiplier: Double? = null, var variable: Char? = n
 
     fun getFunction(): Char? {
         return function
+    }
+
+    fun isComplexPower(): Boolean {
+        return complexBase != null && complexPower != null
+    }
+
+    fun setComplexPower(complexBase: MutableList<Any>, complexPower: MutableList<Any>) {
+        this.complexBase = complexBase
+        this.complexPower = complexPower
+    }
+
+    fun getComplexPower(): MutableList<Any>? {
+        if (isComplexPower()) {
+            val result = mutableListOf<Any>()
+
+            result.add('(')
+            result.addAll(complexBase!!)
+            result.addAll(listOf(')', '^', '('))
+            result.addAll(complexPower!!)
+            result.add(')')
+
+            return result
+        }
+
+        return null
     }
 
     fun getFunctionContent(): MutableList<Any>?  {
@@ -186,6 +214,28 @@ data class UnknownEntity(var multiplier: Double? = null, var variable: Char? = n
                     if (this.functionContent!![i] != other.functionContent!![i]) {
                         return false
                     }
+                }
+            }
+            else {
+                return false
+            }
+        }
+        else if (this.isComplexPower() && other.isComplexPower()) {
+            if (this.complexBase!!.size == other.complexBase!!.size) {
+                if (this.complexPower!!.size == other.complexPower!!.size) {
+                    for (i in this.complexBase!!.indices) {
+                        if (this.complexBase!![i] != other.complexBase!![i]) {
+                            return false
+                        }
+                    }
+                    for (i in this.complexPower!!.indices) {
+                        if (this.complexPower!![i] != other.complexPower!![i]) {
+                            return false
+                        }
+                    }
+                }
+                else {
+                    return false
                 }
             }
             else {
@@ -2828,10 +2878,12 @@ class Calculator {
         val nestedDerivative = findDerivative(equation).second
         var getNested = true
 
-        if (nestedDerivative.isEmpty()) {
-            result.original = null
-            result.derivative = null
-            return result
+        if (function != '^') {
+            if (nestedDerivative.isEmpty()) {
+                result.original = null
+                result.derivative = null
+                return result
+            }
         }
 
         // Recognize function and apply proper derivative transformation
@@ -3211,17 +3263,20 @@ class Calculator {
         var power = false
         var equalSign = false
         var addBrackets = false
-        var multiplyDivide = false
+        var specialBrackets = false
 
         var i = iterator
         while (i < equation.size) {
             when(equation[i]) {
                 '^' ->  {
                     power = true
-                    if (resultEquation.isNotEmpty() && resultEquation.last() == ')') {
-                        if (entity.isEmpty()) {
-                            resultEquation.add(equation[i])
-                        }
+
+                    if (entity.isEmpty()) {
+                        resultEquation.add(0, '(')
+                        resultEquation.add(')')
+                        resultEquation.add(equation[i])
+                        addBrackets = true
+                        specialBrackets = true
                     }
                 }
                 '=' -> {
@@ -3250,6 +3305,12 @@ class Calculator {
                                 subEquation.first.add(')')
                             }
                         }
+                    }
+
+                    if (specialBrackets) {
+                        subEquation.first.add(0, '(')
+                        subEquation.first.add(')')
+                        specialBrackets = false
                     }
 
                     resultEquation.addAll(subEquation.first)
@@ -3291,7 +3352,6 @@ class Calculator {
 
                     stackForEquation.add(equation[i])
                     power = false
-                    multiplyDivide = true
                 }
                 '/' -> {
                     if (!entity.isEmpty()) {
@@ -3305,11 +3365,14 @@ class Calculator {
                     }
                     val buffer = groupUnknowns(connectEquation(stackForEquation), firstOperator = operatorFirst)
 
-                    resultEquation.addAll(buffer)
+                    buffer.add(0, '(')
+                    buffer.add(')')
 
+                    resultEquation.addAll(buffer)
                     resultEquation.add(equation[i])
+
+                    specialBrackets = true
                     power = false
-                    multiplyDivide = true
                 }
                 '+' -> {
                     if (!entity.isEmpty()) {
@@ -3324,7 +3387,6 @@ class Calculator {
                         stackForEquation.add(equation[i])
                     }
                     power = false
-                    multiplyDivide = false
                 }
                 '-' -> {
                     if (!entity.isEmpty()) {
@@ -3433,7 +3495,7 @@ class Calculator {
                         if (entity.multiplier != null) {
                             unknownEntity *= entity
                         }
-                        else if (entity.isFunction()) {
+                        else if (entity.isFunction() || entity.isComplexPower()) {
                             functions.add(entity)
                         }
                     }
@@ -3556,8 +3618,6 @@ class Calculator {
             for (function in firstList) {
                 commonFunctions[function] = commonFunctions.getOrDefault(function, 0) + 1
             }
-            println("allFunctions")
-            println(allFunctions)
 
             var ommit = true
             for (list in allFunctions) {
@@ -3632,11 +3692,16 @@ class Calculator {
                 }
             }
         }
-        else if (functionInEveryEntity && allFunctions.size == 1) {
+        else if (functionInEveryEntity && allFunctions.size == 1 && stackForEquation.size == 1) {
             val commonFunctionResult = mutableMapOf<MutableList<Any>, Pair<UnknownEntity, Int>>()
 
             for (function in allFunctions[0]) {
-                commonFunctionResult[function.getFunctionContent()!!] = Pair(function, commonFunctionResult.getOrDefault(function.getFunctionContent(), Pair(function, 0)).second + 1)
+                if (function.isFunction()) {
+                    commonFunctionResult[function.getFunctionContent()!!] = Pair(function, commonFunctionResult.getOrDefault(function.getFunctionContent(), Pair(function, 0)).second + 1)
+                }
+                else if (function.isComplexPower()) {
+                    commonFunctionResult[function.getComplexPower()!!] = Pair(function, commonFunctionResult.getOrDefault(function.getComplexPower(), Pair(function, 0)).second + 1)
+                }
             }
 
             // Add functions that are common to multiplier
@@ -3686,14 +3751,25 @@ class Calculator {
                                 functionIndex++
                             }
                         }
+                        else if (entity.isComplexPower()) {
+                            if (functionIndex < allFunctions.size) {
+                                if (allFunctions[functionIndex].isNotEmpty()) {
+                                    resultEquation.addAll(entity.getComplexPower()!!)
+                                }
+                                functionIndex++
+                            }
+                        }
                         // Append entity
                         else {
-                            entity.multiplier = fractionsList[entityIndex].numerator.toDouble()/fractionsList[entityIndex].denominator.toDouble()
-                            if (entity.variable != null && entity.powerTo != null && lowestUnknownPower != null) {
-                                entity.powerTo = entity.powerTo!! - lowestUnknownPower
+                            if (entityIndex < fractionsList.size) {
+                                entity.multiplier = fractionsList[entityIndex].numerator.toDouble()/fractionsList[entityIndex].denominator.toDouble()
+                                if (entity.variable != null && entity.powerTo != null && lowestUnknownPower != null) {
+                                    entity.powerTo = entity.powerTo!! - lowestUnknownPower
+                                }
+
+                                resultEquation.addAll(entity.getOriginal())
+                                entityIndex++
                             }
-                            resultEquation.addAll(entity.getOriginal())
-                            entityIndex++
                         }
                     }
                 }
@@ -3724,12 +3800,29 @@ class Calculator {
         val entity = UnknownEntity()
 
         var power = false
+        var multiply = true
+        var negative = false
 
         var i = iterator
         while (i < equation.size) {
             when(equation[i]) {
                 '^' ->  {
                     power = true
+
+                    if (entity.isEmpty()) {
+                        val subEquation = getNestedMultiplication(equation, i+1)
+                        i = subEquation.second
+
+                        val complexPower = UnknownEntity()
+                        val base = mutableListOf<Any>()
+                        base.addAll(resultWithMultiplication)
+
+                        complexPower.setComplexPower(base, subEquation.first)
+                        stackForEquation.add(complexPower)
+
+                        resultWithMultiplication.clear()
+                        continue
+                    }
                 }
                 '=' -> {
                     if (!entity.isEmpty()) {
@@ -3741,7 +3834,12 @@ class Calculator {
                 }
                 '(' -> {
                     if (stackForEquation.isNotEmpty() && stackForEquation.last() is Char) {
-                        resultWithMultiplication.add(stackForEquation.removeLast())
+                        if (stackForEquation.last() != '×') {
+                            resultWithMultiplication.add(stackForEquation.removeLast())
+                        }
+                        else if (resultWithMultiplication.isNotEmpty() && stackForEquation.last() == '×'){
+                            resultWithMultiplication.add(stackForEquation.removeLast())
+                        }
                     }
 
                     val subEquation = getNestedMultiplication(equation, i+1)
@@ -3756,6 +3854,87 @@ class Calculator {
                         entity.clear()
                     }
 
+                    val result = getBiggestMultiplicationAndConvertConstantsIntoFractions(getElementsOfEquation(stackForEquation))
+                    if ((result.first.size == 1 && result.first.last() != 1.0) || result.first.size > 1) {
+                        resultWithMultiplication.addAll(result.first)
+                    }
+
+                    if (result.second.isNotEmpty()) {
+                        val multiplication = mutableListOf<Any>()
+                        for (element in result.second) {
+                            if (element.isFunction()) {
+                                val function = element.getFunctionContent()
+                                if (element.powerTo != null) {
+                                    if (element.powerTo != 1.0) {
+                                        function!!.add('^')
+                                        function.add(element.powerTo!!)
+                                    }
+                                }
+                                multiplication.addAll(function!!)
+                            }
+                            else if (element.isComplexPower()) {
+                                multiplication.addAll(element.getComplexPower()!!)
+                            }
+                            else if (element.onlyNumber() && element.multiplier == 1.0){
+                               continue
+                            }
+                            else {
+                                multiplication.addAll(element.getOriginal())
+                            }
+                        }
+
+                        if (multiplication.isNotEmpty()) {
+                            if ((multiplication.size == 1 && multiplication.last() != 1.0) || multiplication.size > 1) {
+                                if (resultWithMultiplication.isEmpty()) {
+                                    resultWithMultiplication.addAll(multiplication)
+                                }
+                                else {
+                                    if (resultWithMultiplication.size == 1 && resultWithMultiplication.last() == 1.0) {
+                                        resultWithMultiplication.addAll(multiplication)
+                                    }
+                                    else {
+                                        resultWithMultiplication.add(0, '(')
+                                        resultWithMultiplication.addAll(0, multiplication)
+                                        resultWithMultiplication.add(')')
+                                    }
+                                }
+                            }
+                            else if (multiplication.size == 1 && multiplication.last() == 1.0 && resultWithMultiplication.isEmpty()) {
+                                resultWithMultiplication.addAll(multiplication)
+                            }
+                        }
+                        else {
+                            if (resultWithMultiplication.isEmpty()) {
+                                resultWithMultiplication.addAll(result.first)
+                            }
+                        }
+                    }
+                    else {
+                        if (resultWithMultiplication.isEmpty()) {
+                            resultWithMultiplication.addAll(result.first)
+                        }
+                    }
+
+                    if (negative) {
+                        resultWithMultiplication.add(0, '(')
+                        resultWithMultiplication.add(0, '-')
+                        resultWithMultiplication.add(')')
+                    }
+                    return Pair(resultWithMultiplication, i+1)
+                }
+                '×' -> {
+                    if (!entity.isEmpty()) {
+                        stackForEquation.add(entity.copy())
+                        entity.clear()
+                    }
+                    stackForEquation.add(equation[i])
+                    power = false
+                }
+                '/' -> {
+                    if (!entity.isEmpty()) {
+                        stackForEquation.add(entity.copy())
+                        entity.clear()
+                    }
                     val result = getBiggestMultiplicationAndConvertConstantsIntoFractions(getElementsOfEquation(stackForEquation))
                     resultWithMultiplication.addAll(result.first)
 
@@ -3772,46 +3951,57 @@ class Calculator {
                                 }
                                 multiplication.addAll(function!!)
                             }
+                            else if (element.isComplexPower()) {
+                                multiplication.addAll(element.getComplexPower()!!)
+                            }
                             else if (element.onlyNumber() && element.multiplier == 1.0){
-                               continue
+                                continue
                             }
                             else {
                                 multiplication.addAll(element.getOriginal())
                             }
                         }
                         if (multiplication.isNotEmpty()) {
-                            if (resultWithMultiplication.isEmpty()) {
-                                resultWithMultiplication.addAll(multiplication)
-                            }
-                            else {
-                                if (resultWithMultiplication.size == 1 && resultWithMultiplication.last() == 1.0) {
-                                    resultWithMultiplication.clear()
+                            if ((multiplication.size == 1 && multiplication.last() != 1.0) || multiplication.size > 1) {
+                                if (resultWithMultiplication.isEmpty()) {
                                     resultWithMultiplication.addAll(multiplication)
                                 }
                                 else {
-                                    resultWithMultiplication.add(0, '(')
-                                    resultWithMultiplication.addAll(0, multiplication)
-                                    resultWithMultiplication.add(')')
+                                    if (resultWithMultiplication.size == 1 && resultWithMultiplication.last() == 1.0) {
+                                        resultWithMultiplication.clear()
+                                        resultWithMultiplication.addAll(multiplication)
+                                    }
+                                    else {
+                                        resultWithMultiplication.add(0, '(')
+                                        resultWithMultiplication.addAll(0, multiplication)
+                                        resultWithMultiplication.add(')')
+                                    }
                                 }
+                            }
+                            else if (multiplication.size == 1 && multiplication.last() == 1.0 && resultWithMultiplication.isEmpty()) {
+                                resultWithMultiplication.addAll(multiplication)
+                            }
+                        }
+                        else {
+                            if (resultWithMultiplication.isEmpty()) {
+                                resultWithMultiplication.addAll(result.first)
                             }
                         }
                     }
+                    else {
+                        if (resultWithMultiplication.isEmpty()) {
+                            resultWithMultiplication.addAll(result.first)
+                        }
+                    }
+
+                    if (negative) {
+                        resultWithMultiplication.add(0, '(')
+                        resultWithMultiplication.add(0, '-')
+                        resultWithMultiplication.add(')')
+                    }
+
+                    resultWithMultiplication.add(equation[i])
                     stackForEquation.clear()
-                    return Pair(resultWithMultiplication, i+1)
-                }
-                '×' -> {
-                    if (!entity.isEmpty()) {
-                        stackForEquation.add(entity.copy())
-                        entity.clear()
-                    }
-                    stackForEquation.add(equation[i])
-                    power = false
-                }
-                '/' -> {
-                    if (!entity.isEmpty()) {
-                        stackForEquation.add(entity.copy())
-                        entity.clear()
-                    }
                     power = false
                 }
                 '+' -> {
@@ -3819,14 +4009,24 @@ class Calculator {
                         stackForEquation.add(entity.copy())
                         entity.clear()
                     }
+
                     stackForEquation.add(equation[i])
                     power = false
+                    multiply = false
                 }
                 '-' -> {
                     if (!entity.isEmpty()) {
                         stackForEquation.add(entity.copy())
                         entity.clear()
                     }
+
+                    if (stackForEquation.isNotEmpty() && stackForEquation.last() == '×') {
+                        stackForEquation.removeLast()
+                    }
+                    else {
+                        multiply = false
+                    }
+
                     stackForEquation.add(equation[i])
                     power = false
                 }
@@ -3842,6 +4042,10 @@ class Calculator {
                             if (stackForEquation.isNotEmpty() && stackForEquation.last() is Char) {
                                 if (stackForEquation.last() == '×') {
                                     stackForEquation.removeLast()
+                                }
+                                else if (stackForEquation.last() == '-' && multiply) {
+                                    stackForEquation.removeLast()
+                                    negative = true
                                 }
                             }
 
@@ -3897,6 +4101,9 @@ class Calculator {
                     }
                     multiplication.addAll(function!!)
                 }
+                else if (element.isComplexPower()) {
+                    multiplication.addAll(element.getComplexPower()!!)
+                }
                 else if (element.onlyNumber() && element.multiplier == 1.0){
                     continue
                 }
@@ -3905,24 +4112,49 @@ class Calculator {
                 }
             }
             if (multiplication.isNotEmpty()) {
-                if (resultWithMultiplication.isEmpty()) {
-                    resultWithMultiplication.addAll(multiplication)
-                }
-                else {
-                    if (resultWithMultiplication.size == 1 && resultWithMultiplication.last() == 1.0) {
-                        resultWithMultiplication.clear()
+                if ((multiplication.size == 1 && multiplication.last() != 1.0) || multiplication.size > 1) {
+                    if (resultWithMultiplication.isEmpty()) {
                         resultWithMultiplication.addAll(multiplication)
                     }
                     else {
-                        resultWithMultiplication.add(0, '(')
-                        resultWithMultiplication.addAll(0, multiplication)
-                        resultWithMultiplication.add(')')
+                        if (resultWithMultiplication.size == 1 && resultWithMultiplication.last() == 1.0) {
+                            resultWithMultiplication.clear()
+                            resultWithMultiplication.addAll(multiplication)
+                        }
+                        else {
+                            if (resultWithMultiplication.isNotEmpty() && resultWithMultiplication.first() is Char) {
+                                if (resultWithMultiplication.last() == '×') {
+                                    resultWithMultiplication.removeFirst()
+                                }
+                            }
+                            resultWithMultiplication.add(0, '(')
+                            resultWithMultiplication.addAll(0, multiplication)
+                            resultWithMultiplication.add(')')
+                        }
                     }
+                }
+                else if (multiplication.size == 1 && multiplication.last() == 1.0 && resultWithMultiplication.isEmpty()) {
+                    resultWithMultiplication.addAll(multiplication)
+                }
+            }
+            else {
+                if (resultWithMultiplication.isEmpty()) {
+                    resultWithMultiplication.addAll(result.first)
                 }
             }
         }
-        stackForEquation.clear()
-        println("END")
+        else {
+            if (resultWithMultiplication.isEmpty()) {
+                resultWithMultiplication.addAll(result.first)
+            }
+        }
+
+        if (negative) {
+            resultWithMultiplication.add(0, '(')
+            resultWithMultiplication.add(0, '-')
+            resultWithMultiplication.add(')')
+        }
+
         return Pair(resultWithMultiplication, i+1)
     }
 
@@ -4010,6 +4242,7 @@ class Calculator {
         println("With gcd out:")
         println(getNestedMultiplication(groupEquation(findDerivative(transformedEquation).second).first).first)
 
+        println("Derivative results:")
         val substitute = substituteVariableForDerivative(derivative, 1.0)
         val calc = calculateEquation(substitute, baseOfLogarithm = 10.0)
         println("For 1.0: $calc")
