@@ -743,7 +743,8 @@ class AdvancedKeyboard @JvmOverloads constructor(
                         if (textView.text.length - 1 == end) {
                             textView.text = textView.text.dropLast(1)
 
-                            while (textView.text.isNotEmpty() && textView.text.last().isLetter()) {
+                            while (textView.text.isNotEmpty() && textView.text.last().isLetter()
+                                && textView.text.last() != 'x' && textView.text.last() != 'y' && textView.text.last() != 'z') {
                                 textView.text = textView.text.dropLast(1)
                             }
                             deleted = true

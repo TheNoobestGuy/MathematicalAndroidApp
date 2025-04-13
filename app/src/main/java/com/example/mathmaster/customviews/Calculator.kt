@@ -16,54 +16,6 @@ import kotlin.math.tan
 data class Equations(var original: MutableList<Any>? = null, var derivative: MutableList<Any>? = null)
 
 data class UnknownEntity(var multiplier: Double? = null, var variable: Char? = null, var powerTo: Double? = null) {
-    private var function: Char? = null
-    private var functionContent: MutableList<Any>? = null
-
-    private var complexBase: MutableList<Any>? = null
-    private var complexPower: MutableList<Any>? = null
-
-    fun isFunction(): Boolean {
-        return function != null && functionContent != null
-    }
-
-    fun setFunction(function: Char, functionList: MutableList<Any>) {
-        this.function = function
-        this.functionContent = functionList
-    }
-
-    fun getFunction(): Char? {
-        return function
-    }
-
-    fun isComplexPower(): Boolean {
-        return complexBase != null && complexPower != null
-    }
-
-    fun setComplexPower(complexBase: MutableList<Any>, complexPower: MutableList<Any>) {
-        this.complexBase = complexBase
-        this.complexPower = complexPower
-    }
-
-    fun getComplexPower(): MutableList<Any>? {
-        if (isComplexPower()) {
-            val result = mutableListOf<Any>()
-
-            result.add('(')
-            result.addAll(complexBase!!)
-            result.addAll(listOf(')', '^', '('))
-            result.addAll(complexPower!!)
-            result.add(')')
-
-            return result
-        }
-
-        return null
-    }
-
-    fun getFunctionContent(): MutableList<Any>?  {
-        return functionContent
-    }
-
     fun isNotEmpty(): Boolean {
         return multiplier != null && variable != null && powerTo != null
     }
@@ -72,24 +24,31 @@ data class UnknownEntity(var multiplier: Double? = null, var variable: Char? = n
         return multiplier == null && variable == null && powerTo == null
     }
 
-    fun getOriginal(negative: Boolean = false): MutableList<Any> {
+    fun getOriginal(negative: Boolean = false, value: Boolean = false, withoutMultiplier: Boolean = false): MutableList<Any> {
         val original = mutableListOf<Any>()
+
+        if (value) {
+            return mutableListOf('x', '^', 0.0)
+        }
 
         if (isNotEmpty()) {
             if (powerTo!! == 0.0) {
-                if (negative) {
-                    original.add(-multiplier!!)
-                }
-                else {
-                    original.add(multiplier!!)
+                if (!withoutMultiplier) {
+                    if (negative) {
+                        original.add(-multiplier!!)
+                    }
+                    else {
+                        original.add(multiplier!!)
+                    }
                 }
             }
             else {
-                if (negative) {
-                    original.add(-multiplier!!)
-                }
-                else {
-                    original.add(multiplier!!)
+                if (!withoutMultiplier) {
+                    if (negative) {
+                        original.add(-multiplier!!)
+                    } else {
+                        original.add(multiplier!!)
+                    }
                 }
                 original.add(variable!!)
                 original.add('^')
@@ -98,25 +57,26 @@ data class UnknownEntity(var multiplier: Double? = null, var variable: Char? = n
         }
         else {
             if (multiplier != null) {
-                if (negative) {
-                    original.add(-multiplier!!)
-                }
-                else {
-                    original.add(multiplier!!)
+                if (!withoutMultiplier) {
+                    if (negative) {
+                        original.add(-multiplier!!)
+                    } else {
+                        original.add(multiplier!!)
+                    }
                 }
 
                 if (powerTo != null) {
-                    original.clear()
-                    if (negative) {
-                        original.add((-multiplier!!).pow(powerTo!!))
-                    }
-                    else {
-                        original.add(multiplier!!.pow(powerTo!!))
+                    if (!withoutMultiplier) {
+                        original.clear()
+                        if (negative) {
+                            original.add((-multiplier!!).pow(powerTo!!))
+                        } else {
+                            original.add(multiplier!!.pow(powerTo!!))
+                        }
                     }
                 }
             }
             else if (variable != null && powerTo != null) {
-                original.add(1.0)
                 original.add(variable!!)
                 original.add('^')
                 original.add(powerTo!!)
@@ -152,7 +112,35 @@ data class UnknownEntity(var multiplier: Double? = null, var variable: Char? = n
     }
 
     fun onlyNumber(): Boolean {
-        return multiplier != null && variable == null && powerTo == null
+        return multiplier != null && variable == null
+    }
+
+    override operator fun equals(other: Any?): Boolean {
+        if (other is UnknownEntity) {
+            return if (this.isNotEmpty() && other.isNotEmpty()) {
+                this.variable == other.variable && this.powerTo == other.powerTo
+            }
+            else if (this.onlyNumber() && other.onlyNumber()) {
+                true
+            }
+            else if (!this.isEmpty() && !other.isEmpty()) {
+                this.variable == null && other.variable == null
+            }
+            else {
+                false
+            }
+        }
+        else {
+            return false
+        }
+    }
+
+    operator fun plus(other: UnknownEntity): UnknownEntity {
+        return UnknownEntity(this.multiplier!! + other.multiplier!!, this.variable, this.powerTo)
+    }
+
+    operator fun minus(other: UnknownEntity): UnknownEntity {
+        return UnknownEntity(this.multiplier!! - other.multiplier!!, this.variable, this.powerTo)
     }
 
     operator fun times(other: UnknownEntity): UnknownEntity {
@@ -204,64 +192,69 @@ data class UnknownEntity(var multiplier: Double? = null, var variable: Char? = n
         }
     }
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is UnknownEntity) return false
-
-        if (this.isFunction() && other.isFunction()) {
-            if (this.functionContent!!.size == other.functionContent!!.size) {
-                for (i in this.functionContent!!.indices) {
-                    if (this.functionContent!![i] != other.functionContent!![i]) {
-                        return false
-                    }
-                }
-            }
-            else {
-                return false
-            }
-        }
-        else if (this.isComplexPower() && other.isComplexPower()) {
-            if (this.complexBase!!.size == other.complexBase!!.size) {
-                if (this.complexPower!!.size == other.complexPower!!.size) {
-                    for (i in this.complexBase!!.indices) {
-                        if (this.complexBase!![i] != other.complexBase!![i]) {
-                            return false
-                        }
-                    }
-                    for (i in this.complexPower!!.indices) {
-                        if (this.complexPower!![i] != other.complexPower!![i]) {
-                            return false
-                        }
-                    }
-                }
-                else {
-                    return false
-                }
-            }
-            else {
-                return false
-            }
-        }
-        else {
-            return false
-        }
-
-        return true
-    }
-
     override fun hashCode(): Int {
         var result = multiplier?.hashCode() ?: 0
         result = 31 * result + (variable?.hashCode() ?: 0)
         result = 31 * result + (powerTo?.hashCode() ?: 0)
-        result = 31 * result + (function?.hashCode() ?: 0)
-        result = 31 * result + (functionContent?.hashCode() ?: 0)
+        return result
+    }
+}
+
+data class Function(var content: MutableList<Any>, var powerTo: Double = 1.0, var count: Double = 1.0) {
+    private fun getInsideOfFunction(input: MutableList<Any>): MutableList<Any> {
+        val output = mutableListOf<Any>()
+
+        for (element in input) {
+            if (element is Fraction) {
+                val fraction = getInsideOfFunction(element.getFraction())
+                output.addAll(fraction)
+            }
+            else {
+                when (element) {
+                    is UnknownEntity -> output.addAll(element.getOriginal())
+                    is Function -> output.addAll(element.getFunction())
+                    else -> output.add(element)
+                }
+            }
+        }
+
+        return output
+    }
+
+    fun getFunction(): MutableList<Any> {
+        val function = mutableListOf<Any>()
+
+        if (powerTo == 0.0) {
+            function.add(1.0)
+        }
+        else {
+            function.addAll(getInsideOfFunction(content))
+            if (powerTo != 1.0) {
+                function.add('^')
+                function.add(powerTo)
+            }
+        }
+
+        return function
+    }
+
+    override operator fun equals(other: Any?): Boolean {
+        if (other is Function) {
+            return this.content == other.content
+        }
+        return false
+    }
+
+    override fun hashCode(): Int {
+        var result = content.hashCode()
+        result = 31 * result + powerTo.hashCode()
+        result = 31 * result + count.hashCode()
         return result
     }
 }
 
 class Calculator {
     private val matrixCalculator = MatrixCalculator()
-    private val fractions = Fractions()
 
     // Advance calculator
     private fun hasDecimal(num: Double): Boolean {
@@ -3239,7 +3232,7 @@ class Calculator {
         return false
     }
 
-    private fun equationHasOperatorsBrackets(equation: MutableList<Any>): Boolean {
+    private fun equationHasOperators(equation: MutableList<Any>): Boolean {
         val operators = listOf('+', '-', '×', '/')
 
         for (element in equation) {
@@ -3258,11 +3251,12 @@ class Calculator {
         val resultEquation = mutableListOf<Any>()
         val stackForEquation = mutableListOf<Any>()
 
-        val entity = UnknownEntity(null, null, null)
+        val entity = UnknownEntity()
 
         var power = false
         var equalSign = false
         var addBrackets = false
+        var additionalCloseBracket = false
         var specialBrackets = false
 
         var i = iterator
@@ -3300,20 +3294,29 @@ class Calculator {
                     // Check does function already has brackets and if not append them
                     if (!addBrackets && resultEquation.isNotEmpty() && resultEquation.last() is Char) {
                         if ((resultEquation.last() as Char).isLetter() || resultEquation.last() == '√') {
-                            if (equationNotInBrackets(subEquation.first)) {
+                            if (subEquation.first.isNotEmpty() && equationNotInBrackets(subEquation.first)) {
                                 subEquation.first.add(0, '(')
                                 subEquation.first.add(')')
                             }
                         }
                     }
 
-                    if (specialBrackets) {
+                    if (specialBrackets && subEquation.first.isNotEmpty() && equationNotInBrackets(subEquation.first)) {
                         subEquation.first.add(0, '(')
                         subEquation.first.add(')')
                         specialBrackets = false
                     }
+                    else {
+                        specialBrackets = false
+                    }
 
                     resultEquation.addAll(subEquation.first)
+
+                    if (additionalCloseBracket) {
+                        resultEquation.add(')')
+                        additionalCloseBracket = false
+                    }
+
                     continue
                 }
                 ')' ->  {
@@ -3329,15 +3332,19 @@ class Calculator {
                     val buffer = groupUnknowns(connectEquation(stackForEquation), firstOperator = operatorFirst)
 
                     // Append brackets for equations
-                    if (buffer.isNotEmpty() && equationHasOperatorsBrackets(buffer)) {
-                        buffer.add(0, '(')
-                        buffer.add(')')
-                        addBrackets = false
+                    if (buffer.isNotEmpty() && equationHasOperators(buffer)) {
+                        if (buffer.first() is Double || (buffer.first() is Char && (buffer.first() as Char).isLetter())) {
+                            buffer.add(0, '(')
+                            buffer.add(')')
+                        }
+                        else {
+                            addBrackets = true
+                        }
                     }
 
                     resultEquation.addAll(buffer)
 
-                    if (addBrackets) {
+                    if (addBrackets && resultEquation.isNotEmpty()) {
                         resultEquation.add(0, '(')
                         resultEquation.add(')')
                     }
@@ -3365,8 +3372,10 @@ class Calculator {
                     }
                     val buffer = groupUnknowns(connectEquation(stackForEquation), firstOperator = operatorFirst)
 
-                    buffer.add(0, '(')
-                    buffer.add(')')
+                    if (buffer.isNotEmpty()) {
+                        buffer.add(0, '(')
+                        buffer.add(')')
+                    }
 
                     resultEquation.addAll(buffer)
                     resultEquation.add(equation[i])
@@ -3411,6 +3420,10 @@ class Calculator {
                             }
 
                             if (stackForEquation.isNotEmpty() && stackForEquation.last() is Char) {
+                                if (stackForEquation.last() == '-') {
+                                    resultEquation.add('(')
+                                    additionalCloseBracket = true
+                                }
                                 resultEquation.add(stackForEquation.removeLast())
                             }
 
@@ -3449,359 +3462,55 @@ class Calculator {
         return Pair(resultEquation, 0)
     }
 
-    private fun getElementsOfEquation(stackForEquation: MutableList<Any>): MutableList<MutableList<Any>> {
-        val elements = mutableListOf<MutableList<Any>>()
-        var element = mutableListOf<Any>()
+    private fun calculateFractions(stackForEquation: MutableList<Any>): Fraction {
+        // Convert everything to fractions
+        var lastSign = '0'
+        val numerator = mutableListOf<Any>()
+        val denominator = mutableListOf<Any>()
 
-        for (entity in stackForEquation) {
-            when(entity) {
-                '+', '-'-> {
-                    if (element.isNotEmpty()) {
-                        elements.add(element)
-                        element = mutableListOf()
-                    }
-
-                    elements.add(mutableListOf(entity))
-                }
-                is UnknownEntity -> {
-                    element.add(entity)
-                }
-            }
-        }
-        if (element.isNotEmpty()) {
-            elements.add(element)
-        }
-
-        return elements
-    }
-
-    private fun getBiggestMultiplicationAndConvertConstantsIntoFractions(stackForEquation: MutableList<MutableList<Any>>): Pair<MutableList<Any>, MutableList<UnknownEntity>> {
-        val allEntities = mutableListOf<UnknownEntity>()
-        val allFunctions = mutableListOf<MutableList<UnknownEntity>>()
-
-        // Get all constant multipliers in stack
         for (element in stackForEquation) {
-            // If it is operator
-            if (element.size == 1 && element.last() is Char) {
-                continue
+            if (element is Char) {
+                if (element == '+' || element == '-') {
+                    when (lastSign) {
+                        '/' -> {
+                            denominator.add(element)
+                        }
+                        else -> {
+                            numerator.add(element)
+                        }
+                    }
+                }
+                else {
+                    lastSign = element
+                }
             }
-            // If it is element of equation
             else {
-                var unknownEntity = UnknownEntity(1.0,null,null)
-                val functions = mutableListOf<UnknownEntity>()
-
-                for (entity in element) {
-                    if (entity is UnknownEntity) {
-                        if (entity.multiplier != null) {
-                            unknownEntity *= entity
-                        }
-                        else if (entity.isFunction() || entity.isComplexPower()) {
-                            functions.add(entity)
-                        }
+                when (lastSign) {
+                    '/' -> {
+                        denominator.add(element)
                     }
-                }
-
-                allEntities.add(unknownEntity)
-                allFunctions.add(functions)
-            }
-        }
-
-        // Check does every entity contains unknown
-        var unknownInEveryEntity = false
-        for (entity in allEntities) {
-            if (entity.variable == null && !entity.isFunction()) {
-                unknownInEveryEntity = false
-                break
-            }
-            else if (entity.variable != null) {
-                unknownInEveryEntity = true
-            }
-        }
-
-        // Find the lowest degree unknown
-        var lowestMultiplier: Double? = null
-        var lowestUnknownPower: Double? = null
-        for (entity in allEntities) {
-            if (entity.multiplier != null) {
-                if (lowestMultiplier == null) {
-                    lowestMultiplier = entity.multiplier!!
-                }
-                else if (entity.multiplier!! < lowestMultiplier) {
-                    lowestMultiplier = entity.multiplier!!
-                }
-            }
-            if (unknownInEveryEntity) {
-                if (entity.variable != null && entity.powerTo != null) {
-                    if (lowestUnknownPower == null) {
-                        lowestUnknownPower = entity.powerTo!!
-                    }
-                    else if (entity.powerTo!! < lowestUnknownPower) {
-                        lowestUnknownPower = entity.powerTo!!
+                    else -> {
+                        numerator.add(element)
                     }
                 }
             }
         }
 
-        // Convert constants into fractions
-        val fractionsList = fractions.convertListIntoFractionsWithSameBase(allEntities)
-        val allConstants = fractions.getAllNumeratorsOfList(fractionsList)
-        var multiplier: Fraction
-
-        // If there is lowest possible multiplier find all divisors of it and find common multiplier for list
-        if (lowestMultiplier != null) {
-            multiplier = fractions.convertIntoFraction(lowestMultiplier, fractionsList.last().denominator)
-            val multiplicative = mutableListOf(1)
-
-            var multiplicator = 1
-            while (multiplicator <= multiplier.numerator/2) {
-                if (multiplier.numerator % multiplicator == 0) {
-                    multiplicative.add(multiplier.numerator/multiplicator)
-                }
-                multiplicator++
-            }
-
-            val commonDivisors = mutableListOf<Int>()
-            for (divisor in multiplicative) {
-                var isDivisor = true
-                for (constant in allConstants) {
-                    if (constant % divisor != 0) {
-                        isDivisor = false
-                        break
-                    }
-                }
-
-                if (isDivisor) {
-                    commonDivisors.add(divisor)
-                }
-            }
-
-            var biggestDivisor = 1
-            for (divisor in commonDivisors) {
-                if (divisor > biggestDivisor) {
-                    biggestDivisor = divisor
-                }
-            }
-
-            multiplier.numerator = biggestDivisor
+        val fraction = if (denominator.isNotEmpty()) {
+            Fraction(numerator, denominator)
+        } else {
+            Fraction(numerator)
         }
-        else {
-            multiplier = Fraction(1, 1)
-        }
+        fraction.setFraction()
 
-        // Divide every fraction by found multiplier
-        for (index in fractionsList.indices) {
-            fractionsList[index] = fractions.shortenFraction(fractionsList[index]/multiplier)
-        }
-
-        // Shorten fractions and multiplier
-        for (i in fractionsList.indices) {
-            fractionsList[i] = fractions.shortenFraction(fractionsList[i])
-        }
-        multiplier = fractions.shortenFraction(multiplier)
-
-        // Check does every entity contains at least one function
-        val multiplierFunctions = mutableListOf<Pair<UnknownEntity, Int>>()
-        var functionInEveryEntity = true
-        for (list in allFunctions) {
-            if (list.isEmpty()) {
-                functionInEveryEntity = false
-                break
-            }
-        }
-
-        // Check does every entity contains same functions, if they are add them to multiplier
-        if (functionInEveryEntity && allFunctions.size > 1) {
-            val commonFunctionResult = mutableMapOf<UnknownEntity, Pair<Int, Int>>()
-            val commonFunctions = mutableMapOf<UnknownEntity, Int>()
-
-            val firstList = allFunctions.first()
-            for (function in firstList) {
-                commonFunctions[function] = commonFunctions.getOrDefault(function, 0) + 1
-            }
-
-            var ommit = true
-            for (list in allFunctions) {
-                if (ommit) {
-                    ommit = false
-                    continue
-                }
-
-                val common = mutableMapOf<UnknownEntity, Int>()
-
-                for (functionA in list) {
-                    for ((functionB, v) in commonFunctions) {
-                        if (functionA == functionB) {
-                            common[functionA] = commonFunctions.getOrDefault(functionA, 0) + 1
-                        }
-                    }
-                }
-
-                if (common.isNotEmpty()) {
-                    for ((function, v) in commonFunctions) {
-                        if (common[function] != null && commonFunctions[function] != null) {
-                            if (common[function]!! <= commonFunctions[function]!!) {
-                                if (common[function]!! < commonFunctions[function]!!) {
-                                    val value = common[function]!!
-
-                                    commonFunctions[function] = value
-
-                                    if (commonFunctionResult[function] == null) {
-                                        commonFunctionResult[function] = Pair(value, 1)
-                                    }
-                                    else {
-                                        commonFunctionResult[function] = Pair(value, commonFunctionResult[function]!!.second + 1)
-                                    }
-                                }
-                                else {
-                                    if (commonFunctionResult[function] == null) {
-                                        commonFunctionResult[function] = Pair(v, 1)
-                                    }
-                                    else {
-                                        commonFunctionResult[function] = Pair(v, commonFunctionResult[function]!!.second + 1)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Add functions that are common to multiplier
-            for ((function, v) in commonFunctionResult) {
-                if (v.second == allFunctions.size) {
-                    multiplierFunctions.add(Pair(function, v.first))
-                }
-            }
-
-            // Remove multiplier functions from functions
-            for (list in allFunctions) {
-                var i = 0
-                for (function in multiplierFunctions) {
-                    var counter = function.second
-
-                    while (i < list.size) {
-                        if (list[i] == function.first) {
-                            if (counter > 0) {
-                                list.removeAt(i)
-                                counter--
-                                i--
-                            }
-                        }
-                        i++
-                    }
-                }
-            }
-        }
-        else if (functionInEveryEntity && allFunctions.size == 1 && stackForEquation.size == 1) {
-            val commonFunctionResult = mutableMapOf<MutableList<Any>, Pair<UnknownEntity, Int>>()
-
-            for (function in allFunctions[0]) {
-                if (function.isFunction()) {
-                    commonFunctionResult[function.getFunctionContent()!!] = Pair(function, commonFunctionResult.getOrDefault(function.getFunctionContent(), Pair(function, 0)).second + 1)
-                }
-                else if (function.isComplexPower()) {
-                    commonFunctionResult[function.getComplexPower()!!] = Pair(function, commonFunctionResult.getOrDefault(function.getComplexPower(), Pair(function, 0)).second + 1)
-                }
-            }
-
-            // Add functions that are common to multiplier
-            for ((key, v) in commonFunctionResult) {
-                multiplierFunctions.add(Pair(v.first, v.second))
-            }
-
-            // Remove multiplier functions from functions
-            for (list in allFunctions) {
-                var i = 0
-                for (function in multiplierFunctions) {
-                    var counter = function.second
-
-                    while (i < list.size) {
-                        if (list[i] == function.first) {
-                            if (counter > 0) {
-                                list.removeAt(i)
-                                counter--
-                                i--
-                            }
-                        }
-                        i++
-                    }
-                }
-            }
-        }
-
-        // Replace multipliers and get out of equation the lowest possible multiplication of unknown
-        val resultEquation = mutableListOf<Any>()
-        var entityIndex = 0
-        var functionIndex = 0
-        for (element in stackForEquation) {
-            // If it is operator
-            if (element.size == 1 && element.last() is Char) {
-                resultEquation.add(element.last())
-            }
-            // If it is element of equation
-            else {
-                for (entity in element) {
-                    if (entity is UnknownEntity) {
-                        // Append function
-                        if (entity.isFunction()) {
-                            if (functionIndex < allFunctions.size) {
-                                if (allFunctions[functionIndex].isNotEmpty()) {
-                                    resultEquation.addAll(entity.getFunctionContent()!!)
-                                }
-                                functionIndex++
-                            }
-                        }
-                        else if (entity.isComplexPower()) {
-                            if (functionIndex < allFunctions.size) {
-                                if (allFunctions[functionIndex].isNotEmpty()) {
-                                    resultEquation.addAll(entity.getComplexPower()!!)
-                                }
-                                functionIndex++
-                            }
-                        }
-                        // Append entity
-                        else {
-                            if (entityIndex < fractionsList.size) {
-                                entity.multiplier = fractionsList[entityIndex].numerator.toDouble()/fractionsList[entityIndex].denominator.toDouble()
-                                if (entity.variable != null && entity.powerTo != null && lowestUnknownPower != null) {
-                                    entity.powerTo = entity.powerTo!! - lowestUnknownPower
-                                }
-
-                                resultEquation.addAll(entity.getOriginal())
-                                entityIndex++
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // Get final multiplier
-        val resultMultiplier = mutableListOf<UnknownEntity>()
-
-        if (lowestUnknownPower != null) {
-            resultMultiplier.add(UnknownEntity(multiplier.numerator.toDouble()/multiplier.denominator.toDouble(), 'x', lowestUnknownPower))
-        }
-        else {
-            resultMultiplier.add(UnknownEntity(multiplier.numerator.toDouble()/multiplier.denominator.toDouble(), null, null))
-        }
-
-        for (function in multiplierFunctions) {
-            resultMultiplier.add(function.first)
-            resultMultiplier.last().powerTo = function.second.toDouble()
-        }
-
-        return Pair(resultEquation, resultMultiplier)
+        return fraction
     }
 
     private fun getNestedMultiplication(equation: MutableList<Any>, iterator: Int = 0): Pair<MutableList<Any>, Int> {
-        val resultWithMultiplication = mutableListOf<Any>()
         val stackForEquation = mutableListOf<Any>()
         val entity = UnknownEntity()
 
         var power = false
-        var multiply = true
-        var negative = false
 
         var i = iterator
         while (i < equation.size) {
@@ -3810,17 +3519,18 @@ class Calculator {
                     power = true
 
                     if (entity.isEmpty()) {
-                        val subEquation = getNestedMultiplication(equation, i+1)
+                        val subEquation = getNestedMultiplication(equation, i+2)
                         i = subEquation.second
 
-                        val complexPower = UnknownEntity()
-                        val base = mutableListOf<Any>()
-                        base.addAll(resultWithMultiplication)
+                        val function = mutableListOf<Any>('(')
+                        function.addAll(calculateFractions(stackForEquation).getFraction())
+                        function.addAll(listOf(')', '^', '('))
+                        function.addAll(calculateFractions(subEquation.first).getFraction())
+                        function.add(')')
 
-                        complexPower.setComplexPower(base, subEquation.first)
-                        stackForEquation.add(complexPower)
-
-                        resultWithMultiplication.clear()
+                        val functionObject = Function(function)
+                        stackForEquation.clear()
+                        stackForEquation.add(functionObject)
                         continue
                     }
                 }
@@ -3833,19 +3543,10 @@ class Calculator {
                     stackForEquation.add('-')
                 }
                 '(' -> {
-                    if (stackForEquation.isNotEmpty() && stackForEquation.last() is Char) {
-                        if (stackForEquation.last() != '×') {
-                            resultWithMultiplication.add(stackForEquation.removeLast())
-                        }
-                        else if (resultWithMultiplication.isNotEmpty() && stackForEquation.last() == '×'){
-                            resultWithMultiplication.add(stackForEquation.removeLast())
-                        }
-                    }
-
                     val subEquation = getNestedMultiplication(equation, i+1)
                     i = subEquation.second
 
-                    resultWithMultiplication.addAll(subEquation.first)
+                    stackForEquation.add(calculateFractions(subEquation.first))
                     continue
                 }
                 ')' ->  {
@@ -3854,177 +3555,25 @@ class Calculator {
                         entity.clear()
                     }
 
-                    val result = getBiggestMultiplicationAndConvertConstantsIntoFractions(getElementsOfEquation(stackForEquation))
-                    if ((result.first.size == 1 && result.first.last() != 1.0) || result.first.size > 1) {
-                        resultWithMultiplication.addAll(result.first)
-                    }
-
-                    if (result.second.isNotEmpty()) {
-                        val multiplication = mutableListOf<Any>()
-                        for (element in result.second) {
-                            if (element.isFunction()) {
-                                val function = element.getFunctionContent()
-                                if (element.powerTo != null) {
-                                    if (element.powerTo != 1.0) {
-                                        function!!.add('^')
-                                        function.add(element.powerTo!!)
-                                    }
-                                }
-                                multiplication.addAll(function!!)
-                            }
-                            else if (element.isComplexPower()) {
-                                multiplication.addAll(element.getComplexPower()!!)
-                            }
-                            else if (element.onlyNumber() && element.multiplier == 1.0){
-                               continue
-                            }
-                            else {
-                                multiplication.addAll(element.getOriginal())
-                            }
-                        }
-
-                        if (multiplication.isNotEmpty()) {
-                            if ((multiplication.size == 1 && multiplication.last() != 1.0) || multiplication.size > 1) {
-                                if (resultWithMultiplication.isEmpty()) {
-                                    resultWithMultiplication.addAll(multiplication)
-                                }
-                                else {
-                                    if (resultWithMultiplication.size == 1 && resultWithMultiplication.last() == 1.0) {
-                                        resultWithMultiplication.addAll(multiplication)
-                                    }
-                                    else {
-                                        resultWithMultiplication.add(0, '(')
-                                        resultWithMultiplication.addAll(0, multiplication)
-                                        resultWithMultiplication.add(')')
-                                    }
-                                }
-                            }
-                            else if (multiplication.size == 1 && multiplication.last() == 1.0 && resultWithMultiplication.isEmpty()) {
-                                resultWithMultiplication.addAll(multiplication)
-                            }
-                        }
-                        else {
-                            if (resultWithMultiplication.isEmpty()) {
-                                resultWithMultiplication.addAll(result.first)
-                            }
-                        }
-                    }
-                    else {
-                        if (resultWithMultiplication.isEmpty()) {
-                            resultWithMultiplication.addAll(result.first)
-                        }
-                    }
-
-                    if (negative) {
-                        resultWithMultiplication.add(0, '(')
-                        resultWithMultiplication.add(0, '-')
-                        resultWithMultiplication.add(')')
-                    }
-                    return Pair(resultWithMultiplication, i+1)
-                }
-                '×' -> {
-                    if (!entity.isEmpty()) {
-                        stackForEquation.add(entity.copy())
-                        entity.clear()
-                    }
-                    stackForEquation.add(equation[i])
-                    power = false
+                    return Pair(stackForEquation, i+1)
                 }
                 '/' -> {
-                    if (!entity.isEmpty()) {
-                        stackForEquation.add(entity.copy())
-                        entity.clear()
-                    }
-                    val result = getBiggestMultiplicationAndConvertConstantsIntoFractions(getElementsOfEquation(stackForEquation))
-                    resultWithMultiplication.addAll(result.first)
+                    val subEquation = getNestedMultiplication(equation, i+1)
+                    i = subEquation.second-1
 
-                    if (result.second.isNotEmpty()) {
-                        val multiplication = mutableListOf<Any>()
-                        for (element in result.second) {
-                            if (element.isFunction()) {
-                                val function = element.getFunctionContent()
-                                if (element.powerTo != null) {
-                                    if (element.powerTo != 1.0) {
-                                        function!!.add('^')
-                                        function.add(element.powerTo!!)
-                                    }
-                                }
-                                multiplication.addAll(function!!)
-                            }
-                            else if (element.isComplexPower()) {
-                                multiplication.addAll(element.getComplexPower()!!)
-                            }
-                            else if (element.onlyNumber() && element.multiplier == 1.0){
-                                continue
-                            }
-                            else {
-                                multiplication.addAll(element.getOriginal())
-                            }
-                        }
-                        if (multiplication.isNotEmpty()) {
-                            if ((multiplication.size == 1 && multiplication.last() != 1.0) || multiplication.size > 1) {
-                                if (resultWithMultiplication.isEmpty()) {
-                                    resultWithMultiplication.addAll(multiplication)
-                                }
-                                else {
-                                    if (resultWithMultiplication.size == 1 && resultWithMultiplication.last() == 1.0) {
-                                        resultWithMultiplication.clear()
-                                        resultWithMultiplication.addAll(multiplication)
-                                    }
-                                    else {
-                                        resultWithMultiplication.add(0, '(')
-                                        resultWithMultiplication.addAll(0, multiplication)
-                                        resultWithMultiplication.add(')')
-                                    }
-                                }
-                            }
-                            else if (multiplication.size == 1 && multiplication.last() == 1.0 && resultWithMultiplication.isEmpty()) {
-                                resultWithMultiplication.addAll(multiplication)
-                            }
-                        }
-                        else {
-                            if (resultWithMultiplication.isEmpty()) {
-                                resultWithMultiplication.addAll(result.first)
-                            }
-                        }
-                    }
-                    else {
-                        if (resultWithMultiplication.isEmpty()) {
-                            resultWithMultiplication.addAll(result.first)
-                        }
-                    }
+                    val divided = calculateFractions(stackForEquation)
+                    val divider = calculateFractions(subEquation.first)
 
-                    if (negative) {
-                        resultWithMultiplication.add(0, '(')
-                        resultWithMultiplication.add(0, '-')
-                        resultWithMultiplication.add(')')
-                    }
+                    val divideResult = divided / divider
 
-                    resultWithMultiplication.add(equation[i])
                     stackForEquation.clear()
-                    power = false
+                    stackForEquation.add(divideResult)
+                    continue
                 }
-                '+' -> {
+                '×', '+', '-' -> {
                     if (!entity.isEmpty()) {
                         stackForEquation.add(entity.copy())
                         entity.clear()
-                    }
-
-                    stackForEquation.add(equation[i])
-                    power = false
-                    multiply = false
-                }
-                '-' -> {
-                    if (!entity.isEmpty()) {
-                        stackForEquation.add(entity.copy())
-                        entity.clear()
-                    }
-
-                    if (stackForEquation.isNotEmpty() && stackForEquation.last() == '×') {
-                        stackForEquation.removeLast()
-                    }
-                    else {
-                        multiply = false
                     }
 
                     stackForEquation.add(equation[i])
@@ -4039,29 +3588,16 @@ class Calculator {
                                 entity.clear()
                             }
 
-                            if (stackForEquation.isNotEmpty() && stackForEquation.last() is Char) {
-                                if (stackForEquation.last() == '×') {
-                                    stackForEquation.removeLast()
-                                }
-                                else if (stackForEquation.last() == '-' && multiply) {
-                                    stackForEquation.removeLast()
-                                    negative = true
-                                }
-                            }
+                            val function = mutableListOf(equation[i], '(')
 
-                            val function = getNestedMultiplication(equation, i+2)
+                            val subEquation = getNestedMultiplication(equation, i+2)
+                            i = subEquation.second
 
-                            val functionContent = mutableListOf<Any>()
-                            functionContent.add(equation[i])
-                            functionContent.add('(')
-                            functionContent.addAll(function.first)
-                            functionContent.add(')')
+                            function.addAll(subEquation.first)
+                            function.add(')')
 
-                            val functionEntity = UnknownEntity()
-                            functionEntity.setFunction(equation[i] as Char, functionContent)
-                            stackForEquation.add(functionEntity)
-
-                            i = function.second
+                            val functionObject = Function(function)
+                            stackForEquation.add(functionObject)
                             continue
                         }
                         else {
@@ -4084,78 +3620,9 @@ class Calculator {
             stackForEquation.add(entity.copy())
             entity.clear()
         }
+        val result = calculateFractions(stackForEquation)
 
-        val result = getBiggestMultiplicationAndConvertConstantsIntoFractions(getElementsOfEquation(stackForEquation))
-        resultWithMultiplication.addAll(result.first)
-
-        if (result.second.isNotEmpty()) {
-            val multiplication = mutableListOf<Any>()
-            for (element in result.second) {
-                if (element.isFunction()) {
-                    val function = element.getFunctionContent()
-                    if (element.powerTo != null) {
-                        if (element.powerTo != 1.0) {
-                            function!!.add('^')
-                            function.add(element.powerTo!!)
-                        }
-                    }
-                    multiplication.addAll(function!!)
-                }
-                else if (element.isComplexPower()) {
-                    multiplication.addAll(element.getComplexPower()!!)
-                }
-                else if (element.onlyNumber() && element.multiplier == 1.0){
-                    continue
-                }
-                else {
-                    multiplication.addAll(element.getOriginal())
-                }
-            }
-            if (multiplication.isNotEmpty()) {
-                if ((multiplication.size == 1 && multiplication.last() != 1.0) || multiplication.size > 1) {
-                    if (resultWithMultiplication.isEmpty()) {
-                        resultWithMultiplication.addAll(multiplication)
-                    }
-                    else {
-                        if (resultWithMultiplication.size == 1 && resultWithMultiplication.last() == 1.0) {
-                            resultWithMultiplication.clear()
-                            resultWithMultiplication.addAll(multiplication)
-                        }
-                        else {
-                            if (resultWithMultiplication.isNotEmpty() && resultWithMultiplication.first() is Char) {
-                                if (resultWithMultiplication.last() == '×') {
-                                    resultWithMultiplication.removeFirst()
-                                }
-                            }
-                            resultWithMultiplication.add(0, '(')
-                            resultWithMultiplication.addAll(0, multiplication)
-                            resultWithMultiplication.add(')')
-                        }
-                    }
-                }
-                else if (multiplication.size == 1 && multiplication.last() == 1.0 && resultWithMultiplication.isEmpty()) {
-                    resultWithMultiplication.addAll(multiplication)
-                }
-            }
-            else {
-                if (resultWithMultiplication.isEmpty()) {
-                    resultWithMultiplication.addAll(result.first)
-                }
-            }
-        }
-        else {
-            if (resultWithMultiplication.isEmpty()) {
-                resultWithMultiplication.addAll(result.first)
-            }
-        }
-
-        if (negative) {
-            resultWithMultiplication.add(0, '(')
-            resultWithMultiplication.add(0, '-')
-            resultWithMultiplication.add(')')
-        }
-
-        return Pair(resultWithMultiplication, i+1)
+        return Pair(result.getFraction(), i+1)
     }
 
     private fun convertDerivativeForOutput(equation: MutableList<Any>): String {
@@ -4240,7 +3707,8 @@ class Calculator {
         println(groupEquation(findDerivative(transformedEquation).second).first)
 
         println("With gcd out:")
-        println(getNestedMultiplication(groupEquation(findDerivative(transformedEquation).second).first).first)
+        val withGCDs = getNestedMultiplication(groupEquation(findDerivative(transformedEquation).second).first).first
+        println(withGCDs)
 
         println("Derivative results:")
         val substitute = substituteVariableForDerivative(derivative, 1.0)
@@ -4259,6 +3727,6 @@ class Calculator {
         val calc3 = calculateEquation(substitute3, baseOfLogarithm = 10.0)
         println("For 0.5: $calc3")
 
-        return convertDerivativeForOutput(getNestedMultiplication(groupEquation(findDerivative(transformedEquation).second).first).first)
+        return convertDerivativeForOutput(withGCDs)
     }
 }
