@@ -3546,7 +3546,7 @@ class Calculator {
                     val subEquation = getNestedMultiplication(equation, i+1)
                     i = subEquation.second
 
-                    stackForEquation.add(calculateFractions(subEquation.first))
+                    stackForEquation.addAll(subEquation.first)
                     continue
                 }
                 ')' ->  {
@@ -3593,7 +3593,7 @@ class Calculator {
                             val subEquation = getNestedMultiplication(equation, i+2)
                             i = subEquation.second
 
-                            function.addAll(subEquation.first)
+                            function.addAll(calculateFractions(subEquation.first).getFraction())
                             function.add(')')
 
                             val functionObject = Function(function)
