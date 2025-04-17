@@ -180,7 +180,7 @@ data class UnknownEntity(var multiplier: Double? = null, var variable: Char? = n
         } else if (this.onlyNumber() && other.onlyNumber()) {
             UnknownEntity(this.multiplier!! / other.multiplier!!, null, null)
         } else if (this.isEmpty() && other.isNotEmpty()) {
-            UnknownEntity(other.multiplier!!, other.variable, (-other.powerTo!!))
+            UnknownEntity(other.multiplier!!, other.variable, -(other.powerTo!!))
         } else if (this.isNotEmpty() && other.isEmpty()) {
             UnknownEntity(this.multiplier, this.variable, this.powerTo)
         } else if (this.isEmpty() && other.onlyNumber()) {
@@ -201,18 +201,18 @@ data class UnknownEntity(var multiplier: Double? = null, var variable: Char? = n
 }
 
 data class Function(var content: MutableList<Any>, var powerTo: Double = 1.0, var count: Double = 1.0) {
-    private fun getInsideOfFunction(input: MutableList<Any>): MutableList<Any> {
+    private fun getInsideOfFunction(input: MutableList<Any>, key: Boolean = false): MutableList<Any> {
         val output = mutableListOf<Any>()
 
         for (element in input) {
             if (element is Fraction) {
-                val fraction = getInsideOfFunction(element.getFraction())
+                val fraction = getInsideOfFunction(element.getFraction(key = key), key = true)
                 output.addAll(fraction)
             }
             else {
                 when (element) {
                     is UnknownEntity -> output.addAll(element.getOriginal())
-                    is Function -> output.addAll(element.getFunction())
+                    is Function -> output.addAll(element.getFunction(key = key))
                     else -> output.add(element)
                 }
             }
@@ -221,17 +221,21 @@ data class Function(var content: MutableList<Any>, var powerTo: Double = 1.0, va
         return output
     }
 
-    fun getFunction(): MutableList<Any> {
+    fun getFunction(key: Boolean = false): MutableList<Any> {
         val function = mutableListOf<Any>()
 
-        if (powerTo == 0.0) {
-            function.add(1.0)
+        if (powerTo == 0.0 && !key) {
+            return getInsideOfFunction(mutableListOf(UnknownEntity(1.0)))
         }
         else {
-            function.addAll(getInsideOfFunction(content))
-            if (powerTo != 1.0) {
-                function.add('^')
-                function.add(powerTo)
+            function.addAll(getInsideOfFunction(content, key = key))
+            if (!key) {
+                if (powerTo != 1.0) {
+                    function.add('^')
+                    function.add('(')
+                    function.add(powerTo)
+                    function.add(')')
+                }
             }
         }
 
@@ -3227,9 +3231,6 @@ class Calculator {
 
         var power = false
         var equalSign = false
-        var addBrackets = false
-        var additionalCloseBracket = false
-        var specialBrackets = false
 
         var i = iterator
         while (i < equation.size) {
@@ -3381,6 +3382,10 @@ class Calculator {
     }
 
     private fun calculateFractions(stackForEquation: MutableList<Any>): Fraction {
+        if (stackForEquation.size == 1 && stackForEquation.last() is Fraction) {
+            return stackForEquation.last() as Fraction
+        }
+
         // Convert everything to fraction
         var lastSign = '0'
         val numerator = mutableListOf<Any>()
@@ -3413,9 +3418,6 @@ class Calculator {
             }
         }
 
-        println("INPUT")
-        println(numerator)
-        println(denominator)
         val fraction = if (denominator.isEmpty()) {
             Fraction(numerator)
         }
@@ -3424,15 +3426,12 @@ class Calculator {
         }
         fraction.setFraction()
 
-        println("OUTPUT")
-        println(fraction)
-
         return fraction
     }
 
-    private fun getNestedMultiplication(equation: MutableList<Any>, iterator: Int = 0): Pair<MutableList<Any>, Int> {
+    private fun getNestedMultiplication(equation: MutableList<Any>, iterator: Int = 0): Pair<Fraction, Int> {
         val stackForEquation = mutableListOf<Any>()
-        val entity = UnknownEntity()
+        var entity = UnknownEntity()
 
         var power = false
 
@@ -3448,11 +3447,19 @@ class Calculator {
 
                         val function = mutableListOf<Any>('(')
                         function.add(calculateFractions(stackForEquation))
-                        function.addAll(listOf(')', '^', '('))
-                        function.add(calculateFractions(subEquation.first))
+
+                        val powerTo = subEquation.first.isCalculable()
+
+                        if (powerTo.isEmpty()) {
+                            function.addAll(listOf(')', '^', '('))
+                            function.add(subEquation.first)
+                        }
                         function.add(')')
 
                         val functionObject = Function(function)
+                        if (powerTo.isNotEmpty()) {
+                            functionObject.powerTo = calculateEquation(powerTo, 0, 10.0).first
+                        }
                         stackForEquation.clear()
                         stackForEquation.add(functionObject)
                         continue
@@ -3460,48 +3467,62 @@ class Calculator {
                 }
                 '=' -> {
                     if (!entity.isEmpty()) {
-                        stackForEquation.add(entity.copy())
-                        entity.clear()
+                        stackForEquation.add(entity)
+                        entity = UnknownEntity()
                     }
 
                     stackForEquation.add('-')
                 }
                 '(' -> {
                     if (!entity.isEmpty()) {
-                        stackForEquation.add(entity.copy())
-                        entity.clear()
+                        stackForEquation.add(entity)
+                        entity = UnknownEntity()
                     }
 
                     val subEquation = getNestedMultiplication(equation, i+1)
                     i = subEquation.second
 
-                    stackForEquation.add(calculateFractions(subEquation.first))
+                    stackForEquation.add(subEquation.first)
                     continue
                 }
                 ')' ->  {
                     if (!entity.isEmpty()) {
-                        stackForEquation.add(entity.copy())
-                        entity.clear()
+                        stackForEquation.add(entity)
                     }
 
-                    return Pair(stackForEquation, i+1)
+                    return Pair(calculateFractions(stackForEquation), i+1)
                 }
-                '+', '-', '/', '×'-> {
+                '+', '-', '×' -> {
                     if (!entity.isEmpty()) {
-                        stackForEquation.add(entity.copy())
-                        entity.clear()
+                        stackForEquation.add(entity)
+                        entity = UnknownEntity()
                     }
 
                     stackForEquation.add(equation[i])
                     power = false
+                }
+                '/' -> {
+                    if (!entity.isEmpty()) {
+                        stackForEquation.add(entity)
+                        entity = UnknownEntity()
+                    }
+
+                    val subEquation = getNestedMultiplication(equation, i+2)
+                    i = subEquation.second
+
+                    stackForEquation.add('/')
+                    stackForEquation.add(subEquation.first)
+
+                    power = false
+                    continue
                 }
                 is Char -> {
                     // Check is it function and get it as UnknownEntity
                     if ((equation[i] as Char).isLetter() || equation[i] == '√') {
                         if (equation[i] != 'x' && equation[i] != 'y' && equation[i] != 'z') {
                             if (!entity.isEmpty()) {
-                                stackForEquation.add(entity.copy())
-                                entity.clear()
+                                stackForEquation.add(entity)
+                                entity = UnknownEntity()
                             }
 
                             val function = mutableListOf(equation[i], '(')
@@ -3509,7 +3530,7 @@ class Calculator {
                             val subEquation = getNestedMultiplication(equation, i+2)
                             i = subEquation.second
 
-                            function.add(calculateFractions(subEquation.first))
+                            function.add(subEquation.first)
                             function.add(')')
 
                             val functionObject = Function(function)
@@ -3533,13 +3554,10 @@ class Calculator {
             i++
         }
         if (!entity.isEmpty()) {
-            stackForEquation.add(entity.copy())
-            entity.clear()
+            stackForEquation.add(entity)
         }
 
-        println("END")
-        println(stackForEquation)
-        return Pair(calculateFractions(stackForEquation).getFraction(), i+1)
+        return Pair(calculateFractions(stackForEquation), i+1)
     }
 
     private fun convertDerivativeForOutput(equation: MutableList<Any>): String {
@@ -3625,7 +3643,7 @@ class Calculator {
 
         println("With gcd out:")
         val withGCDs = getNestedMultiplication(groupEquation(findDerivative(transformedEquation).second).first).first
-        println(withGCDs)
+        println(withGCDs.getFraction())
 
         println("Derivative results:")
         val substitute = substituteVariableForDerivative(derivative, 1.0)
@@ -3644,6 +3662,6 @@ class Calculator {
         val calc3 = calculateEquation(substitute3, baseOfLogarithm = 10.0)
         println("For 0.5: $calc3")
 
-        return convertDerivativeForOutput(withGCDs)
+        return convertDerivativeForOutput(withGCDs.getFraction())
     }
 }
