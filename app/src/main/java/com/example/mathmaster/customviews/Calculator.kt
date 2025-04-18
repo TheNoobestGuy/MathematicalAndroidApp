@@ -105,6 +105,18 @@ data class UnknownEntity(var multiplier: Double? = null, var variable: Char? = n
         return derivative
     }
 
+    fun getKey(value: Boolean = false): MutableList<Any> {
+        return getOriginal(value = value, withoutMultiplier = true)
+            .filter { it != '(' && it != ')' }.sortedWith(
+                compareBy<Any> {
+                    if (it is Char) it.code else 0
+                }.thenBy {
+                    if (it is Double) it else 1.0
+                }.thenBy {
+                    it::class.simpleName
+                }).toMutableList()
+    }
+
     fun clear() {
         multiplier = null
         variable = null
@@ -203,28 +215,56 @@ data class UnknownEntity(var multiplier: Double? = null, var variable: Char? = n
 data class Function(var content: MutableList<Any> = mutableListOf(), var powerTo: Double = 1.0, var count: Double = 1.0) {
     private fun getInsideOfFunction(
         input: MutableList<Any>,
-        key: Boolean = false
+        key: Boolean = false,
+        flatFunction: Boolean = false,
+        withMultiplication: Boolean = false
     ): MutableList<Any> {
         val output = mutableListOf<Any>()
 
         for (element in input) {
             if (element is Fraction) {
-                val fraction = getInsideOfFunction(element.getFraction(key = key, withMultiplication = true), key = true)
-                output.addAll(fraction)
+                if (key) {
+                    output.addAll(getInsideOfFunction(element.getKey()))
+                }
+                else {
+                    output.addAll(getInsideOfFunction(element.getFraction(flatFraction = flatFunction, withMultiplication = true), key = true))
+                }
             } else {
                 when (element) {
                     is UnknownEntity -> {
-                        output.add('(')
-                        output.addAll(element.getOriginal())
-                        output.add(')')
-                        output.add('×')
+                        if (withMultiplication) {
+                            output.add('(')
+                            if (key) {
+                                output.addAll(element.getKey())
+                            }
+                            else {
+                                output.addAll(element.getOriginal())
+                            }
+                            output.add(')')
+                            output.add('×')
+                        }
+                        else {
+                            if (key) {
+                                output.addAll(element.getKey())
+                            }
+                            else {
+                                output.addAll(element.getOriginal())
+                            }
+                        }
                     }
                     is Function -> {
-                        output.addAll(element.getFunction(key = key))
+                        if (key) {
+                            output.addAll(element.getKey())
+                        }
+                        else {
+                            output.addAll(element.getFunction(flatFunction = flatFunction))
+                        }
                     }
                     else -> {
-                        if (output.isNotEmpty() && output.last() == '×') {
-                            output.removeLast()
+                        if (withMultiplication) {
+                            if (output.isNotEmpty() && output.last() == '×') {
+                                output.removeLast()
+                            }
                         }
                         output.add(element)
                     }
@@ -240,7 +280,7 @@ data class Function(var content: MutableList<Any> = mutableListOf(), var powerTo
     }
 
     fun getKey(): MutableList<Any> {
-        return getInsideOfFunction(getFunction(key = true), key = true)
+        return getInsideOfFunction(getFunction(flatFunction = true, withMultiplication =  false), key = true, withMultiplication = false)
             .filter { it != '(' && it != ')' }.sortedWith(
             compareBy<Any> {
                 if (it is Char) it.code else 0
@@ -251,22 +291,26 @@ data class Function(var content: MutableList<Any> = mutableListOf(), var powerTo
             }).toMutableList()
     }
 
-    fun getFunction(key: Boolean = false, withoutCount: Boolean = false): MutableList<Any> {
+    fun getFunction(flatFunction: Boolean = false, withoutCount: Boolean = false, withMultiplication: Boolean = false): MutableList<Any> {
         val function = mutableListOf<Any>()
+        var index = 0
 
-        if (powerTo == 0.0 && !key) {
+        if (powerTo == 0.0 && !flatFunction) {
             return getInsideOfFunction(mutableListOf(UnknownEntity(1.0)))
         } else {
-            if (count != 1.0 && !key && !withoutCount) {
+            if (count != 1.0 && !flatFunction && !withoutCount) {
                 function.add('(')
                 function.add(count)
                 function.add(')')
                 function.add('×')
                 function.add('(')
+                index = function.size
             }
-            function.addAll(getInsideOfFunction(content, key = key))
-            if (!key) {
+            function.addAll(getInsideOfFunction(content, flatFunction = flatFunction, withMultiplication = withMultiplication))
+            if (!flatFunction) {
                 if (powerTo != 1.0) {
+                    function.add(index, '(')
+                    function.add(')')
                     function.add('^')
                     function.add('(')
                     function.add(powerTo)
@@ -274,7 +318,7 @@ data class Function(var content: MutableList<Any> = mutableListOf(), var powerTo
                 }
             }
 
-            if (count != 1.0 && !key && !withoutCount) {
+            if (count != 1.0 && !flatFunction && !withoutCount) {
                 function.add(')')
             }
         }
@@ -632,7 +676,7 @@ class Calculator {
                     }
                     '^' -> {
                         if (inRoot.last()) {
-                            if (additionalOpenedBrackets.last().isNotEmpty()) {
+                            while (additionalOpenedBrackets.last().isNotEmpty()) {
                                 transformedEquation.add(additionalOpenedBrackets.last().removeLast())
                             }
                             inRoot.removeLast()
@@ -1189,12 +1233,12 @@ class Calculator {
                     stackForEquation.add(equation[iterator])
                 }
                 '×' -> {
-                    if (!entity.isEmpty()) {
-                        stackForEquation.add(entity.copy())
-                        entity.clear()
-                    }
-
                     if (equation[iterator+1] == '(') {
+                        if (!entity.isEmpty()) {
+                            stackForEquation.add(entity.copy())
+                            entity.clear()
+                        }
+
                         val subEquation = transformEquationForSolvingUnknowns(equation, iterator+2)
                         iterator = subEquation.second
 
@@ -1206,7 +1250,6 @@ class Calculator {
                     else {
                         stackForEquation.add(equation[iterator])
                     }
-
                 }
                 '/' -> {
                     if (!entity.isEmpty()) {
@@ -1240,7 +1283,7 @@ class Calculator {
                                 calculateEquation(checkIsItCalculable, baseOfLogarithm = 10.0).first
                             is UnknownEntity -> (stackForEquation.last() as UnknownEntity).powerTo =
                                 calculateEquation(checkIsItCalculable, baseOfLogarithm = 10.0).first
-                            is Fraction -> (stackForEquation.last() as Function).powerTo =
+                            is Fraction -> (stackForEquation.last() as Fraction).powerTo =
                                 calculateEquation(checkIsItCalculable, baseOfLogarithm = 10.0).first
                         }
                     }
@@ -2814,6 +2857,12 @@ class Calculator {
 
     private fun calculateFractions(stackForEquation: MutableList<Any>, withoutGCD: Boolean = false): Fraction {
         if (stackForEquation.size == 1 && stackForEquation.last() is Fraction) {
+            if (withoutGCD) {
+                (stackForEquation.last() as Fraction).setWithoutGCDMode()
+            }
+            else {
+                (stackForEquation.last() as Fraction).setGCDMode()
+            }
             return stackForEquation.last() as Fraction
         }
 
@@ -2856,11 +2905,13 @@ class Calculator {
         else {
             Fraction(numerator, denominator)
         }
+
         if (withoutGCD) {
             fraction.setWithoutGCDMode()
             fraction.setFraction()
         }
         else {
+            fraction.setGCDMode()
             fraction.setFraction()
         }
 
