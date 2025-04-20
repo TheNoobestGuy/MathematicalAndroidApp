@@ -65,7 +65,7 @@ data class UnknownEntity(var multiplier: Double? = null, var variable: Char? = n
                     }
                 }
 
-                if (powerTo != null) {
+                if (powerTo != null && powerTo != 0.0) {
                     if (!withoutMultiplier) {
                         original.clear()
                         if (negative) {
@@ -76,7 +76,7 @@ data class UnknownEntity(var multiplier: Double? = null, var variable: Char? = n
                     }
                 }
             }
-            else if (variable != null && powerTo != null) {
+            else if (variable != null && powerTo != null && powerTo != 0.0) {
                 original.add(variable!!)
                 original.add('^')
                 original.add(powerTo!!)
@@ -125,6 +125,14 @@ data class UnknownEntity(var multiplier: Double? = null, var variable: Char? = n
 
     fun onlyNumber(): Boolean {
         return multiplier != null && (variable == null || powerTo == 0.0)
+    }
+
+    fun isOne(): Boolean {
+        return this.multiplier == 1.0 && (this.variable == null || (this.powerTo == null || this.powerTo == 0.0))
+    }
+
+    fun isZero(): Boolean {
+        return this.multiplier == 0.0
     }
 
     override operator fun equals(other: Any?): Boolean {
@@ -227,7 +235,7 @@ data class Function(var content: MutableList<Any> = mutableListOf(), var powerTo
                     output.addAll(getInsideOfFunction(element.getKey()))
                 }
                 else {
-                    output.addAll(getInsideOfFunction(element.getFraction(flatFraction = flatFunction, withMultiplication = true), key = true))
+                    output.addAll(getInsideOfFunction(element.getFraction(flatFraction = flatFunction, withMultiplication = withMultiplication), key = true, withMultiplication = withMultiplication))
                 }
             } else {
                 when (element) {
@@ -257,7 +265,7 @@ data class Function(var content: MutableList<Any> = mutableListOf(), var powerTo
                             output.addAll(element.getKey())
                         }
                         else {
-                            output.addAll(element.getFunction(flatFunction = flatFunction))
+                            output.addAll(element.getFunction(flatFunction = flatFunction, withMultiplication = withMultiplication))
                         }
                     }
                     else -> {
@@ -279,6 +287,47 @@ data class Function(var content: MutableList<Any> = mutableListOf(), var powerTo
         return output
     }
 
+    private fun equationHasOperators(equation: MutableList<Any>): Boolean {
+        val operators = listOf('+', '-')
+
+        for (element in equation) {
+            if (element is Char) {
+                for (operator in operators)  {
+                    if (element == operator) {
+                        return true
+                    }
+                }
+            }
+        }
+
+        return false
+    }
+
+    init {
+        cleanFunction()
+    }
+
+    fun cleanFunction() {
+        val toRemove = mutableListOf<Any>()
+
+        if (!equationHasOperators(content)) {
+            for (i in content) {
+                when (i) {
+                    is Fraction -> if (i.isEmpty()) toRemove.add(i)
+                    is Function -> if (!i.isNotEmpty()) toRemove.add(i)
+                    is UnknownEntity -> {
+                        if (i.isEmpty()) toRemove.add(i)
+                        else if (i.isOne()) toRemove.add(i)
+                    }
+                }
+            }
+        }
+
+        for (i in toRemove) {
+            content.remove(i)
+        }
+    }
+
     fun getKey(): MutableList<Any> {
         return getInsideOfFunction(getFunction(flatFunction = true, withMultiplication =  false), key = true, withMultiplication = false)
             .filter { it != '(' && it != ')' }.sortedWith(
@@ -296,7 +345,7 @@ data class Function(var content: MutableList<Any> = mutableListOf(), var powerTo
         var index = 0
 
         if (powerTo == 0.0 && !flatFunction) {
-            return getInsideOfFunction(mutableListOf(UnknownEntity(1.0)))
+            return getInsideOfFunction(mutableListOf(UnknownEntity(1.0)), withMultiplication = withMultiplication)
         } else {
             if (count != 1.0 && !flatFunction && !withoutCount) {
                 function.add('(')
@@ -332,7 +381,7 @@ data class Function(var content: MutableList<Any> = mutableListOf(), var powerTo
 
     override operator fun equals(other: Any?): Boolean {
         if (other is Function) {
-            return this.getFunction(withoutCount = true) == other.getFunction(withoutCount = true) && this.powerTo == other.powerTo
+            return this.getKey() == other.getKey() && this.powerTo == other.powerTo
         }
         return false
     }
@@ -1207,11 +1256,6 @@ class Calculator {
                         transformEquationForSolvingUnknowns(equation, iterator + 1, entity)
                     iterator = subEquation.second
 
-                    if (!entity.isEmpty()) {
-                        stackForEquation.add(entity.copy())
-                        entity.clear()
-                    }
-
                     val fraction = calculateFractions(subEquation.first, withoutGCD = true)
                     stackForEquation.add(fraction)
                     continue
@@ -1233,23 +1277,12 @@ class Calculator {
                     stackForEquation.add(equation[iterator])
                 }
                 '×' -> {
-                    if (equation[iterator+1] == '(') {
-                        if (!entity.isEmpty()) {
-                            stackForEquation.add(entity.copy())
-                            entity.clear()
-                        }
-
-                        val subEquation = transformEquationForSolvingUnknowns(equation, iterator+2)
-                        iterator = subEquation.second
-
-                        val base = calculateFractions(stackForEquation, withoutGCD = true)
-                        stackForEquation.clear()
-                        stackForEquation.add(base * calculateFractions(subEquation.first, withoutGCD = true))
-                        continue
+                    if (!entity.isEmpty()) {
+                        stackForEquation.add(entity.copy())
+                        entity.clear()
                     }
-                    else {
-                        stackForEquation.add(equation[iterator])
-                    }
+
+                    stackForEquation.add(equation[iterator])
                 }
                 '/' -> {
                     if (!entity.isEmpty()) {
@@ -1257,25 +1290,29 @@ class Calculator {
                         entity.clear()
                     }
 
-                    val subEquation = transformEquationForSolvingUnknowns(equation, iterator+2)
-                    iterator = subEquation.second
-
-                    val base = calculateFractions(stackForEquation, withoutGCD = true)
-                    stackForEquation.clear()
-                    stackForEquation.add(base / calculateFractions(subEquation.first, withoutGCD = true))
-                    continue
+                    if (equation[iterator+1] == '(') {
+                        val subEquation = transformEquationForSolvingUnknowns(equation, iterator+2, entity)
+                        iterator = subEquation.second
+                        val base = calculateFractions(stackForEquation, withoutGCD = true)
+                        stackForEquation.clear()
+                        stackForEquation.add(base / calculateFractions(subEquation.first, withoutGCD = true))
+                        continue
+                    }
+                    else {
+                        stackForEquation.add(equation[iterator])
+                    }
                 }
                 '^' -> {
-                    val subEquation = transformEquationForSolvingUnknowns(equation, iterator+2)
-                    iterator = subEquation.second
-
-                    // Check are brackets calculable
-                    val checkIsItCalculable = Fraction(subEquation.first).isCalculable()
-
                     if (!entity.isEmpty()) {
                         stackForEquation.add(entity.copy())
                         entity.clear()
                     }
+
+                    val subEquation = transformEquationForSolvingUnknowns(equation, iterator+2, entity)
+                    iterator = subEquation.second
+
+                    // Check are brackets calculable
+                    val checkIsItCalculable = Fraction(subEquation.first).isCalculable()
 
                     if (checkIsItCalculable.isNotEmpty()) {
                         when (stackForEquation.last()) {
@@ -1306,7 +1343,7 @@ class Calculator {
                 is Char -> {
                     if ((equation[iterator] as Char).isLetter() || equation[iterator] == '√') {
                         if (equation[iterator] != 'x' && equation[iterator] != 'y' && equation[iterator] != 'z') {
-                            var count = 1.0
+                            var count: Double? = null
                             if (!entity.isEmpty()) {
                                 if (entity.onlyNumber()) {
                                     count = entity.multiplier!!
@@ -1326,7 +1363,9 @@ class Calculator {
                             function.add(')')
 
                             val functionObject = Function(function)
-                            functionObject.count = count
+                            if (count != null) {
+                                functionObject.count = count
+                            }
                             stackForEquation.add(functionObject)
                             continue
                         }
@@ -1347,10 +1386,17 @@ class Calculator {
                         }
                     }
                 }
-             }
+            }
 
             iterator++
         }
+        if (!entity.isEmpty()) {
+            stackForEquation.add(entity.copy())
+            entity.clear()
+        }
+
+        println("END")
+        println(stackForEquation)
 
         return Pair(calculateFractions(stackForEquation, withoutGCD = true).getFraction(withMultiplication = true), iterator)
     }
@@ -2855,6 +2901,10 @@ class Calculator {
         return Pair(resultEquation, 0)
     }
 
+    private fun itIsNotFraction(input: MutableList<Any>): Boolean {
+        return !(input.size == 1 && input.last() is Fraction)
+    }
+
     private fun calculateFractions(stackForEquation: MutableList<Any>, withoutGCD: Boolean = false): Fraction {
         if (stackForEquation.size == 1 && stackForEquation.last() is Fraction) {
             if (withoutGCD) {
@@ -2867,9 +2917,11 @@ class Calculator {
         }
 
         // Convert everything to fraction
-        var lastSign = '0'
+        var lastSign = '×'
         val numerator = mutableListOf<Any>()
         val denominator = mutableListOf<Any>()
+        var skipNumerator = false
+        var skipDenominator = false
 
         for (element in stackForEquation) {
             if (element is Char) {
@@ -2877,9 +2929,11 @@ class Calculator {
                     when (lastSign) {
                         '/' -> {
                             denominator.add(element)
+                            skipDenominator = false
                         }
-                        else -> {
+                        '×' -> {
                             numerator.add(element)
+                            skipNumerator = false
                         }
                     }
                 }
@@ -2890,17 +2944,127 @@ class Calculator {
             else {
                 when (lastSign) {
                     '/' -> {
-                        denominator.add(element)
+                        if (!skipDenominator) {
+                            when (element) {
+                                is Fraction-> {
+                                    if (element.isZero()) {
+                                        while (denominator.isNotEmpty() && denominator.last() != '+' && denominator.last() != '-') {
+                                            denominator.removeLast()
+                                        }
+                                        if (denominator.isNotEmpty() && denominator.last() is Char) {
+                                            denominator.removeLast()
+                                        }
+                                        skipDenominator = true
+                                    }
+                                    else if (element.isOne()) {
+                                        if (denominator.isNotEmpty() && (denominator.last() == '+' || denominator.last() == '-')) {
+                                            denominator.add(element)
+                                        }
+                                        else if (denominator.isEmpty()) {
+                                            denominator.add(element)
+                                        }
+                                    }
+                                    else {
+                                        denominator.add(element)
+                                    }
+                                }
+                                is UnknownEntity -> {
+                                    if (element.isZero()) {
+                                        while (denominator.isNotEmpty() && denominator.last() != '+' && denominator.last() != '-') {
+                                            denominator.removeLast()
+                                        }
+                                        if (denominator.isNotEmpty() && denominator.last() is Char) {
+                                            denominator.removeLast()
+                                        }
+                                        skipDenominator = true
+                                    }
+                                    else if (element.isOne()) {
+                                        if (denominator.isNotEmpty() && (denominator.last() == '+' || denominator.last() == '-')) {
+                                            denominator.add(element.copy())
+                                        }
+                                        else if (denominator.isEmpty()) {
+                                            denominator.add(element.copy())
+                                        }
+                                    }
+                                    else {
+                                        denominator.add(element.copy())
+                                    }
+                                }
+                                is Function -> {
+                                    denominator.add(element)
+                                }
+                            }
+                        }
                     }
-                    else -> {
-                        numerator.add(element)
+                    '×' -> {
+                        if (!skipNumerator) {
+                            when (element) {
+                                is Fraction -> {
+                                    if (element.isZero()) {
+                                        while (numerator.isNotEmpty() && numerator.last() != '+' && numerator.last() != '-') {
+                                            numerator.removeLast()
+                                        }
+                                        if (numerator.isNotEmpty() && numerator.last() is Char) {
+                                            numerator.removeLast()
+                                        }
+                                        skipNumerator = true
+                                    } else if (element.isOne()) {
+                                        if (numerator.isNotEmpty() && (numerator.last() == '+' || numerator.last() == '-')) {
+                                            numerator.add(element)
+                                        }
+                                        else if (numerator.isEmpty()) {
+                                            numerator.add(element)
+                                        }
+                                    } else {
+                                        numerator.add(element)
+                                    }
+                                }
+                                is UnknownEntity -> {
+                                    if (element.isZero()) {
+                                        while (numerator.isNotEmpty() && numerator.last() != '+' && numerator.last() != '-') {
+                                            numerator.removeLast()
+                                        }
+                                        if (numerator.isNotEmpty() && numerator.last() is Char) {
+                                            numerator.removeLast()
+                                        }
+                                        skipNumerator = true
+                                    } else if (element.isOne()) {
+                                        if (numerator.isNotEmpty() && (numerator.last() == '+' || numerator.last() == '-')) {
+                                            numerator.add(element.copy())
+                                        }
+                                        else if (numerator.isEmpty()) {
+                                            numerator.add(element.copy())
+                                        }
+                                    } else {
+                                        numerator.add(element.copy())
+                                    }
+                                }
+                                is Function -> {
+                                    numerator.add(element)
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
+        if (numerator.isNotEmpty() && numerator.last() is Char) {
+            numerator.removeLast()
+        }
+        if (denominator.isNotEmpty() && denominator.last() is Char) {
+            denominator.removeLast()
+        }
 
         val fraction = if (denominator.isEmpty()) {
-            Fraction(numerator)
+            if (numerator.isEmpty()) {
+                Fraction(mutableListOf(UnknownEntity(0.0)))
+            }
+            else if (itIsNotFraction(numerator)) {
+                Fraction(numerator)
+            }
+            else {
+                numerator.last() as Fraction
+            }
         }
         else {
             Fraction(numerator, denominator)
@@ -2959,7 +3123,6 @@ class Calculator {
                         stackForEquation.add(entity)
                         entity = UnknownEntity()
                     }
-
                     stackForEquation.add('-')
                 }
                 '(' -> {
@@ -2981,7 +3144,16 @@ class Calculator {
 
                     return Pair(stackForEquation, i+1)
                 }
-                '+', '-', '×' -> {
+                '+', '-' -> {
+                    if (!entity.isEmpty()) {
+                        stackForEquation.add(entity)
+                        entity = UnknownEntity()
+                    }
+
+                    stackForEquation.add(equation[i])
+                    power = false
+                }
+                '×' -> {
                     if (!entity.isEmpty()) {
                         stackForEquation.add(entity)
                         entity = UnknownEntity()
@@ -3046,6 +3218,8 @@ class Calculator {
             stackForEquation.add(entity)
         }
 
+        println("END")
+        println(stackForEquation)
         return Pair(calculateFractions(stackForEquation, withoutGCD = withoutGCD).getFraction(withMultiplication = withMultiplication), i+1)
     }
 
@@ -3135,7 +3309,6 @@ class Calculator {
 
         println("Derivative results:")
         val substitute = substituteVariableForDerivative(derivative, 1.0)
-        println(substitute)
         val calc = calculateEquation(substitute, baseOfLogarithm = 10.0)
         println("For 1.0: $calc")
 
@@ -3150,6 +3323,13 @@ class Calculator {
         val substitute3 = substituteVariableForDerivative(derivative, 0.5)
         val calc3 = calculateEquation(substitute3, baseOfLogarithm = 10.0)
         println("For 0.5: $calc3")
+
+        // TEST of gcd
+        val test = substituteVariableForDerivative(withGCDs, 1.0)
+        val testCalc = calculateEquation(test, baseOfLogarithm = 10.0)
+        println("Test of gcd:")
+        println(test)
+        println("For 1.0: $testCalc")
 
         return convertDerivativeForOutput(withGCDs)
     }
