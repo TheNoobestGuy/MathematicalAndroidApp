@@ -204,7 +204,7 @@ data class UnknownEntity(var multiplier: Double? = null, var variable: Char? = n
         } else if (this.isNotEmpty() && other.isEmpty()) {
             UnknownEntity(this.multiplier, this.variable, this.powerTo)
         } else if (this.isEmpty() && other.onlyNumber()) {
-            UnknownEntity((-other.multiplier!!), other.variable, other.powerTo)
+            UnknownEntity(other.multiplier!!, other.variable, other.powerTo)
         } else if (this.onlyNumber() && other.isEmpty()) {
             UnknownEntity(this.multiplier, this.variable, this.powerTo)
         } else {
@@ -725,10 +725,10 @@ class Calculator {
                     }
                     '^' -> {
                         if (inRoot.last()) {
-                            while (additionalOpenedBrackets.last().isNotEmpty()) {
+                            if (additionalOpenedBrackets.last().isNotEmpty()) {
                                 transformedEquation.add(additionalOpenedBrackets.last().removeLast())
+                                inRoot.removeLast()
                             }
-                            inRoot.removeLast()
                         }
 
                         if (inDegree) {
