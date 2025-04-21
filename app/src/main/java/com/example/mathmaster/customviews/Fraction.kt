@@ -589,8 +589,8 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
         if (denominator != null) shortenEveryFractionDenominator()
         if (denominator != null) shortenNumeratorWithDenominator()
 
-//        cleanNumeratorMaps()
-//        cleanDenominatorMaps()
+       cleanNumeratorMaps()
+       cleanDenominatorMaps()
 
 //        println("AFTER SHORTENING")
 //        println(this)
@@ -1391,6 +1391,7 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                                 if (commonsToFind[key]!! > 0) {
                                     if ((numeratorElements[index][element] as Function).powerTo == 0.0) {
                                         numeratorOutput.add(numeratorElements[index].removeAt(element))
+                                        (numeratorOutput.last() as Function).powerTo = 1.0
                                         element--
                                     }
                                     else {
@@ -1413,6 +1414,7 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                                 if (commonsToFind[key]!! > 0) {
                                     if ((numeratorElements[index][element] as Fraction).powerTo == 0.0) {
                                         numeratorOutput.add(numeratorElements[index].removeAt(element))
+                                        (numeratorOutput.last() as Fraction).powerTo = 1.0
                                         element--
                                     }
                                     else {
@@ -1714,6 +1716,7 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                                 if (commonsToFind[key]!! > 0) {
                                     if ((denominatorElements[index][element] as Function).powerTo == 0.0) {
                                         denominatorOutput.add(denominatorElements[index].removeAt(element))
+                                        (denominatorOutput.last() as Function).powerTo = 1.0
                                         element--
                                     }
                                     else {
@@ -1735,6 +1738,7 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                                 if (commonsToFind[key]!! > 0) {
                                     if ((denominatorElements[index][element] as Fraction).powerTo == 0.0) {
                                         denominatorOutput.add(denominatorElements[index].removeAt(element))
+                                        (denominatorOutput.last() as Fraction).powerTo = 1.0
                                         element--
                                     }
                                     else {
@@ -2459,8 +2463,6 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                 }
                 is Char -> {
                     if (element == '+' || element == '-') {
-                        println("pieceOfEquation")
-                        println(pieceOfEquation)
                         grouped.addAll(pieceOfEquation)
                         pieceOfEquation.clear()
                         grouped.add(element)
