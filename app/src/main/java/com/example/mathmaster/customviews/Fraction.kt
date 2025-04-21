@@ -1614,15 +1614,14 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                 }
             }
 
-            // Apply GCD to all multipliers
-            for (fraction in allNumeratorMultipliers) {
-                val newValue =  (fraction.numerator.last() as UnknownEntity).multiplier?.times(decimalPoint.toDouble())
-                if (newValue != null) {
-                    (fraction.numerator.last() as UnknownEntity).multiplier = newValue / gcd.toDouble()
-                }
-            }
-
             if (!(gcd == 1 && decimalPoint == 1)) {
+                // Apply GCD to all multipliers
+                for (fraction in allNumeratorMultipliers) {
+                    val newValue =  (fraction.numerator.last() as UnknownEntity).multiplier?.times(decimalPoint.toDouble())
+                    if (newValue != null) {
+                        (fraction.numerator.last() as UnknownEntity).multiplier = newValue / gcd.toDouble()
+                    }
+                }
                 var i = 0
                 var multiplier = 0
                 while (i < numeratorElements.size) {
@@ -1674,7 +1673,7 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
             }
             else {
                 if (entity.powerTo != 0.0) {
-                    numeratorOutput.add(UnknownEntity(entity.multiplier, entity.variable, entity.powerTo))
+                    numeratorOutput.add(UnknownEntity(1.0, entity.variable, entity.powerTo))
                 }
             }
         }
@@ -1953,15 +1952,15 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                 }
             }
 
-            // Apply GCD to all multipliers
-            for (fraction in allDenominatorMultipliers) {
-                val newValue =  (fraction.numerator.last() as UnknownEntity).multiplier?.times(decimalPoint.toDouble())
-                if (newValue != null) {
-                    (fraction.numerator.last() as UnknownEntity).multiplier = newValue / gcd.toDouble()
-                }
-            }
-
             if (!(gcd == 1 && decimalPoint == 1)) {
+                // Apply GCD to all multipliers
+                for (fraction in allDenominatorMultipliers) {
+                    val newValue =  (fraction.numerator.last() as UnknownEntity).multiplier?.times(decimalPoint.toDouble())
+                    if (newValue != null) {
+                        (fraction.numerator.last() as UnknownEntity).multiplier = newValue / gcd.toDouble()
+                    }
+                }
+
                 var i = 0
                 var multiplier = 0
                 while (i < denominatorElements.size) {
@@ -2012,7 +2011,7 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                 if (entity.powerTo != 0.0) {
                     denominatorOutput.add(
                         UnknownEntity(
-                            entity.multiplier,
+                            1.0,
                             entity.variable,
                             entity.powerTo
                         )
