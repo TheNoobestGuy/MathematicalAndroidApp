@@ -1395,9 +1395,6 @@ class Calculator {
             entity.clear()
         }
 
-        println("END")
-        println(stackForEquation)
-
         return Pair(calculateFractions(stackForEquation, withoutGCD = true).getFraction(withMultiplication = true), iterator)
     }
 
@@ -3218,8 +3215,6 @@ class Calculator {
             stackForEquation.add(entity)
         }
 
-        println("END")
-        println(stackForEquation)
         return Pair(calculateFractions(stackForEquation, withoutGCD = withoutGCD).getFraction(withMultiplication = withMultiplication), i+1)
     }
 
