@@ -212,6 +212,24 @@ data class UnknownEntity(var multiplier: Double? = null, var variable: Char? = n
         }
     }
 
+    operator fun div(other: Fraction): Fraction {
+        if (this.isZero()) {
+            return other
+        }
+        if (this.isZero()) {
+            return Fraction(mutableListOf(UnknownEntity(0.0)))
+        }
+        if (other.isOne() && this.isNotEmpty()) {
+            return  Fraction(mutableListOf(this))
+        }
+
+        val fraction = Fraction(mutableListOf(this))
+        fraction.denominator = mutableListOf()
+        fraction.denominator!!.add(other)
+
+        return fraction
+    }
+
     override fun hashCode(): Int {
         var result = multiplier?.hashCode() ?: 0
         result = 31 * result + (variable?.hashCode() ?: 0)
