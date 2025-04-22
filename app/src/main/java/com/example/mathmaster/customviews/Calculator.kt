@@ -31,6 +31,10 @@ data class UnknownEntity(var multiplier: Double? = null, var variable: Char? = n
             return mutableListOf('x', '^', 0.0)
         }
 
+        if ((powerTo == null || powerTo == 0.0) && multiplier != null) {
+            return mutableListOf(multiplier!!)
+        }
+
         if (isNotEmpty()) {
             if (powerTo!! == 0.0) {
                 if (!withoutMultiplier) {
