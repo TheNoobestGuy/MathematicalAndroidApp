@@ -160,11 +160,27 @@ data class UnknownEntity(var multiplier: Double? = null, var variable: Char? = n
     }
 
     operator fun plus(other: UnknownEntity): UnknownEntity {
-        return UnknownEntity(this.multiplier!! + other.multiplier!!, this.variable, this.powerTo)
+        return if (this.multiplier != null && other.multiplier != null && this.variable == other.variable && this.powerTo == other.powerTo) {
+            UnknownEntity(this.multiplier!! + other.multiplier!!, this.variable, this.powerTo)
+        }
+        else if (this.onlyNumber() && other.onlyNumber()) {
+            UnknownEntity(this.multiplier!! - other.multiplier!!, this.variable, this.powerTo)
+        }
+        else {
+            this
+        }
     }
 
     operator fun minus(other: UnknownEntity): UnknownEntity {
-        return UnknownEntity(this.multiplier!! - other.multiplier!!, this.variable, this.powerTo)
+        return if (this.multiplier != null && other.multiplier != null && this.variable == other.variable && this.powerTo == other.powerTo) {
+            UnknownEntity(this.multiplier!! - other.multiplier!!, this.variable, this.powerTo)
+        }
+        else if (this.onlyNumber() && other.onlyNumber()) {
+            UnknownEntity(this.multiplier!! - other.multiplier!!, this.variable, this.powerTo)
+        }
+        else {
+            this
+        }
     }
 
     operator fun times(other: UnknownEntity): UnknownEntity {
@@ -253,11 +269,24 @@ data class Function(var content: MutableList<Any> = mutableListOf(), var powerTo
 
         for (element in input) {
             if (element is Fraction) {
-                if (key) {
-                    output.addAll(getInsideOfFunction(element.getKey()))
+                if (withMultiplication) {
+                    output.add('(')
+                    if (key) {
+                        output.addAll(getInsideOfFunction(element.getKey()))
+                    }
+                    else {
+                        output.addAll(getInsideOfFunction(element.getFraction(flatFraction = flatFunction, withMultiplication = true), key = true, withMultiplication = withMultiplication))
+                    }
+                    output.add(')')
+                    output.add('×')
                 }
                 else {
-                    output.addAll(getInsideOfFunction(element.getFraction(flatFraction = flatFunction, withMultiplication = withMultiplication), key = true, withMultiplication = withMultiplication))
+                    if (key) {
+                        output.addAll(getInsideOfFunction(element.getKey()))
+                    }
+                    else {
+                        output.addAll(getInsideOfFunction(element.getFraction(flatFraction = flatFunction, withMultiplication = false), key = true, withMultiplication = withMultiplication))
+                    }
                 }
             } else {
                 when (element) {
@@ -283,11 +312,24 @@ data class Function(var content: MutableList<Any> = mutableListOf(), var powerTo
                         }
                     }
                     is Function -> {
-                        if (key) {
-                            output.addAll(element.getKey())
+                        if (withMultiplication) {
+                            output.add('(')
+                            if (key) {
+                                output.addAll(element.getKey())
+                            }
+                            else {
+                                output.addAll(element.getFunction(flatFunction = flatFunction, withMultiplication = true))
+                            }
+                            output.add(')')
+                            output.add('×')
                         }
                         else {
-                            output.addAll(element.getFunction(flatFunction = flatFunction, withMultiplication = withMultiplication))
+                            if (key) {
+                                output.addAll(element.getKey())
+                            }
+                            else {
+                                output.addAll(element.getFunction(flatFunction = flatFunction, withMultiplication = false))
+                            }
                         }
                     }
                     else -> {
@@ -377,7 +419,9 @@ data class Function(var content: MutableList<Any> = mutableListOf(), var powerTo
                 function.add('(')
                 index = function.size
             }
+
             function.addAll(getInsideOfFunction(content, flatFunction = flatFunction, withMultiplication = withMultiplication))
+
             if (!flatFunction) {
                 if (powerTo != 1.0) {
                     function.add(index, '(')
@@ -1317,7 +1361,9 @@ class Calculator {
                         iterator = subEquation.second
                         val base = calculateFractions(stackForEquation, withoutGCD = true)
                         stackForEquation.clear()
-                        stackForEquation.add(base / calculateFractions(subEquation.first, withoutGCD = true))
+                        val result = base / calculateFractions(subEquation.first, withoutGCD = true)
+                        result.setFraction()
+                        stackForEquation.add(result)
                         continue
                     }
                     else {
@@ -3237,7 +3283,7 @@ class Calculator {
             stackForEquation.add(entity)
         }
 
-        return Pair(calculateFractions(stackForEquation, withoutGCD = withoutGCD).getFraction(withMultiplication = withMultiplication), i+1)
+        return Pair(calculateFractions(stackForEquation, withoutGCD = withoutGCD).getFraction(withMultiplication = false), i+1)
     }
 
     private fun convertDerivativeForOutput(equation: MutableList<Any>): String {
@@ -3311,6 +3357,33 @@ class Calculator {
         return output
     }
 
+    private fun testPrepareEquationWithGCDs(equation: MutableList<Any>): MutableList<Any> {
+        val result = mutableListOf<Any>()
+
+        var lastChar: Any = '0'
+        for (element in equation) {
+            when (element) {
+                is Char -> {
+                    if (element.isLetter() || element == '√') {
+                        if (lastChar != '×' && lastChar != '(') {
+                            result.add('×')
+                        }
+                    }
+                    else if (element == '(') {
+                        if (lastChar is Double) {
+                            result.add('×')
+                        }
+                    }
+                }
+
+            }
+            lastChar = element
+            result.add(element)
+        }
+
+        return result
+    }
+
     fun solveDerivative(equation: String): String {
         val transformedEquation = transformEquationForSolvingUnknowns(transformEquation(equation)).first
         println("transformedEquation:")
@@ -3322,7 +3395,6 @@ class Calculator {
 
         println("With gcd out:")
         val withGCDs = getNestedMultiplication(derivative).first
-        println(withGCDs)
 
         println("Derivative results:")
         val substitute = substituteVariableForDerivative(derivative, 1.0)
@@ -3342,7 +3414,7 @@ class Calculator {
         println("For 0.5: $calc3")
 
         // TEST of gcd
-        val test = substituteVariableForDerivative(withGCDs, 1.0)
+        val test = testPrepareEquationWithGCDs(substituteVariableForDerivative(withGCDs, 1.0))
         val testCalc = calculateEquation(test, baseOfLogarithm = 10.0)
         println("Test of gcd:")
         println(test)
