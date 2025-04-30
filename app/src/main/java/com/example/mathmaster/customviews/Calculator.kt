@@ -28,7 +28,7 @@ data class UnknownEntity(var multiplier: Double? = null, var variable: Char? = n
         val original = mutableListOf<Any>()
 
         if (value) {
-            return mutableListOf('x', '^', 0.0)
+            return mutableListOf('f', '^', 0.0)
         }
 
         if ((powerTo == null || powerTo == 0.0) && multiplier != null) {
@@ -133,7 +133,7 @@ data class UnknownEntity(var multiplier: Double? = null, var variable: Char? = n
     }
 
     fun onlyNumber(): Boolean {
-        return multiplier != null && (variable == null || powerTo == 0.0)
+        return multiplier != null && (variable == null || variable == 'n' || powerTo == 0.0)
     }
 
     fun isOne(): Boolean {
@@ -146,11 +146,11 @@ data class UnknownEntity(var multiplier: Double? = null, var variable: Char? = n
 
     override operator fun equals(other: Any?): Boolean {
         if (other is UnknownEntity) {
-            return if (this.isNotEmpty() && other.isNotEmpty()) {
-                this.variable == other.variable && this.powerTo == other.powerTo
-            }
-            else if (this.onlyNumber() && other.onlyNumber()) {
+            return if (this.onlyNumber() || other.onlyNumber()) {
                 true
+            }
+            else if (this.isNotEmpty() && other.isNotEmpty()) {
+                this.variable == other.variable && this.powerTo == other.powerTo
             }
             else if (!this.isEmpty() && !other.isEmpty()) {
                 this.variable == other.variable
@@ -447,7 +447,7 @@ data class Function(var content: MutableList<Any> = mutableListOf(), var powerTo
     }
 
     fun isNotEmpty(): Boolean {
-        return content.isNotEmpty() && powerTo != 0.0
+        return content.isNotEmpty()
     }
 
     override operator fun equals(other: Any?): Boolean {
@@ -845,7 +845,8 @@ class Calculator {
                         }
 
                         if (transformedEquation.isNotEmpty()) {
-                            if (transformedEquation.last() is Double) {
+                            if (transformedEquation.last() is Double || transformedEquation.last() == 'x' || transformedEquation.last() == 'y'
+                                || transformedEquation.last() == 'z' || transformedEquation.last() == 'π' || transformedEquation.last() == 'e') {
                                 transformedEquation.add('×')
                             }
                         }
@@ -1286,29 +1287,51 @@ class Calculator {
 
         for (entityF in entitiesF) {
             for (entityG in entitiesG) {
-                val entity = if (divide) {
-                    entityF / entityG
-                } else {
-                    entityF * entityG
-                }
-
-                // Recreate operators
-                var negative = false
-                if (entity.multiplier!! < 0) {
-                    negative = true
-                }
-
-                if (negative) {
-                    if (result.isNotEmpty()) {
-                        result.add('-')
+                if (entityF == entityG) {
+                    val entity = if (divide) {
+                        entityF / entityG
+                    } else {
+                        entityF * entityG
                     }
-                    result.addAll(entity.getOriginal(negative = true))
+
+                    // Recreate operators
+                    var negative = false
+                    if (entity.multiplier!! < 0) {
+                        negative = true
+                    }
+
+                    if (negative) {
+                        if (result.isNotEmpty()) {
+                            result.add('-')
+                        }
+                        result.add(entity)
+                    } else {
+                        if (result.isNotEmpty()) {
+                            result.add('+')
+                        }
+                        result.add(entity)
+                    }
                 }
                 else {
-                    if (result.isNotEmpty()) {
-                        result.add('+')
+                    // Recreate operators
+                    var negative = false
+                    if ((entityF.multiplier!! < 0 || entityG.multiplier!! < 0) && !(entityF.multiplier!! < 0 && entityG.multiplier!! < 0)) {
+                        negative = true
                     }
-                    result.addAll(entity.getOriginal())
+
+                    if (negative) {
+                        if (result.isNotEmpty()) {
+                            result.add('-')
+                        }
+                        result.add(entityF)
+                        result.add(entityG)
+                    } else {
+                        if (result.isNotEmpty()) {
+                            result.add('+')
+                        }
+                        result.add(entityF)
+                        result.add(entityG)
+                    }
                 }
             }
         }
@@ -2417,10 +2440,12 @@ class Calculator {
                 derivativeResult.add('(')
                 derivativeResult.addAll(dividedDerivative)
                 derivativeResult.add(')')
-                derivativeResult.add('/')
-                derivativeResult.add('(')
-                derivativeResult.addAll(gx2)
-                derivativeResult.add(')')
+                if (gx2.isNotEmpty()) {
+                    derivativeResult.add('/')
+                    derivativeResult.add('(')
+                    derivativeResult.addAll(gx2)
+                    derivativeResult.add(')')
+                }
             }
 
             equations.derivative = derivativeResult
