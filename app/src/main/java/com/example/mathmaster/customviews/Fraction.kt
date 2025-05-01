@@ -1,5 +1,6 @@
 package com.example.mathmaster.customviews
 
+import androidx.compose.ui.unit.Density
 import kotlin.math.ceil
 import kotlin.math.min
 import kotlin.math.round
@@ -334,41 +335,52 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
             if (!multiplicative!!.isOne()) {
                 if (isOne(numerator) && (denominator == null || denominator!!.isEmpty())) numerator.clear()
 
-                if (numerator.isEmpty() && (denominator == null || denominator!!.isEmpty())) {
+                if (numerator.isNotEmpty()) {
+                    if (equationHasOperators(numerator)) {
+                        if (equationHasOperators(multiplicative!!.numerator)) {
+                            numerator = mutableListOf(Fraction(numerator), Fraction(multiplicative!!.numerator))
+                        }
+                        else {
+                            numerator = mutableListOf(Fraction(numerator))
+                            numerator.addAll(multiplicative!!.numerator)
+                        }
+                    }
+                    else {
+                        if (equationHasOperators(multiplicative!!.numerator)) {
+                            numerator.add(Fraction(multiplicative!!.numerator))
+                        }
+                        else {
+                            numerator.addAll(multiplicative!!.numerator)
+                        }
+                    }
+                }
+                else {
                     numerator = multiplicative!!.numerator
-                    denominator = multiplicative!!.denominator
-                } else if (denominator == null || denominator!!.isEmpty()) {
-                    if (multiplicative!!.numerator.isNotEmpty()) {
-                        if (equationHasOperators(numerator) && itIsNotFraction(numerator)) {
-                            numerator = mutableListOf(Fraction(numerator))
-                        }
-                        numerator.addAll(multiplicative!!.numerator)
-                    }
+                }
+
+                if (denominator != null) {
                     if (multiplicative!!.denominator != null) {
-                        denominator = multiplicative!!.denominator
-                    }
-                } else {
-                    if (multiplicative!!.numerator.isNotEmpty()) {
-                        if (equationHasOperators(numerator) && itIsNotFraction(numerator)) {
-                            numerator = mutableListOf(Fraction(numerator))
-                        }
-                        numerator.addAll(multiplicative!!.numerator)
-                    }
-                    if (multiplicative!!.denominator != null) {
-                        if (denominator!!.isNotEmpty()) {
-                            if (multiplicative!!.denominator!!.isNotEmpty()) {
-                                if (equationHasOperators(denominator!!) && itIsNotFraction(
-                                        denominator!!
-                                    )
-                                ) {
-                                    denominator = mutableListOf(Fraction(denominator!!))
-                                }
+                        if (equationHasOperators(denominator!!)) {
+                            if (equationHasOperators(multiplicative!!.denominator!!)) {
+                                denominator = mutableListOf(Fraction(denominator!!), Fraction(multiplicative!!.denominator!!))
+                            }
+                            else {
+                                denominator = mutableListOf(Fraction(denominator!!))
                                 denominator!!.addAll(multiplicative!!.denominator!!)
                             }
-                        } else {
-                            denominator = multiplicative!!.denominator
+                        }
+                        else {
+                            if (equationHasOperators(multiplicative!!.denominator!!)) {
+                                denominator!!.add(Fraction(multiplicative!!.denominator!!))
+                            }
+                            else {
+                                denominator!!.addAll(multiplicative!!.denominator!!)
+                            }
                         }
                     }
+                }
+                else {
+                    denominator = multiplicative!!.denominator
                 }
             }
         }
@@ -378,40 +390,43 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
 
     private fun getOutPowerTo() {
         if (this.powerTo > 1.0) {
-            var newFraction = Fraction()
-            var i = 0.0
+            val numeratorExp = this.numerator.toMutableList()
+            var denominatorExp: MutableList<Any>? = null
+            if(this.denominator != null) {
+                denominatorExp = this.denominator!!.toMutableList()
+            }
+
+            var i = 1.0
             val limit = this.powerTo
             this.powerTo = 1.0
             while  (i < limit) {
-                newFraction *= this
+                this.multiplyByItself(numeratorExp, denominatorExp)
                 i += 1.0
             }
-
-            newFraction.cleanFraction()
-            newFraction.shortenFraction()
-            newFraction.numerator =  shortenEquation(newFraction.numerator)
-            if (newFraction.denominator != null) {
-                newFraction.denominator =  shortenEquation(newFraction.denominator!!)
-            }
-            this.numerator = newFraction.numerator
-            this.denominator = newFraction.denominator
         }
         else if (this.powerTo < 0.0){
-            var newFraction = Fraction()
+            val numeratorExp = this.numerator.toMutableList()
+            var denominatorExp: MutableList<Any>? = null
+            if(this.denominator != null) {
+                denominatorExp = this.denominator!!.toMutableList()
+            }
+
+            if (denominatorExp == null) {
+                this.numerator.clear()
+            }
+            else {
+                this.numerator = denominatorExp
+            }
+            this.denominator = numeratorExp
+
+            this.powerTo += 1.0
+
             var i = this.powerTo
             this.powerTo = 1.0
             while  (i < 0) {
-                newFraction /= this
+                this.divideByItself(numeratorExp, denominatorExp)
                 i += 1.0
             }
-            newFraction.cleanFraction()
-            newFraction.shortenFraction()
-            newFraction.numerator =  shortenEquation(newFraction.numerator)
-            if (newFraction.denominator != null) {
-                newFraction.denominator =  shortenEquation(newFraction.denominator!!)
-            }
-            this.numerator = newFraction.numerator
-            this.denominator = newFraction.denominator
         }
     }
 
@@ -914,7 +929,6 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
         cleanNumeratorMaps()
         cleanDenominatorMaps()
         if (denominator != null) shortenNumeratorWithDenominator()
-        if (multiplicative != null) multiplicative!!.shortenFraction()
 
         rebuildFractionNumerator()
         if (denominator != null) rebuildFractionDenominator()
@@ -1711,17 +1725,20 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
 
                         is Function -> {
                             if (key == (numeratorElements[index][element] as Function).getKey()) {
-                                (numeratorElements[index][element] as Function).powerTo -= v
+                                if ((numeratorElements[index][element] as Function).powerTo != 0.0) {
+                                    (numeratorElements[index][element] as Function).powerTo -= v
+                                }
+
                                 if (commonsToFind[key]!! > 0) {
                                     if ((numeratorElements[index][element] as Function).powerTo == 0.0) {
                                         numeratorOutput.add(numeratorElements[index].removeAt(element))
-                                        (numeratorOutput.last() as Function).powerTo = 1.0
                                         element--
                                     }
                                     else {
-                                        numeratorOutput.add((numeratorElements[index][element] as Function))
+                                        numeratorOutput.add((numeratorElements[index][element] as Function).copy())
                                     }
-                                    commonsToFind[key] = commonsToFind[key]!! - 1
+                                    (numeratorOutput.last() as Function).powerTo = v
+                                    commonsToFind[key] = 0.0
                                 }
                                 else {
                                     if ((numeratorElements[index][element] as Function).powerTo == 0.0) {
@@ -1734,17 +1751,19 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
 
                         is Fraction -> {
                             if (key == (numeratorElements[index][element] as Fraction).getKey()) {
-                                (numeratorElements[index][element] as Fraction).powerTo -= v
+                                if ((numeratorElements[index][element] as Fraction).powerTo != 0.0) {
+                                    (numeratorElements[index][element] as Fraction).powerTo -= v
+                                }
                                 if (commonsToFind[key]!! > 0) {
                                     if ((numeratorElements[index][element] as Fraction).powerTo == 0.0) {
                                         numeratorOutput.add(numeratorElements[index].removeAt(element))
-                                        (numeratorOutput.last() as Fraction).powerTo = 1.0
                                         element--
                                     }
                                     else {
-                                        numeratorOutput.add((numeratorElements[index][element] as Fraction))
+                                        numeratorOutput.add((numeratorElements[index][element] as Fraction).copy())
                                     }
-                                    commonsToFind[key] = commonsToFind[key]!! - 1
+                                    (numeratorOutput.last() as Fraction).powerTo = v
+                                    commonsToFind[key] = 0.0
                                 }
                                 else {
                                     if ((numeratorElements[index][element] as Fraction).powerTo == 0.0) {
@@ -2039,17 +2058,19 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
 
                         is Function -> {
                             if (key == (denominatorElements[index][element] as Function).getKey()) {
-                                (denominatorElements[index][element] as Function).powerTo -= v
+                                if ((numeratorElements[index][element] as Function).powerTo != 0.0) {
+                                    (numeratorElements[index][element] as Function).powerTo -= v
+                                }
                                 if (commonsToFind[key]!! > 0) {
                                     if ((denominatorElements[index][element] as Function).powerTo == 0.0) {
                                         denominatorOutput.add(denominatorElements[index].removeAt(element))
-                                        (denominatorOutput.last() as Function).powerTo = 1.0
                                         element--
                                     }
                                     else {
-                                        denominatorOutput.add((denominatorElements[index][element] as Function))
+                                        denominatorOutput.add((denominatorElements[index][element] as Function).copy())
                                     }
-                                    commonsToFind[key] = commonsToFind[key]!! - 1
+                                    (denominatorOutput.last() as Function).powerTo = v
+                                    commonsToFind[key] = 0.0
                                 }
                                 else {
                                     if ((denominatorElements[index][element] as Function).powerTo == 0.0) {
@@ -2061,17 +2082,19 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                         }
                         is Fraction -> {
                             if (key == (denominatorElements[index][element] as Fraction).getKey()) {
-                                (denominatorElements[index][element] as Fraction).powerTo -= v
+                                if ((numeratorElements[index][element] as Fraction).powerTo != 0.0) {
+                                    (numeratorElements[index][element] as Fraction).powerTo -= v
+                                }
                                 if (commonsToFind[key]!! > 0) {
                                     if ((denominatorElements[index][element] as Fraction).powerTo == 0.0) {
                                         denominatorOutput.add(denominatorElements[index].removeAt(element))
-                                        (denominatorOutput.last() as Fraction).powerTo = 1.0
                                         element--
                                     }
                                     else {
-                                        denominatorOutput.add((denominatorElements[index][element] as Fraction))
+                                        denominatorOutput.add((denominatorElements[index][element] as Fraction).copy())
                                     }
-                                    commonsToFind[key] = commonsToFind[key]!! - 1
+                                    (denominatorOutput.last() as Fraction).powerTo = v
+                                    commonsToFind[key] = 0.0
                                 }
                                 else {
                                     if ((denominatorElements[index][element] as Fraction).powerTo == 0.0) {
@@ -2735,6 +2758,18 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                                     break
                                 }
                             }
+                            else if (pieceOfEquation[i] is Fraction) {
+                                if ((pieceOfEquation[i] as Fraction).getKey() == element.getKey()) {
+                                    if (operator == '×') {
+                                        (pieceOfEquation[i] as Fraction).powerTo += element.powerTo
+                                    }
+                                    else {
+                                        (pieceOfEquation[i] as Fraction).powerTo -= element.powerTo
+                                    }
+                                    found = true
+                                    break
+                                }
+                            }
                             i++
                         }
 
@@ -2873,12 +2908,22 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                                         continue
                                     }
                                     if (pieceOfEquation[i] is Fraction) {
-                                        if (operator == '×') {
-                                            pieceOfEquation[i] =
-                                                (pieceOfEquation[i] as Fraction) * element
-                                        } else {
-                                            pieceOfEquation[i] =
-                                                (pieceOfEquation[i] as Fraction) / element
+                                        if ((pieceOfEquation[i] as Fraction) == element) {
+                                            if (operator == '×') {
+                                                (pieceOfEquation[i] as Fraction).powerTo += element.powerTo
+                                            }
+                                            else {
+                                                (pieceOfEquation[i] as Fraction).powerTo -= element.powerTo
+                                            }
+                                        }
+                                        else {
+                                            if (operator == '×') {
+                                                pieceOfEquation[i] =
+                                                    (pieceOfEquation[i] as Fraction) * element
+                                            } else {
+                                                pieceOfEquation[i] =
+                                                    (pieceOfEquation[i] as Fraction) / element
+                                            }
                                         }
                                         found = true
                                         break
@@ -3302,9 +3347,6 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
     }
 
     private fun makeCalculations(input: MutableList<Any>): MutableList<Any>  {
-        println("input")
-        println(input)
-
         if (equationHasOperators(input)) {
             val transformedInput = mutableListOf<MutableList<Any>>()
             var piece = mutableListOf<Any>()
@@ -3410,13 +3452,8 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                 output.addAll(i)
             }
 
-            println("output")
-            println(output)
-
             return output
         }
-        println("Same")
-        println(input)
 
         return input
     }
@@ -3577,10 +3614,7 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
             return this
         }
 
-        this.getOutPowerTo()
-        other.getOutPowerTo()
-
-        if (this.getKey() == other.getKey() && this !== other) {
+        if (this.getKey() == other.getKey()) {
             if (this.getSeriesOfPowersTo() == other.getSeriesOfPowersTo()) {
                 if (this.denominator == null && other.denominator == null) {
                     this.powerTo = this.getPower()
@@ -3594,150 +3628,58 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
             }
         }
 
-        if (!equationHasOperators(this.numerator) && !equationHasOperators(other.numerator)) {
-            this.numerator.addAll(other.numerator)
+        this.getOutPowerTo()
+        other.getOutPowerTo()
 
-            if (this.denominator != null && other.denominator != null && this.denominator!!.isNotEmpty() && other.denominator!!.isNotEmpty()) {
-                if (denominator!! == other.denominator) {
-                    if (!equationHasOperators(this.denominator!!) && !equationHasOperators(other.denominator!!)) {
-                        this.denominator!!.addAll(other.denominator!!)
-                    }
-                    else {
-                        if (itIsNotFraction(this.denominator!!) && itIsNotFunction(this.denominator!!)) {
-                            this.denominator = mutableListOf(Fraction(this.denominator!!))
-                        }
-                        if (itIsNotFraction(other.denominator!!) && itIsNotFunction(other.denominator!!)) {
-                            this.denominator!!.add(Fraction(other.denominator!!))
-                        }
-                        else {
-                            this.denominator!!.addAll(other.denominator!!)
-                        }
-                    }
-                }
-            }
-            else if (other.denominator != null && other.denominator!!.isNotEmpty()) {
-                this.denominator = other.denominator
-            }
-
-            return this
-        }
-        else {
-            if (this.denominator != null && other.denominator != null && this.denominator!!.isNotEmpty() && other.denominator!!.isNotEmpty()) {
-                if (this.numerator.isNotEmpty()) {
-                    if (other.numerator.isNotEmpty()) {
-                        if (itIsNotFraction(this.numerator) && itIsNotFunction(this.numerator)) {
-                            this.numerator = mutableListOf(Fraction(this.numerator))
-                        }
-                        if (itIsNotFraction(other.numerator) && itIsNotFunction(other.numerator)) {
-                            this.numerator.add(Fraction(other.numerator))
-                        }
-                        else {
-                            this.numerator.addAll(other.numerator)
-                        }
-                        if (itIsNotFraction(this.denominator!!) && itIsNotFunction(this.denominator!!)) {
-                            this.denominator = mutableListOf(Fraction(this.denominator!!))
-                        }
-                        if (itIsNotFraction(other.denominator!!) && itIsNotFunction(other.denominator!!)) {
-                            this.denominator!!.add(Fraction(other.denominator!!))
-                        }
-                        else {
-                            this.denominator!!.addAll(other.denominator!!)
-                        }
-                    }
-                    else {
-                        if (itIsNotFraction(this.denominator!!) && itIsNotFunction(this.denominator!!)) {
-                            this.denominator = mutableListOf(Fraction(this.denominator!!))
-                        }
-                        if (itIsNotFraction(other.denominator!!) && itIsNotFunction(other.denominator!!)) {
-                            this.denominator!!.add(Fraction(other.denominator!!))
-                        }
-                        else {
-                            this.denominator!!.addAll(other.denominator!!)
-                        }
-                    }
+        if (other.numerator.isNotEmpty()) {
+            if (equationHasOperators(numerator)) {
+                if (equationHasOperators(other.numerator)) {
+                    numerator = mutableListOf(Fraction(numerator), Fraction(other.numerator))
                 }
                 else {
-                    if (other.numerator.isNotEmpty()) {
-                        if (itIsNotFraction(other.denominator!!) && itIsNotFunction(other.denominator!!)) {
-                            other.denominator = mutableListOf(Fraction(other.denominator!!))
-                        }
-                        if (itIsNotFraction(this.denominator!!) && itIsNotFunction(this.denominator!!)) {
-                            other.denominator!!.add(Fraction(this.denominator!!))
-                        }
-                        else {
-                            other.denominator!!.addAll(this.denominator!!)
-                        }
-                        return other
-                    }
-                    else {
-                        if (itIsNotFraction(this.denominator!!) && itIsNotFunction(this.denominator!!)) {
-                            this.denominator = mutableListOf(Fraction(this.denominator!!))
-                        }
-                        if (itIsNotFraction(other.denominator!!) && itIsNotFunction(other.denominator!!)) {
-                            this.denominator!!.add(Fraction(other.denominator!!))
-                        }
-                        else {
-                            this.denominator!!.addAll(other.denominator!!)
-                        }
-                    }
-                }
-            }
-            else if (this.denominator != null && this.denominator!!.isNotEmpty()) {
-                if (this.numerator.isNotEmpty()) {
-                    if (other.numerator.isNotEmpty()) {
-                        if (itIsNotFraction(this.numerator) && itIsNotFunction(this.numerator)) {
-                            this.numerator = mutableListOf(Fraction(this.numerator))
-                        }
-                        if (itIsNotFraction(other.numerator) && itIsNotFunction(other.numerator)) {
-                            this.numerator.add(Fraction(other.numerator))
-                        }
-                        else {
-                            this.numerator.addAll(other.numerator)
-                        }
-                    }
-                }
-            }
-            else if (other.denominator != null && other.denominator!!.isNotEmpty()) {
-                if (this.numerator.isNotEmpty()) {
-                    if (other.numerator.isNotEmpty()) {
-                        if (itIsNotFraction(this.numerator) && itIsNotFunction(this.numerator)) {
-                            this.numerator = mutableListOf(Fraction(this.numerator))
-                        }
-                        if (itIsNotFraction(other.numerator) && itIsNotFunction(other.numerator)) {
-                            this.numerator.add(Fraction(other.numerator))
-                        }
-                        else {
-                            this.numerator.addAll(other.numerator)
-                        }
-                        this.denominator = other.denominator!!
-                    }
-                    else {
-                        return other
-                    }
-                }
-                else {
-                    return other
+                    numerator = mutableListOf(Fraction(numerator))
+                    numerator.addAll(other.numerator)
                 }
             }
             else {
-                if (this.numerator.isNotEmpty()) {
-                    if (other.numerator.isNotEmpty()) {
-                        if (itIsNotFraction(this.numerator) && itIsNotFunction(this.numerator)) {
-                            this.numerator = mutableListOf(Fraction(this.numerator))
-                        }
-                        if (itIsNotFraction(other.numerator) && itIsNotFunction(other.numerator)) {
-                            this.numerator.add(Fraction(other.numerator))
-                        }
-                        else {
-                            this.numerator.addAll(other.numerator)
-                        }
-                    }
+                if (equationHasOperators(other.numerator)) {
+                    numerator.add(Fraction(other.numerator))
                 }
                 else {
-                    return other
+                    numerator.addAll(other.numerator)
                 }
             }
         }
+
+        if (other.denominator != null) {
+            if (denominator != null) {
+                if (equationHasOperators(denominator!!)) {
+                    if (equationHasOperators(other.denominator!!)) {
+                        denominator = mutableListOf(Fraction(denominator!!), Fraction(other.denominator!!))
+                    }
+                    else {
+                        denominator = mutableListOf(Fraction(denominator!!))
+                        denominator!!.addAll(other.denominator!!)
+                    }
+                }
+                else {
+                    if (equationHasOperators(other.denominator!!)) {
+                        denominator!!.add(Fraction(other.denominator!!))
+                    }
+                    else {
+                        denominator!!.addAll(other.denominator!!)
+                    }
+                }
+            }
+            else {
+                denominator = other.denominator!!
+            }
+        }
+
+        if (this.numerator.isEmpty() && other.numerator.isNotEmpty()) {
+            this.numerator = other.numerator
+        }
+
         return this
     }
 
@@ -3773,6 +3715,8 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
             return Fraction(mutableListOf(other))
         }
 
+        this.getOutPowerTo()
+
         if (itIsNotFraction(this.numerator)) {
             this.numerator = mutableListOf(Fraction(this.numerator))
         }
@@ -3797,70 +3741,70 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
             return this
         }
 
-        this.getOutPowerTo()
-        other.getOutPowerTo()
-
-        if (this.getKey() == other.getKey() && this !== other) {
+        if (this.getKey() == other.getKey()) {
             if (this.getSeriesOfPowersTo() == other.getSeriesOfPowersTo()) {
-                this.powerTo -= other.powerTo
+                if (this.denominator == null && other.denominator == null) {
+                    this.powerTo = this.getPower()
+                    other.powerTo = other.getPower()
+                    this.powerTo += other.powerTo
+                }
+                else {
+                    this.powerTo += other.powerTo
+                }
                 return this
             }
         }
-        else {
-            if (this.denominator != null && other.denominator != null && this.denominator!!.isNotEmpty() && other.denominator!!.isNotEmpty()) {
-                if (this.numerator.isNotEmpty()) {
-                    if (itIsNotFraction(this.numerator)) {
-                        this.numerator = mutableListOf(Fraction(this.numerator))
-                    }
-                }
-                if (itIsNotFraction(other.denominator!!)) {
-                    this.numerator.add(Fraction(other.denominator!!))
-                }
-                else {
-                    this.numerator.addAll(other.denominator!!)
-                }
-                if (itIsNotFraction(this.denominator!!)) {
-                    this.denominator = mutableListOf(Fraction(this.denominator!!))
-                }
 
-                if (itIsNotFraction(other.numerator)) {
-                    this.denominator!!.add(Fraction(other.numerator))
-                }
-                else {
-                    this.denominator!!.addAll((other.numerator))
-                }
-            }
-            else if (this.denominator != null && this.denominator!!.isNotEmpty()) {
-                if (itIsNotFraction(this.denominator!!)) {
-                    this.denominator = mutableListOf(Fraction(this.denominator!!))
-                }
+        this.getOutPowerTo()
+        other.getOutPowerTo()
 
-                if (itIsNotFraction(other.numerator)) {
-                    this.denominator!!.add(Fraction(other.numerator))
+        if (other.denominator != null) {
+            if (equationHasOperators(numerator)) {
+                if (equationHasOperators(other.denominator!!)) {
+                    numerator = mutableListOf(Fraction(mutableListOf(Fraction(numerator), Fraction(other.denominator!!))))
                 }
                 else {
-                    this.denominator!!.addAll((other.numerator))
+                    numerator = mutableListOf(Fraction(numerator))
+                    numerator.addAll(other.denominator!!)
                 }
-            }
-            else if (other.denominator != null && other.denominator!!.isNotEmpty()) {
-                if (this.numerator.isNotEmpty()) {
-                    if (itIsNotFraction(this.numerator)) {
-                        this.numerator = mutableListOf(Fraction(this.numerator))
-                    }
-                }
-                if (itIsNotFraction(other.denominator!!)) {
-                    this.numerator.add(Fraction(other.denominator!!))
-                }
-                else {
-                    this.numerator.addAll(other.denominator!!)
-                }
-
-                this.denominator = other.numerator
             }
             else {
-                this.denominator =  other.numerator
+                if (equationHasOperators(other.denominator!!)) {
+                    numerator.add(Fraction(other.denominator!!))
+                }
+                else {
+                    numerator.addAll(other.denominator!!)
+                }
             }
         }
+
+        if (denominator != null) {
+            if (equationHasOperators(denominator!!)) {
+                if (equationHasOperators(other.numerator)) {
+                    denominator = mutableListOf(Fraction(mutableListOf(Fraction(denominator!!), Fraction(other.numerator))))
+                }
+                else {
+                    denominator = mutableListOf(Fraction(denominator!!))
+                    denominator!!.addAll(other.numerator)
+                }
+            }
+            else {
+                if (equationHasOperators(other.numerator)) {
+                    denominator!!.add(Fraction(other.numerator))
+                }
+                else {
+                    denominator!!.addAll(other.numerator)
+                }
+            }
+        }
+        else {
+            denominator = other.numerator
+        }
+
+        if (this.numerator.isEmpty() && other.denominator != null) {
+            this.numerator = other.denominator!!
+        }
+
         return this
     }
 
@@ -3894,6 +3838,8 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
             return this
         }
 
+        this.getOutPowerTo()
+
         if (this.denominator == null) denominator = mutableListOf()
         if (itIsNotFraction(this.denominator!!)) {
             this.denominator = mutableListOf(Fraction(this.denominator!!))
@@ -3925,5 +3871,97 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
         result = 31 * result + denominatorElements.hashCode()
         result = 31 * result + commonForDenominator.hashCode()
         return result
+    }
+
+    private fun multiplyByItself(numeratorExp: MutableList<Any>, denominatorExp: MutableList<Any>?) {
+        if (numeratorExp.isNotEmpty()) {
+            if (equationHasOperators(numerator)) {
+                if (equationHasOperators(numeratorExp)) {
+                    numerator = mutableListOf(Fraction(numerator), Fraction(numeratorExp))
+                }
+                else {
+                    numerator = mutableListOf(Fraction(numerator))
+                    numerator.addAll(numeratorExp)
+                }
+            }
+            else {
+                if (equationHasOperators(numeratorExp)) {
+                    numerator.add(Fraction(numeratorExp))
+                }
+                else {
+                    numerator.addAll(numeratorExp)
+                }
+            }
+        }
+
+        if (denominatorExp != null) {
+            if (denominator != null) {
+                if (equationHasOperators(denominator!!)) {
+                    if (equationHasOperators(denominatorExp)) {
+                        denominator = mutableListOf(Fraction(denominator!!), Fraction(denominatorExp))
+                    }
+                    else {
+                        denominator = mutableListOf(Fraction(denominator!!))
+                        denominator!!.addAll(denominatorExp)
+                    }
+                }
+                else {
+                    if (equationHasOperators(denominatorExp)) {
+                        denominator!!.add(Fraction(denominatorExp))
+                    }
+                    else {
+                        denominator!!.addAll(denominatorExp)
+                    }
+                }
+            }
+            else {
+                denominator = denominatorExp
+            }
+        }
+    }
+
+    private fun divideByItself(numeratorExp: MutableList<Any>, denominatorExp: MutableList<Any>?) {
+        if (denominatorExp != null) {
+            if (equationHasOperators(numerator)) {
+                if (equationHasOperators(denominatorExp)) {
+                    numerator = mutableListOf(Fraction(mutableListOf(Fraction(numerator), Fraction(denominatorExp))))
+                }
+                else {
+                    numerator = mutableListOf(Fraction(numerator))
+                    numerator.addAll(denominatorExp)
+                }
+            }
+            else {
+                if (equationHasOperators(denominatorExp)) {
+                    numerator.add(Fraction(denominatorExp))
+                }
+                else {
+                    numerator.addAll(denominatorExp)
+                }
+            }
+        }
+
+        if (denominator != null) {
+            if (equationHasOperators(denominator!!)) {
+                if (equationHasOperators(numeratorExp)) {
+                    denominator = mutableListOf(Fraction(mutableListOf(Fraction(denominator!!), Fraction(numeratorExp))))
+                }
+                else {
+                    denominator = mutableListOf(Fraction(denominator!!))
+                    denominator!!.addAll(numeratorExp)
+                }
+            }
+            else {
+                if (equationHasOperators(numeratorExp)) {
+                    denominator!!.add(Fraction(numeratorExp))
+                }
+                else {
+                    denominator!!.addAll(numeratorExp)
+                }
+            }
+        }
+        else {
+            denominator = numeratorExp
+        }
     }
 }
