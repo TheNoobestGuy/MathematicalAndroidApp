@@ -31,7 +31,7 @@ data class UnknownEntity(var multiplier: Double? = null, var variable: Char? = n
             return mutableListOf('f', '^', 0.0)
         }
 
-        if ((powerTo == null || powerTo == 0.0) && multiplier != null) {
+        if ((powerTo == null || variable == 'f' || powerTo == 0.0) && multiplier != null) {
             return mutableListOf(multiplier!!)
         }
 
@@ -263,7 +263,7 @@ data class UnknownEntity(var multiplier: Double? = null, var variable: Char? = n
     }
 }
 
-data class Function(var content: MutableList<Any> = mutableListOf(), var powerTo: Double = 1.0, var count: Double = 1.0) {
+data class Function(var content: MutableList<Any> = mutableListOf(), var powerTo: Double = 1.0, var count: UnknownEntity? = null) {
     private fun getInsideOfFunction(
         input: MutableList<Any>,
         key: Boolean = false,
@@ -416,9 +416,9 @@ data class Function(var content: MutableList<Any> = mutableListOf(), var powerTo
         if (powerTo == 0.0 && !flatFunction) {
             return getInsideOfFunction(mutableListOf(UnknownEntity(1.0)), withMultiplication = withMultiplication)
         } else {
-            if (count != 1.0 && !flatFunction && !withoutCount) {
+            if (count != null && !flatFunction && !withoutCount) {
                 function.add('(')
-                function.add(count)
+                function.addAll(count!!.getOriginal())
                 function.add(')')
                 function.add('×')
                 function.add('(')
@@ -438,7 +438,7 @@ data class Function(var content: MutableList<Any> = mutableListOf(), var powerTo
                 }
             }
 
-            if (count != 1.0 && !flatFunction && !withoutCount) {
+            if (count != null && !flatFunction && !withoutCount) {
                 function.add(')')
             }
         }
@@ -1484,7 +1484,7 @@ class Calculator {
 
                             val functionObject = Function(function)
                             if (count != null) {
-                                functionObject.count = count
+                                functionObject.count = UnknownEntity(count)
                             }
                             stackForEquation.add(functionObject)
                             continue
@@ -3389,6 +3389,8 @@ class Calculator {
         }
 
         val result = calculateFractions(stackForEquation, withoutGCD = withoutGCD)
+        result.finalShort()
+
         return Pair(result.getFraction(withMultiplication = false), i+1)
     }
 
