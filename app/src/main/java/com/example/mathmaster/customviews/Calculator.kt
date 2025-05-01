@@ -3279,7 +3279,7 @@ class Calculator {
                         }
                         function.add(')')
 
-                        val functionObject = Function(function)
+                        val functionObject = Fraction(function)
                         if (powerTo.isNotEmpty()) {
                             functionObject.powerTo = calculateEquation(powerTo, 0, 10.0).first
                         }
