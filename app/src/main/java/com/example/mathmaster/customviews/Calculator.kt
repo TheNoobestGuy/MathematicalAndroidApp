@@ -280,7 +280,7 @@ data class Function(var content: MutableList<Any> = mutableListOf(), var powerTo
                         output.addAll(getInsideOfFunction(element.getKey()))
                     }
                     else {
-                        output.addAll(getInsideOfFunction(element.getFraction(flatFraction = flatFunction, withMultiplication = true), key = true, withMultiplication = withMultiplication))
+                        output.addAll(getInsideOfFunction(element.getFraction(flatFraction = flatFunction, withMultiplication = true), key = true, withMultiplication = true))
                     }
                     output.add(')')
                     output.add('×')
@@ -290,7 +290,7 @@ data class Function(var content: MutableList<Any> = mutableListOf(), var powerTo
                         output.addAll(getInsideOfFunction(element.getKey()))
                     }
                     else {
-                        output.addAll(getInsideOfFunction(element.getFraction(flatFraction = flatFunction, withMultiplication = false), key = true, withMultiplication = withMultiplication))
+                        output.addAll(getInsideOfFunction(element.getFraction(flatFraction = flatFunction, withMultiplication = false), key = true, withMultiplication = false))
                     }
                 }
             } else {
@@ -3343,7 +3343,6 @@ class Calculator {
 
                     stackForEquation.add('/')
                     stackForEquation.add(calculateFractions(subEquation.first, withoutGCD = withoutGCD))
-
                     power = false
                     continue
                 }
@@ -3389,7 +3388,8 @@ class Calculator {
             stackForEquation.addAll(entities)
         }
 
-        return Pair(calculateFractions(stackForEquation, withoutGCD = withoutGCD).getFraction(withMultiplication = false), i+1)
+        val result = calculateFractions(stackForEquation, withoutGCD = withoutGCD)
+        return Pair(result.getFraction(withMultiplication = false), i+1)
     }
 
     private fun convertDerivativeForOutput(equation: MutableList<Any>): String {
