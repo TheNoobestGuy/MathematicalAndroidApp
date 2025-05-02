@@ -133,7 +133,7 @@ data class UnknownEntity(var multiplier: Double? = null, var variable: Char? = n
     }
 
     fun onlyNumber(): Boolean {
-        return multiplier != null && (variable == null || variable == 'n' || powerTo == 0.0)
+        return multiplier != null && (variable == null || variable == 'f' || powerTo == 0.0)
     }
 
     fun isOne(): Boolean {
@@ -169,7 +169,7 @@ data class UnknownEntity(var multiplier: Double? = null, var variable: Char? = n
             UnknownEntity(this.multiplier!! + other.multiplier!!, this.variable, this.powerTo)
         }
         else if (this.onlyNumber() && other.onlyNumber()) {
-            UnknownEntity(this.multiplier!! - other.multiplier!!, this.variable, this.powerTo)
+            UnknownEntity(this.multiplier!! + other.multiplier!!, this.variable, this.powerTo)
         }
         else {
             this
@@ -186,6 +186,66 @@ data class UnknownEntity(var multiplier: Double? = null, var variable: Char? = n
         else {
             this
         }
+    }
+
+    private fun equationHasOperators(equation: MutableList<Any>): Boolean {
+        val operators = listOf('+', '-')
+
+        for (element in equation) {
+            if (element is Char) {
+                for (operator in operators)  {
+                    if (element == operator) {
+                        return true
+                    }
+                }
+            }
+        }
+
+        return false
+    }
+
+    operator fun minus(other: Fraction): Fraction {
+        if (other.denominator == null) {
+            other.numerator.add('-')
+            other.numerator.add(this)
+        }
+        else {
+            val toAppend: Fraction
+            if (equationHasOperators(other.denominator!!)) {
+                toAppend = Fraction(mutableListOf(this, Fraction(other.denominator!!)))
+            }
+            else {
+                toAppend = Fraction(other.denominator!!)
+                toAppend.numerator.add(this)
+            }
+
+            other.numerator.add('-')
+            other.numerator.add(toAppend)
+        }
+
+        return other
+    }
+
+    operator fun plus(other: Fraction): Fraction {
+        if (other.denominator == null) {
+            other.numerator.add('+')
+            other.numerator.add(this)
+        }
+        else {
+            val toAppend: Fraction
+            if (equationHasOperators(other.denominator!!)) {
+                toAppend = Fraction(mutableListOf(this, Fraction(other.denominator!!)))
+            }
+            else {
+                toAppend = Fraction(other.denominator!!)
+                toAppend.numerator.add(this)
+            }
+
+            other.numerator.add('+')
+            other.numerator.add(toAppend)
+        }
+
+        return other
     }
 
     operator fun times(other: UnknownEntity): UnknownEntity {
@@ -263,7 +323,7 @@ data class UnknownEntity(var multiplier: Double? = null, var variable: Char? = n
     }
 }
 
-data class Function(var content: MutableList<Any> = mutableListOf(), var powerTo: Double = 1.0, var count: UnknownEntity? = null) {
+data class Function(var content: MutableList<Any> = mutableListOf(), var powerTo: Double = 1.0, var count: Fraction? = null) {
     private fun getInsideOfFunction(
         input: MutableList<Any>,
         key: Boolean = false,
@@ -418,7 +478,7 @@ data class Function(var content: MutableList<Any> = mutableListOf(), var powerTo
         } else {
             if (count != null && !flatFunction && !withoutCount) {
                 function.add('(')
-                function.addAll(count!!.getOriginal())
+                function.addAll(count!!.getFraction())
                 function.add(')')
                 function.add('×')
                 function.add('(')
@@ -1484,7 +1544,7 @@ class Calculator {
 
                             val functionObject = Function(function)
                             if (count != null) {
-                                functionObject.count = UnknownEntity(count)
+                                functionObject.count = Fraction(mutableListOf(UnknownEntity(count)))
                             }
                             stackForEquation.add(functionObject)
                             continue
