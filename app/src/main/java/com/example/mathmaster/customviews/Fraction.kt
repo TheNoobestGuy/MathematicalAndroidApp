@@ -173,9 +173,15 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
 
         makeCopy()
 
+        println("INPUT")
+        println(this)
+
         shortenEverything()
         sortEverything()
         cleanFraction()
+
+        println("OUTPUT")
+        println(this)
     }
 
     private fun isNotEmpty(): Boolean {
@@ -1253,8 +1259,8 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
     fun setFraction() {
         clearMaps()
 
-        println("INPUT")
-        println(this)
+//        println("INPUT")
+//        println(this)
 
         updateFractionNumerator()
         if (denominator != null) updateFractionDenominator()
@@ -1271,9 +1277,8 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
         if (denominator != null) rebuildFractionDenominator()
         if (denominator != null && denominator!!.isEmpty()) denominator = null
 
-
-        println("AFTER BUILD")
-        println(this)
+//        println("AFTER BUILD")
+//        println(this)
 
         getOutMultiplication()
         getOutCount()
@@ -1285,9 +1290,9 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
         if (denominator != null) convertDoublesToFractionInDenominator()
         sortEverything()
         cleanFraction()
-
-        println("OUTPUT")
-        println(this)
+//
+//        println("OUTPUT")
+//        println(this)
 
     }
 
@@ -3547,98 +3552,287 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
         }
     }
 
-    private fun onlyCalculable(): MutableList<Any> {
+    private fun onlyCalculable(switch: Boolean = false): MutableList<Any> {
         val list = mutableListOf<Any>()
+
+        var newList = mutableListOf<Any>()
+        var fractionList = mutableListOf<Any>()
         var i = 0
-        var brackets = 0
-        list.add('(')
         while (i < numerator.size) {
             if (numerator[i] is Fraction) {
-                val buffer = (numerator[i] as Fraction).onlyCalculable()
+                val buffer = (numerator[i] as Fraction).onlyCalculable(switch)
                 if (buffer.isNotEmpty()) {
-                    if (list.isNotEmpty() && (list.last() !is Char || list.last() == ')')) {
-                        list.add('×')
-                    }
-                    list.add('(')
-                    list.addAll(buffer)
-                    list.add(')')
+                    fractionList.addAll(buffer)
                 }
                 else {
                     return mutableListOf()
                 }
             }
             else if (numerator[i] is UnknownEntity) {
-                if (list.isNotEmpty() && (list.last() !is Char || list.last() == ')')) {
-                    list.add('×')
-                    list.add('(')
-                    brackets++
+                if (switch) {
+                    newList.add(Fraction(mutableListOf(UnknownEntity(1.0)), mutableListOf(numerator[i] as UnknownEntity)))
                 }
-                list.add(numerator[i] as UnknownEntity)
+                else {
+                    newList.add(numerator[i] as UnknownEntity)
+                }
             }
             else if (numerator[i] is Char) {
-                list.add(numerator[i])
-                list.add('(')
-                brackets++
+                if (numerator[i] != '/') {
+                    val listToAppend = mutableListOf<Any>()
+                    var operator = '+'
+                    for (elementA in newList) {
+                        if (elementA is Char) {
+                            if (elementA == '+' || elementA == '-') {
+                                operator = elementA
+                            }
+                            continue
+                        }
+
+                        var additionalList = mutableListOf<Any>()
+
+                        for (elementB in fractionList) {
+                            if (elementB == '+' || elementB == '-') {
+                                listToAppend.addAll(additionalList)
+                                listToAppend.add(elementA)
+
+                                if (operator == '-' && elementB == '+') {
+                                    listToAppend.add('-')
+                                }
+                                else if (operator == '-' && elementB == '-') {
+                                    listToAppend.add('+')
+                                }
+                                else {
+                                    listToAppend.add(elementB)
+                                }
+
+                                additionalList = mutableListOf()
+                            }
+                            else {
+                                additionalList.add(elementB)
+                            }
+                        }
+
+                        if (additionalList.isNotEmpty()) {
+                            listToAppend.addAll(additionalList)
+                            listToAppend.add(elementA)
+                        }
+                        else {
+                            listToAppend.addAll(newList)
+                            break
+                        }
+                    }
+
+                    if (listToAppend.isNotEmpty()) {
+                        list.addAll(listToAppend)
+                    }
+                    else {
+                        list.addAll(fractionList)
+                    }
+
+                    newList = mutableListOf()
+                    fractionList = mutableListOf()
+                }
+
+                newList.add(numerator[i])
             }
             else {
                 return mutableListOf()
             }
             i++
         }
-        i = 0
-        while (i < brackets) {
-            list.add(')')
-            i++
+        if (newList.isNotEmpty()) {
+            val listToAppend = mutableListOf<Any>()
+            var operator = '+'
+            for (elementA in newList) {
+                if (elementA is Char) {
+                    if (elementA == '+' || elementA == '-') {
+                        operator = elementA
+                    }
+                    continue
+                }
+
+                var additionalList = mutableListOf<Any>()
+
+                for (elementB in fractionList) {
+                    if (elementB == '+' || elementB == '-') {
+                        listToAppend.addAll(additionalList)
+                        listToAppend.add(elementA)
+
+                        if (operator == '-' && elementB == '+') {
+                            listToAppend.add('-')
+                        }
+                        else if (operator == '-' && elementB == '-') {
+                            listToAppend.add('+')
+                        }
+                        else {
+                            listToAppend.add(elementB)
+                        }
+
+                        additionalList = mutableListOf()
+                    }
+                    else {
+                        additionalList.add(elementB)
+                    }
+                }
+
+                if (additionalList.isNotEmpty()) {
+                    listToAppend.addAll(additionalList)
+                    listToAppend.add(elementA)
+                }
+                else {
+                    listToAppend.addAll(newList)
+                    break
+                }
+            }
+
+            if (listToAppend.isNotEmpty()) {
+                list.addAll(listToAppend)
+            }
+            else {
+                list.addAll(fractionList)
+            }
         }
-        list.add(')')
 
         if (denominator != null && denominator!!.isNotEmpty()) {
+            newList = mutableListOf()
+            fractionList = mutableListOf()
             i = 0
-            brackets = 0
-            list.add('/')
-            list.add('(')
             while (i < denominator!!.size) {
                 if (denominator!![i] is Fraction) {
-                    val buffer = (denominator!![i] as Fraction).onlyCalculable()
+                    val buffer = (denominator!![i] as Fraction).onlyCalculable(!switch)
                     if (buffer.isNotEmpty()) {
-                        if (list.isNotEmpty() && (list.last() !is Char || list.last() == ')')) {
-                            list.add('×')
-                        }
-                        list.add('(')
-                        list.addAll(buffer)
-                        list.add(')')
+                        fractionList.addAll(buffer)
                     }
                     else {
                         return mutableListOf()
                     }
                 }
                 else if (denominator!![i] is UnknownEntity) {
-                    if (list.isNotEmpty() && (list.last() !is Char || list.last() == ')')) {
-                        list.add('×')
-                        list.add('(')
-                        brackets++
+                    if (!switch) {
+                        newList.add(Fraction(mutableListOf(UnknownEntity(1.0)), mutableListOf(denominator!![i] as UnknownEntity)))
                     }
-                    list.add(denominator!![i] as UnknownEntity)
+                    else {
+                        newList.add(denominator!![i] as UnknownEntity)
+                    }
                 }
                 else if (denominator!![i] is Char) {
-                    list.add(denominator!![i])
-                    list.add('(')
-                    brackets++
+                    if (denominator!![i] != '/') {
+                        val listToAppend = mutableListOf<Any>()
+                        var operator = '+'
+                        for (elementA in newList) {
+                            if (elementA is Char) {
+                                if (elementA == '+' || elementA == '-') {
+                                    operator = elementA
+                                }
+                                continue
+                            }
+
+                            var additionalList = mutableListOf<Any>()
+
+                            for (elementB in fractionList) {
+                                if (elementB == '+' || elementB == '-') {
+                                    listToAppend.addAll(additionalList)
+                                    listToAppend.add(elementA)
+
+                                    if (operator == '-' && elementB == '+') {
+                                        listToAppend.add('-')
+                                    }
+                                    else if (operator == '-' && elementB == '-') {
+                                        listToAppend.add('+')
+                                    }
+                                    else {
+                                        listToAppend.add(elementB)
+                                    }
+
+                                    additionalList = mutableListOf()
+                                }
+                                else {
+                                    additionalList.add(elementB)
+                                }
+                            }
+
+                            if (additionalList.isNotEmpty()) {
+                                listToAppend.addAll(additionalList)
+                                listToAppend.add(elementA)
+                            }
+                            else {
+                                listToAppend.addAll(newList)
+                                break
+                            }
+                        }
+
+                        if (listToAppend.isNotEmpty()) {
+                            list.addAll(listToAppend)
+                        }
+                        else {
+                            list.addAll(fractionList)
+                        }
+
+                        newList = mutableListOf()
+                        fractionList = mutableListOf()
+                    }
+
+                    newList.add(denominator!![i])
                 }
                 else {
                     return mutableListOf()
                 }
                 i++
             }
-            i = 0
-            while (i < brackets) {
-                list.add(')')
-                i++
+            if (newList.isNotEmpty()) {
+                val listToAppend = mutableListOf<Any>()
+                var operator = '+'
+                for (elementA in newList) {
+                    if (elementA is Char) {
+                        if (elementA == '+' || elementA == '-') {
+                            operator = elementA
+                        }
+                        continue
+                    }
+
+                    var additionalList = mutableListOf<Any>()
+
+                    for (elementB in fractionList) {
+                        if (elementB == '+' || elementB == '-') {
+                            listToAppend.addAll(additionalList)
+                            listToAppend.add(elementA)
+
+                            if (operator == '-' && elementB == '+') {
+                                listToAppend.add('-')
+                            }
+                            else if (operator == '-' && elementB == '-') {
+                                listToAppend.add('+')
+                            }
+                            else {
+                                listToAppend.add(elementB)
+                            }
+
+                            additionalList = mutableListOf()
+                        }
+                        else {
+                            additionalList.add(elementB)
+                        }
+                    }
+
+                    if (additionalList.isNotEmpty()) {
+                        listToAppend.addAll(additionalList)
+                        listToAppend.add(elementA)
+                    }
+                    else {
+                        listToAppend.addAll(newList)
+                        break
+                    }
+                }
+
+                if (listToAppend.isNotEmpty()) {
+                    list.addAll(listToAppend)
+                }
+                else {
+                    list.addAll(fractionList)
+                }
             }
-            list.add(')')
         }
 
-        if (list.size == 2) return mutableListOf()
         return list
     }
 
@@ -3864,6 +4058,12 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                                 is Fraction -> {
                                     when (elementB) {
                                         is Fraction -> {
+                                            elementA.getOutCount()
+                                            elementA.getOutPowerTo()
+
+                                            elementB.getOutCount()
+                                            elementB.getOutPowerTo()
+
                                             val calculableA = elementA.onlyCalculable()
                                             val calculableB = elementB.onlyCalculable()
                                             if (calculableA.isNotEmpty() && calculableB.isNotEmpty()) {
@@ -3883,8 +4083,10 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                                                 else {
                                                     elementA.numerator = (calculableA + '+' + calculableB).toMutableList()
                                                 }
+
                                                 elementA.denominator = null
-                                                if (i-1 > 0 && transformedInput[i-1].size == 1 && transformedInput[i-1].last() is Char) {
+
+                                                if (i-1 >= 0 && transformedInput[i-1].size == 1 && transformedInput[i-1].last() is Char) {
                                                     toRemove.add(i-1)
                                                     transformedInput[i-1].clear()
                                                 }
@@ -3903,7 +4105,11 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                                                         listA[j] = elementA + elementB
                                                     }
 
-                                                    if (i-1 > 0 && transformedInput[i-1].size == 1 && transformedInput[i-1].last() is Char) {
+                                                    if ((listA[j] as Fraction).isZero()) {
+                                                        listA.clear()
+                                                    }
+
+                                                    if (i-1 >= 0 && transformedInput[i-1].size == 1 && transformedInput[i-1].last() is Char) {
                                                         toRemove.add(i-1)
                                                         transformedInput[i-1].clear()
                                                     }
@@ -3927,7 +4133,11 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                                                         listA[j] = elementA + elementB
                                                     }
 
-                                                    if (i-1 > 0 && transformedInput[i-1].size == 1 && transformedInput[i-1].last() is Char) {
+                                                    if ((listA[j] as UnknownEntity).isZero()) {
+                                                        listA.clear()
+                                                    }
+
+                                                    if (i-1 >= 0 && transformedInput[i-1].size == 1 && transformedInput[i-1].last() is Char) {
                                                         toRemove.add(i-1)
                                                         transformedInput[i-1].clear()
                                                     }
@@ -3947,7 +4157,11 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                                                         listA[j] = elementA + elementB
                                                     }
 
-                                                    if (i-1 > 0 && transformedInput[i-1].size == 1 && transformedInput[i-1].last() is Char) {
+                                                    if ((listA[j] as Fraction).isZero()) {
+                                                        listA.clear()
+                                                    }
+
+                                                    if (i-1 >= 0 && transformedInput[i-1].size == 1 && transformedInput[i-1].last() is Char) {
                                                         toRemove.add(i-1)
                                                         transformedInput[i-1].clear()
                                                     }
