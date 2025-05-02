@@ -477,12 +477,14 @@ data class Function(var content: MutableList<Any> = mutableListOf(), var powerTo
             return getInsideOfFunction(mutableListOf(UnknownEntity(1.0)), withMultiplication = withMultiplication)
         } else {
             if (count != null && !flatFunction && !withoutCount) {
-                function.add('(')
-                function.addAll(count!!.getFraction())
-                function.add(')')
-                function.add('×')
-                function.add('(')
-                index = function.size
+                if (withMultiplication) {
+                    function.add('(')
+                    function.addAll(count!!.getFraction(withMultiplication = false, flatFraction = true))
+                    function.add(')')
+                    function.add('×')
+                    function.add('(')
+                    index = function.size
+                }
             }
 
             function.addAll(getInsideOfFunction(content, flatFunction = flatFunction, withMultiplication = withMultiplication))
@@ -498,7 +500,7 @@ data class Function(var content: MutableList<Any> = mutableListOf(), var powerTo
                 }
             }
 
-            if (count != null && !flatFunction && !withoutCount) {
+            if (count != null && !flatFunction && !withoutCount && withMultiplication) {
                 function.add(')')
             }
         }
