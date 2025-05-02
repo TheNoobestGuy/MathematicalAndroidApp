@@ -133,7 +133,7 @@ data class UnknownEntity(var multiplier: Double? = null, var variable: Char? = n
     }
 
     fun onlyNumber(): Boolean {
-        return multiplier != null && (variable == null || variable == 'f' || powerTo == 0.0)
+        return multiplier != null && (variable == null || variable == 'f')
     }
 
     fun isOne(): Boolean {
