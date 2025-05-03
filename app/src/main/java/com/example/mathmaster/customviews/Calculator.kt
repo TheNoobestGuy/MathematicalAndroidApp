@@ -1401,7 +1401,7 @@ class Calculator {
         return result
     }
 
-    private fun transformEquationForSolvingUnknowns(equation: MutableList<Any>, index: Int = 0, entities: MutableList<UnknownEntity> = mutableListOf()): Pair<MutableList<Any>, Int> {
+        private fun transformEquationForSolvingUnknowns(equation: MutableList<Any>, index: Int = 0, entities: MutableList<UnknownEntity> = mutableListOf()): Pair<MutableList<Any>, Int> {
         val stackForEquation = mutableListOf<Any>()
 
         var iterator = index
@@ -1438,14 +1438,7 @@ class Calculator {
                         entities.clear()
                     }
 
-                    if (stackForEquation.isNotEmpty()) {
-                        if (stackForEquation.last() != '/' && stackForEquation.last() != '×' && stackForEquation.last() != '+' && stackForEquation.last() != '-') {
-                            stackForEquation.add(equation[iterator])
-                        }
-                    }
-                    else {
-                        stackForEquation.add(equation[iterator])
-                    }
+                    stackForEquation.add(equation[iterator])
                 }
                 '/' -> {
                     if (entities.isNotEmpty()) {
@@ -1453,13 +1446,15 @@ class Calculator {
                         entities.clear()
                     }
 
+                    val fraction = calculateFractions(stackForEquation, withoutGCD = true)
+                    stackForEquation.clear()
+                    stackForEquation.add(fraction)
+
                     if (equation[iterator+1] == '(') {
                         val subEquation = transformEquationForSolvingUnknowns(equation, iterator+2, entities)
                         iterator = subEquation.second
-                        val base = calculateFractions(stackForEquation, withoutGCD = true)
-                        stackForEquation.clear()
-                        val result = base / calculateFractions(subEquation.first, withoutGCD = true)
-                        result.setFraction()
+                        val result = calculateFractions(subEquation.first, withoutGCD = true)
+                        stackForEquation.add('/')
                         stackForEquation.add(result)
                         continue
                     }
@@ -1589,8 +1584,10 @@ class Calculator {
         if (entities.isNotEmpty()) {
             stackForEquation.addAll(entities)
         }
+        val result = calculateFractions(stackForEquation, withoutGCD = true)
+        result.calculateFraction()
 
-        return Pair(calculateFractions(stackForEquation, withoutGCD = true).getFraction(withMultiplication = true), iterator)
+        return Pair(result.getFraction(withMultiplication = true), iterator)
     }
 
     private fun groupUnknowns(equation: MutableList<Any>, eqSign: Boolean = false, negative: Boolean = false, firstOperator: Boolean = false) : MutableList<Any> {
@@ -3139,12 +3136,6 @@ class Calculator {
 
     private fun calculateFractions(stackForEquation: MutableList<Any>, withoutGCD: Boolean = false): Fraction {
         if (stackForEquation.size == 1 && stackForEquation.last() is Fraction) {
-            if (withoutGCD) {
-                (stackForEquation.last() as Fraction).setWithoutGCDMode()
-            }
-            else {
-                (stackForEquation.last() as Fraction).setGCDMode()
-            }
             return stackForEquation.last() as Fraction
         }
 
@@ -3302,15 +3293,6 @@ class Calculator {
             Fraction(numerator, denominator)
         }
 
-        if (withoutGCD) {
-            fraction.setWithoutGCDMode()
-            fraction.setFraction()
-        }
-        else {
-            fraction.setGCDMode()
-            fraction.setFraction()
-        }
-
         return fraction
     }
 
@@ -3451,6 +3433,7 @@ class Calculator {
         }
 
         val result = calculateFractions(stackForEquation, withoutGCD = withoutGCD)
+        result.calculateFraction()
         result.finalShort()
 
         return Pair(result.getFraction(withMultiplication = false), i+1)
