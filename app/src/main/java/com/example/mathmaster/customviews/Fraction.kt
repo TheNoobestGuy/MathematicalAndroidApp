@@ -4085,15 +4085,23 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                                                 }
 
                                                 elementA.denominator = null
-
-                                                if (i-1 >= 0 && transformedInput[i-1].size == 1 && transformedInput[i-1].last() is Char) {
-                                                    toRemove.add(i-1)
-                                                    transformedInput[i-1].clear()
-                                                }
-                                                toRemove.add(i)
-                                                listB.clear()
-                                                break
                                             }
+                                            else {
+                                                if (operator == '-') {
+                                                    listA[j] = elementA - elementB
+                                                }
+                                                else {
+                                                    listA[j] = elementA + elementB
+                                                }
+                                            }
+
+                                            if (i-1 >= 0 && transformedInput[i-1].size == 1 && transformedInput[i-1].last() is Char) {
+                                                toRemove.add(i-1)
+                                                transformedInput[i-1].clear()
+                                            }
+                                            toRemove.add(i)
+                                            listB.clear()
+                                            break
                                         }
                                         is UnknownEntity -> {
                                             if (listB.size == 1 && listA.size == 1) {
