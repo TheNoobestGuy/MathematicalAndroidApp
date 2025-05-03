@@ -28,7 +28,7 @@ data class UnknownEntity(var multiplier: Double? = null, var variable: Char? = n
         val original = mutableListOf<Any>()
 
         if (value) {
-            return mutableListOf('f', '^', 0.0)
+            return mutableListOf(0.0, '^', 'f')
         }
 
         if ((powerTo == null || variable == 'f' || powerTo == 0.0) && multiplier != null) {
@@ -137,7 +137,7 @@ data class UnknownEntity(var multiplier: Double? = null, var variable: Char? = n
     }
 
     fun isOne(): Boolean {
-        return this.multiplier == 1.0 && (this.variable == null || (this.powerTo == null || this.powerTo == 0.0))
+        return this.multiplier == 1.0 && (this.variable == null || this.variable == 'f' || this.powerTo == null || this.powerTo == 0.0)
     }
 
     fun isZero(): Boolean {
