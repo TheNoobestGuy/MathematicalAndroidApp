@@ -3129,69 +3129,33 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
     }
 
     private fun updateNumeratorMaps() {
+
+        println("BEFORE")
+        println(numeratorMaps)
+        println(numeratorElements)
+
+
         for ((index, map) in numeratorMaps.withIndex()) {
             val toRemove = mutableListOf<MutableList<Any>>()
 
             for (element in map) {
                 if (element.value == 0.0 || (element.value == 1.0 && element.key.last() == 'f')) {
                     toRemove.add(element.key)
-
-                    numeratorElements[index].remove(numeratorElements[index].find {
-                        when (it) {
-                            is UnknownEntity -> {
-                                it.getKey() == element.key
-                            }
-                            is Function -> {
-                                it.getKey() == element.key
-                            }
-                            is Fraction -> {
-                                it.getKey() == element.key
-                            }
-                            else -> false
-                        }
-                    })
-
-                    if (numeratorElements[index].isEmpty()) {
-                        numeratorMaps[index][mutableListOf('f', '^', 0.0)] = 1.0
-                        numeratorElements[index].add(UnknownEntity(1.0, 'f', 0.0))
-                    }
-                }
-                else {
-                    val entities = numeratorElements[index].filter {
-                        when (it) {
-                            is UnknownEntity -> {
-                                it.getKey() == element.key
-                            }
-                            is Function -> {
-                                it.getKey() == element.key
-                            }
-                            is Fraction -> {
-                                it.getKey() == element.key
-                            }
-                            else -> false
-                        }
-                    }
-
-                    for (entity in entities) {
-                        when (entity) {
-                            is UnknownEntity -> {
-                                entity.multiplier = element.value
-                            }
-                            is Function -> {
-                                entity.powerTo = element.value
-                            }
-                            is Fraction -> {
-                                entity.powerTo = element.value
-                            }
-                        }
-                    }
                 }
             }
 
             for (j in toRemove) {
                 numeratorMaps[index].remove(j)
             }
-        }
+
+            if (numeratorMaps[index].isEmpty()) {
+                numeratorMaps[index][mutableListOf(0.0, '^', 'f')] = 1.0
+            }
+         }
+
+        println("AFFTER")
+        println(numeratorMaps)
+        println(numeratorElements)
     }
 
     private fun updateDenominatorMaps() {
@@ -3277,14 +3241,18 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                     when (entity) {
                         is Function -> {
                             if (key == entity.getKey()) {
-                                entity.powerTo = v
-                                fragment.add(entity)
+                                if (v != 0.0) {
+                                    entity.powerTo = v
+                                    fragment.add(entity)
+                                }
                             }
                         }
                         is Fraction -> {
                             if (key == entity.getKey()) {
-                                entity.powerTo = v
-                                fragment.add(entity)
+                                if (v != 0.0) {
+                                    entity.powerTo = v
+                                    fragment.add(entity)
+                                }
                             }
                         }
                     }
