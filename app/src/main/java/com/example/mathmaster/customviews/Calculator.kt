@@ -94,7 +94,7 @@ data class UnknownEntity(var multiplier: Double? = null, var variable: Char? = n
         val derivative = mutableListOf<Any>()
 
         if (variable == null) {
-            return derivative
+            return mutableListOf(0.0)
         }
 
         if (isNotEmpty()) {
@@ -249,6 +249,10 @@ data class UnknownEntity(var multiplier: Double? = null, var variable: Char? = n
     }
 
     operator fun times(other: UnknownEntity): UnknownEntity {
+        if (this.variable == 'f' && other.variable != 'f') {
+            this.variable = other.variable
+        }
+
         return if (this.isNotEmpty() && other.isNotEmpty()) {
             UnknownEntity(this.multiplier!! * other.multiplier!!, this.variable, this.powerTo!! + other.powerTo!!)
         } else if (this.onlyNumber() && other.isNotEmpty()) {
@@ -271,6 +275,10 @@ data class UnknownEntity(var multiplier: Double? = null, var variable: Char? = n
     }
 
     operator fun div(other: UnknownEntity): UnknownEntity {
+        if (this.variable == 'f' && other.variable != 'f') {
+            this.variable = other.variable
+        }
+
         return if (this.isNotEmpty() && other.isNotEmpty()) {
             if (this.powerTo!! - other.powerTo!! == 0.0) {
                 UnknownEntity(this.multiplier!! / other.multiplier!!, null, null)
@@ -1401,7 +1409,7 @@ class Calculator {
         return result
     }
 
-        private fun transformEquationForSolvingUnknowns(equation: MutableList<Any>, index: Int = 0, entities: MutableList<UnknownEntity> = mutableListOf()): Pair<MutableList<Any>, Int> {
+    private fun transformEquationForSolvingUnknowns(equation: MutableList<Any>, index: Int = 0, entities: MutableList<UnknownEntity> = mutableListOf()): Pair<MutableList<Any>, Int> {
         val stackForEquation = mutableListOf<Any>()
 
         var iterator = index
@@ -3151,11 +3159,15 @@ class Calculator {
                 if (element == '+' || element == '-') {
                     when (lastSign) {
                         '/' -> {
-                            denominator.add(element)
+                            if (!skipDenominator) {
+                                denominator.add(element)
+                            }
                             skipDenominator = false
                         }
                         '×' -> {
-                            numerator.add(element)
+                            if (!skipNumerator) {
+                                numerator.add(element)
+                            }
                             skipNumerator = false
                         }
                     }
