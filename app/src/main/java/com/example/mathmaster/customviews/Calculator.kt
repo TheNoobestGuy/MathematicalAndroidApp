@@ -107,7 +107,7 @@ data class UnknownEntity(var multiplier: Double? = null, var variable: Char? = n
                 }
             }
             else {
-                derivative.add(0.0)
+                return mutableListOf(0.0)
             }
         }
 
@@ -146,7 +146,7 @@ data class UnknownEntity(var multiplier: Double? = null, var variable: Char? = n
 
     override operator fun equals(other: Any?): Boolean {
         if (other is UnknownEntity) {
-            return if (this.onlyNumber() || other.onlyNumber()) {
+            return if (this.onlyNumber() && other.onlyNumber()) {
                 true
             }
             else if (this.isNotEmpty() && other.isNotEmpty()) {
