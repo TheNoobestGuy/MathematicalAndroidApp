@@ -252,6 +252,9 @@ data class UnknownEntity(var multiplier: Double? = null, var variable: Char? = n
         if (this.variable == 'f' && other.variable != 'f') {
             this.variable = other.variable
         }
+        else if (this.variable != 'f' && other.variable == 'f') {
+            other.variable = this.variable
+        }
 
         return if (this.isNotEmpty() && other.isNotEmpty()) {
             UnknownEntity(this.multiplier!! * other.multiplier!!, this.variable, this.powerTo!! + other.powerTo!!)
@@ -277,6 +280,9 @@ data class UnknownEntity(var multiplier: Double? = null, var variable: Char? = n
     operator fun div(other: UnknownEntity): UnknownEntity {
         if (this.variable == 'f' && other.variable != 'f') {
             this.variable = other.variable
+        }
+        else if (this.variable != 'f' && other.variable == 'f') {
+            other.variable = this.variable
         }
 
         return if (this.isNotEmpty() && other.isNotEmpty()) {
@@ -3186,9 +3192,7 @@ class Calculator {
                                         while (denominator.isNotEmpty() && denominator.last() != '+' && denominator.last() != '-') {
                                             denominator.removeLast()
                                         }
-                                        if (denominator.isNotEmpty() && denominator.last() is Char) {
-                                            denominator.removeLast()
-                                        }
+
                                         skipDenominator = true
                                     }
                                     else if (element.isOne()) {
@@ -3208,21 +3212,19 @@ class Calculator {
                                         while (denominator.isNotEmpty() && denominator.last() != '+' && denominator.last() != '-') {
                                             denominator.removeLast()
                                         }
-                                        if (denominator.isNotEmpty() && denominator.last() is Char) {
-                                            denominator.removeLast()
-                                        }
+
                                         skipDenominator = true
                                     }
                                     else if (element.isOne()) {
                                         if (denominator.isNotEmpty() && (denominator.last() == '+' || denominator.last() == '-')) {
-                                            denominator.add(element.copy())
+                                            denominator.add(element)
                                         }
                                         else if (denominator.isEmpty()) {
-                                            denominator.add(element.copy())
+                                            denominator.add(element)
                                         }
                                     }
                                     else {
-                                        denominator.add(element.copy())
+                                        denominator.add(element)
                                     }
                                 }
                                 is Function -> {
@@ -3239,9 +3241,7 @@ class Calculator {
                                         while (numerator.isNotEmpty() && numerator.last() != '+' && numerator.last() != '-') {
                                             numerator.removeLast()
                                         }
-                                        if (numerator.isNotEmpty() && numerator.last() is Char) {
-                                            numerator.removeLast()
-                                        }
+
                                         skipNumerator = true
                                     } else if (element.isOne()) {
                                         if (numerator.isNotEmpty() && (numerator.last() == '+' || numerator.last() == '-')) {
@@ -3259,9 +3259,7 @@ class Calculator {
                                         while (numerator.isNotEmpty() && numerator.last() != '+' && numerator.last() != '-') {
                                             numerator.removeLast()
                                         }
-                                        if (numerator.isNotEmpty() && numerator.last() is Char) {
-                                            numerator.removeLast()
-                                        }
+
                                         skipNumerator = true
                                     } else if (element.isOne()) {
                                         if (numerator.isNotEmpty() && (numerator.last() == '+' || numerator.last() == '-')) {
@@ -3370,16 +3368,7 @@ class Calculator {
 
                     return Pair(stackForEquation, i+1)
                 }
-                '+', '-' -> {
-                    if (entities.isNotEmpty()) {
-                        stackForEquation.addAll(entities)
-                        entities = mutableListOf()
-                    }
-
-                    stackForEquation.add(equation[i])
-                    power = false
-                }
-                '×' -> {
+                '+', '-', '×' -> {
                     if (entities.isNotEmpty()) {
                         stackForEquation.addAll(entities)
                         entities = mutableListOf()

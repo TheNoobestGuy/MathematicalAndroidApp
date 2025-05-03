@@ -190,7 +190,7 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
         }
 
         makeCopy()
-        cleanFraction()
+
 //        println("INPUT")
 //        println(this)
 
@@ -1362,13 +1362,11 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
             setMultiplicative(getMultiplicativeNumerator(), getMultiplicativeDenominator())
         }
 
-        println("numeratorMaps")
+
+        println("AFTER MULTIPLICATION")
         println(numeratorMaps)
         println(numeratorElements)
 
-
-        println("AFTER MULTIPLICATION")
-        println(this)
         updateNumeratorMaps()
         updateDenominatorMaps()
 
@@ -1386,13 +1384,13 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
 //        makeCopy()
 //        shortenEverything() println
 
-        convertDoublesToFractionInNumerator()
-        if (denominator != null) convertDoublesToFractionInDenominator()
+//        convertDoublesToFractionInNumerator()
+//        if (denominator != null) convertDoublesToFractionInDenominator()
         sortEverything()
-        cleanFraction()
+//        cleanFraction()
 
-        println("OUTPUT")
-        println(this)
+//        println("OUTPUT")
+//        println(this)
     }
 
     fun calculateFraction() {
@@ -1904,11 +1902,22 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                         '+', '-' -> {
                             if (entities.isNotEmpty()) {
                                 val newEntity = UnknownEntity(1.0, 'f', 0.0)
+                                val toRemove = mutableListOf<UnknownEntity>()
                                 for (entity in entities) {
                                     newEntity.multiplier = newEntity.multiplier?.times(entity.multiplier!!)
                                     entity.multiplier = 1.0
+
+                                    if (entity.onlyNumber()) {
+                                        toRemove.add(entity)
+                                    }
                                 }
-                                entities.add(newEntity)
+                                if (newEntity.multiplier != 1.0) {
+                                    entities.add(newEntity)
+                                }
+
+                                for (i in toRemove) {
+                                    entities.remove(i)
+                                }
 
                                 for (entity in entities) {
                                     if (entity.onlyNumber()) {
@@ -1940,11 +1949,22 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
         }
         if (entities.isNotEmpty()) {
             val newEntity = UnknownEntity(1.0, 'f', 0.0)
+            val toRemove = mutableListOf<UnknownEntity>()
             for (entity in entities) {
                 newEntity.multiplier = newEntity.multiplier?.times(entity.multiplier!!)
                 entity.multiplier = 1.0
+
+                if (entity.onlyNumber()) {
+                    toRemove.add(entity)
+                }
             }
-            entities.add(newEntity)
+            if (newEntity.multiplier != 1.0) {
+                entities.add(newEntity)
+            }
+
+            for (i in toRemove) {
+                entities.remove(i)
+            }
 
             for (entity in entities) {
                 if (entity.onlyNumber()) {
@@ -1962,6 +1982,10 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
             numeratorMaps.add(numeratorMap)
             numeratorElements.add(numeratorElement)
         }
+
+        println("numeratorMaps")
+        println(numeratorMaps)
+        println(numeratorElements)
     }
 
     private fun updateFractionDenominator() {
@@ -2183,10 +2207,12 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
         for (list in numeratorElements) {
             for (element in list) {
                 if (element is UnknownEntity) {
-                    allNumeratorMultipliers.add(Fraction(mutableListOf(UnknownEntity(ceil(round(element.multiplier!! * 1000) / 1000)))))
-                    val decimalPoint = countDecimalPlaces(ceil(round(element.multiplier!! * 1000) / 1000))
-                    if (decimalPoint > biggestDecimalPoint) {
-                        biggestDecimalPoint = decimalPoint
+                    if (element.onlyNumber()) {
+                        allNumeratorMultipliers.add(Fraction(mutableListOf(UnknownEntity(ceil(round(element.multiplier!! * 1000) / 1000)))))
+                        val decimalPoint = countDecimalPlaces(ceil(round(element.multiplier!! * 1000) / 1000))
+                        if (decimalPoint > biggestDecimalPoint) {
+                            biggestDecimalPoint = decimalPoint
+                        }
                     }
                 }
             }
@@ -2268,10 +2294,12 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
         for (list in denominatorElements) {
             for (element in list) {
                 if (element is UnknownEntity) {
-                    allNumeratorMultipliers.add(Fraction(mutableListOf(UnknownEntity(ceil(round(element.multiplier!! * 1000) / 1000)))))
-                    val decimalPoint = countDecimalPlaces(ceil(round(element.multiplier!! * 1000) / 1000))
-                    if (decimalPoint > biggestDecimalPoint) {
-                        biggestDecimalPoint = decimalPoint
+                    if (element.onlyNumber()) {
+                        allNumeratorMultipliers.add(Fraction(mutableListOf(UnknownEntity(ceil(round(element.multiplier!! * 1000) / 1000)))))
+                        val decimalPoint = countDecimalPlaces(ceil(round(element.multiplier!! * 1000) / 1000))
+                        if (decimalPoint > biggestDecimalPoint) {
+                            biggestDecimalPoint = decimalPoint
+                        }
                     }
                 }
             }
@@ -2348,13 +2376,11 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
 
     private fun getMultiplicativeNumerator(): MutableList<Any> {
         // Find commons for numerator
-        if (numeratorMaps.isNotEmpty()) {
-            val startCommonForNumerator = hashMapOf<MutableList<Any>, Double>()
-            for ((key, v) in numeratorMaps.last()) {
-                if (v != 0.0) {
-                    startCommonForNumerator[key] = v
-                }
-            }
+//        println("INPUT")
+//        println(numeratorMaps)
+
+        if (numeratorMaps.isNotEmpty() && numeratorMaps.size != 1) {
+            val startCommonForNumerator = numeratorMaps.last()
 //
 //            println("numeratorMaps")
 //            println(numeratorMaps)
@@ -2362,10 +2388,11 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
             var noCommonEntity = false
             val toRemove = mutableListOf<MutableList<Any>>()
             for (map in numeratorMaps) {
+                if (map === startCommonForNumerator) continue
                 for ((key, value) in startCommonForNumerator) {
                     if (itIsUnknown(key) && !noCommonEntity) {
                         var found = false
-                        for((k, v) in map) {
+                        for ((k, v) in map) {
                             if (itIsUnknown(k)) {
                                 if (key.last() == k.last()) {
                                     val newPower = min(k.first() as Double, k.first() as Double)
@@ -2373,10 +2400,11 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                                     val newKey = mutableListOf(newPower, key[1], k.last())
 
                                     if (commonForNumerator[newKey] != null) {
-                                        commonForNumerator[newKey] = min(commonForNumerator[newKey]!!, v)
-                                        commonForNumerator[newKey] = min(commonForNumerator[newKey]!!, value)
-                                    }
-                                    else {
+                                        commonForNumerator[newKey] =
+                                            min(commonForNumerator[newKey]!!, v)
+                                        commonForNumerator[newKey] =
+                                            min(commonForNumerator[newKey]!!, value)
+                                    } else {
                                         commonForNumerator[newKey] = min(v, value)
                                     }
 
@@ -2384,14 +2412,10 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                                         found = true
                                     }
 
+                                    println(newKey)
                                     if (newKey != key) {
                                         commonForNumerator[key] = 0.0
-                                    }
-
-                                    for ((common, _) in commonForNumerator) {
-                                        if (itIsUnknown(common) && common.first() as Double > newPower && common.last() == newKey.last()) {
-                                            toRemove.add(common)
-                                        }
+                                        toRemove.add(key)
                                     }
                                 }
                             }
@@ -2405,23 +2429,18 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                             }
                             noCommonEntity = true
                         }
-                    }
-                    else if (map[key] == null && startCommonForNumerator[key] != null) {
+                    } else if (map[key] == null && startCommonForNumerator[key] != null) {
                         toRemove.add(key)
-                    }
-                    else if (map[key] == null) {
+                    } else if (map[key] == null) {
                         continue
-                    }
-                    else {
+                    } else {
                         if (startCommonForNumerator[key] != null && map[key]!! < value) {
                             commonForNumerator[key] = map[key]!!
-                        }
-                        else if (startCommonForNumerator[key] != null && map[key]!! == value) {
+                        } else if (startCommonForNumerator[key] != null && map[key]!! == value) {
                             if (map !== numeratorMaps.last()) {
                                 commonForNumerator[key] = value
                             }
-                        }
-                        else if (startCommonForNumerator[key] != null && map[key]!! > value) {
+                        } else if (startCommonForNumerator[key] != null && map[key]!! > value) {
                             commonForNumerator[key] = value
                         }
                     }
@@ -2431,147 +2450,146 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
             for (i in toRemove) {
                 commonForNumerator.remove(i)
             }
-        }
 
-//        println("commonForNumerator")
-//        println(commonForNumerator)
+//            println("commonForNumerator")
+//            println(commonForNumerator)
 
-        // Get possible gcd
-        val gcdList = mutableListOf<Pair<Double, Double>>()
-        for (element in commonForNumerator) {
-            if (itIsUnknown(element.key)) {
-                val gcd = findGCDNumerator(element.value)
-                gcdList.add(gcd)
+            // Get possible gcd
+            val gcdList = mutableListOf<Pair<Double, Double>>()
+            for (element in commonForNumerator) {
+                if (itIsUnknown(element.key) && element.key.last() == 'f') {
+                    val gcd = findGCDNumerator(element.value)
+                    if (!hasDecimal(gcd.first)) {
+                        gcdList.add(gcd)
+                    }
+                }
             }
-        }
 
-        var gcd = Double.MAX_VALUE
-        var decimalPoint = 1.0
-        for (element in gcdList) {
-            if (gcd > element.first) {
-                gcd = element.first
-                decimalPoint = element.second
+            var gcd = if (gcdList.isNotEmpty()) gcdList.last().first else 1.0
+            var decimalPoint = 1.0
+            for (element in gcdList) {
+                if (gcd > element.first) {
+                    gcd = element.first
+                    decimalPoint = element.second
+                }
             }
-        }
 
-        // Remove commons from fraction numerator
-        for (map in numeratorMaps) {
-            for ((original) in map) {
-                for ((common, count) in commonForNumerator) {
-                    if (itIsUnknown(original)) {
-                        if (original == common) {
-                            map[original] = map[original]!! / gcd * decimalPoint
-                            commonForNumerator[common] = gcd / decimalPoint
+            println("GCD")
+            println(gcd)
 
-                            original[0] = original[0] as Double - common[0] as Double
+            // Remove commons from fraction numerator
+            for (map in numeratorMaps) {
+                for ((original) in map) {
+                    for ((common, count) in commonForNumerator) {
+                        if (itIsUnknown(original)) {
+                            if (original == common && original.last() == 'f') {
+                                map[original] = map[original]!! / gcd * decimalPoint
+                                commonForNumerator[common] = gcd / decimalPoint
+
+                                original[0] = original[0] as Double - common[0] as Double
+                            } else if (original == common) {
+                                map[original] = 0.0
+                                commonForNumerator[common] = 1.0
+                            }
+                        } else if (original == common) {
+                            map[original] = map[original]!! - count
                         }
                     }
-                    else if (original == common) {
-                        map[original] = map[original]!! - count
+                }
+            }
+
+            // Get all common entities
+            val numeratorOutput = mutableListOf<Any>()
+            val commonsToFind = hashMapOf<MutableList<Any>, Double>()
+            val entities = mutableListOf<UnknownEntity>()
+
+            for ((key, value) in commonForNumerator) {
+                if (value != 0.0) {
+                    commonsToFind[key] = value
+
+                    if (itIsUnknown(key)) {
+                        entities.add(UnknownEntity())
+                        entities.last().multiplier = value
+                        entities.last().variable = key.last() as Char
+                        entities.last().powerTo = key.first() as Double
                     }
                 }
             }
-        }
 
-        // Get all common entities
-        val numeratorOutput = mutableListOf<Any>()
-        val commonsToFind = hashMapOf<MutableList<Any>, Double>()
-        val entities = mutableListOf<UnknownEntity>()
-
-        for ((key, value) in commonForNumerator) {
-            if (value != 0.0) {
-                commonsToFind[key] = value
-
-                if (itIsUnknown(key)) {
-                    entities.add(UnknownEntity())
-                    entities.last().multiplier = value
-                    entities.last().variable = key.last() as Char
-                    entities.last().powerTo = key.first() as Double
-                }
-            }
-        }
-
-        var index = 0
-        while (index < numeratorElements.size) {
-            var element = 0
-            while (element < numeratorElements[index].size) {
-                for ((key, v) in commonForNumerator) {
-                    if (element > numeratorElements[index].size || element < 0) {
-                        break
-                    }
-                    when (numeratorElements[index][element]) {
-                        is Function -> {
-                            if (key == (numeratorElements[index][element] as Function).getKey()) {
-                                if (commonsToFind[key]!! > 0) {
-                                    numeratorOutput.add((numeratorElements[index][element] as Function).copy())
-                                    (numeratorOutput.last() as Function).powerTo = v
-                                    commonsToFind[key] = 0.0
+            var index = 0
+            while (index < numeratorElements.size) {
+                var element = 0
+                while (element < numeratorElements[index].size) {
+                    for ((key, v) in commonForNumerator) {
+                        if (element > numeratorElements[index].size || element < 0) {
+                            break
+                        }
+                        when (numeratorElements[index][element]) {
+                            is Function -> {
+                                if (key == (numeratorElements[index][element] as Function).getKey()) {
+                                    if (commonsToFind[key]!! > 0) {
+                                        numeratorOutput.add((numeratorElements[index][element] as Function).copy())
+                                        (numeratorOutput.last() as Function).powerTo = v
+                                        commonsToFind[key] = 0.0
+                                    }
                                 }
                             }
-                        }
-                        is Fraction -> {
-                            val keys = (numeratorElements[index][element] as Fraction).getKeys()
 
-                            for (k in keys) {
-                                if (key == k.first) {
-                                    if (commonsToFind[key]!! > 0) {
-                                        when (k.third) {
-                                            is Function -> {
-                                                numeratorOutput.add((k.third as Function).copy())
-                                                (numeratorOutput.last() as Function).powerTo = v
+                            is Fraction -> {
+                                val keys = (numeratorElements[index][element] as Fraction).getKeys()
+
+                                for (k in keys) {
+                                    if (key == k.first) {
+                                        if (commonsToFind[key]!! > 0) {
+                                            when (k.third) {
+                                                is Function -> {
+                                                    numeratorOutput.add((k.third as Function).copy())
+                                                    (numeratorOutput.last() as Function).powerTo = v
+                                                }
+
+                                                is Fraction -> {
+                                                    numeratorOutput.add((k.third as Fraction).copy())
+                                                    (numeratorOutput.last() as Fraction).powerTo = v
+                                                }
                                             }
-                                            is Fraction -> {
-                                                numeratorOutput.add((k.third as Fraction).copy())
-                                                (numeratorOutput.last() as Fraction).powerTo = v
-                                            }
+                                            commonsToFind[key] = 0.0
                                         }
-                                        commonsToFind[key] = 0.0
                                     }
                                 }
                             }
                         }
                     }
+                    element++
                 }
-                element++
-            }
-            index++
-        }
-
-
-        for (entity in entities) {
-            entity.multiplier = gcd
-
-            if (entity.powerTo == 0.0) {
-                entity.variable = 'f'
+                index++
             }
 
-            if (!(entity.multiplier == 1.0 && entity.onlyNumber())) {
-                numeratorOutput.add(Fraction(mutableListOf(entity), mutableListOf(UnknownEntity(decimalPoint))))
-            }
-        }
 
-        val toAdd = mutableListOf<Fraction>()
-        val toRemove = mutableListOf<UnknownEntity>()
+            for (entity in entities) {
+                entity.multiplier = gcd
 
-        for (element in numeratorOutput) {
-            if (element is UnknownEntity) {
-                if (element.powerTo == 0.0) {
-                    element.variable = 'f'
-                    toAdd.add(Fraction(mutableListOf(element)))
-                    toRemove.add(element)
+                if (entity.powerTo == 0.0) {
+                    entity.variable = 'f'
+                }
+
+                if (!(entity.multiplier == 1.0 && entity.onlyNumber())) {
+                    if (decimalPoint != 1.0) {
+                        numeratorOutput.add(
+                            Fraction(
+                                mutableListOf(entity),
+                                mutableListOf(UnknownEntity(decimalPoint))
+                            )
+                        )
+                    } else {
+                        numeratorOutput.add(entity)
+                    }
                 }
             }
+
+            return numeratorOutput
         }
 
-        for (i in toRemove) {
-            numeratorOutput.remove(i)
-        }
-
-        for (i in toAdd) {
-            numeratorOutput.add(i)
-        }
-
-        return numeratorOutput
+        return mutableListOf()
     }
 
     private fun getMultiplicativeDenominator(): MutableList<Any>? {
@@ -2925,7 +2943,10 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
         }
 
         if (multiplicative != null) {
-            if (multiplicative!!.denominator != null && multiplicative!!.numerator.isEmpty()) {
+            if (multiplicative!!.isOne()) {
+                multiplicative = null
+            }
+            else if (multiplicative!!.denominator != null && multiplicative!!.numerator.isEmpty()) {
                 multiplicative!!.numerator = mutableListOf(UnknownEntity(1.0, 'f', 0.0))
             }
         }
@@ -3233,10 +3254,17 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
             // Get unknown entities
             for ((key, v) in numeratorMaps[index]) {
                 if (itIsUnknown(key)) {
-                    val newEntity = UnknownEntity(1.0, 'f', 0.0)
-                    newEntity.multiplier = v
+                    val newEntity = UnknownEntity()
                     newEntity.variable = key.last() as Char
                     newEntity.powerTo = key.first() as Double
+
+                    if (key.last() == 'f') {
+                        newEntity.multiplier = v
+                    }
+                    else {
+                        newEntity.multiplier = 1.0
+                    }
+
                     fragment.add(newEntity)
                 }
             }
@@ -3257,9 +3285,7 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
             outputNumerator.removeLast()
         }
 
-        val result = shortenEquation(outputNumerator)
-
-        numerator = if (equationHasOperators(result)) mutableListOf(Fraction(result)) else result
+        numerator = if (equationHasOperators(outputNumerator)) mutableListOf(Fraction(outputNumerator)) else outputNumerator
     }
 
     private fun rebuildFractionDenominator() {
@@ -3304,7 +3330,7 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
             outputDenominator.removeLast()
         }
 
-        val result = shortenEquation(outputDenominator)
+        val result = outputDenominator
 
         denominator = if (equationHasOperators(result)) mutableListOf(Fraction(result)) else result
     }
