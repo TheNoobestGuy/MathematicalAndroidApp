@@ -1331,8 +1331,8 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
     private fun setFraction() {
         clearMaps()
 
-//        println("INPUT")
-//        println(this)
+        println("INPUT")
+        println(this)
 
         updateFractionNumerator()
         if (denominator != null) updateFractionDenominator()
@@ -1343,8 +1343,8 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
         }
 
 
-//        println("AFTER MULTIPLICATION")
-//        println(this)
+        println("AFTER MULTIPLICATION")
+        println(this)
         updateNumeratorMaps()
         updateDenominatorMaps()
 
@@ -1356,8 +1356,8 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
         getOutCount()
         getOutPowerTo()
 
-//        println("AFTER BUILD")
-//        println(this)
+        println("AFTER BUILD")
+        println(this)
 
 //        makeCopy()
 //        shortenEverything() println
@@ -2125,6 +2125,176 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
         return this.isNumberFraction() && (this.denominator == null || this.denominator!!.isEmpty()) && this.numerator.size == 1 && this.numerator.last() is UnknownEntity
     }
 
+    private fun findGCDNumerator(input: Double? = null): Pair<Double, Double> {
+        // Get all multipliers of unknown entities
+        val allNumeratorMultipliers = mutableListOf<Fraction>()
+        var biggestDecimalPoint = 0
+        for (list in numeratorElements) {
+            for (element in list) {
+                if (element is UnknownEntity) {
+                    allNumeratorMultipliers.add(Fraction(mutableListOf(UnknownEntity(ceil(round(element.multiplier!! * 1000) / 1000)))))
+                    val decimalPoint = countDecimalPlaces(ceil(round(element.multiplier!! * 1000) / 1000))
+                    if (decimalPoint > biggestDecimalPoint) {
+                        biggestDecimalPoint = decimalPoint
+                    }
+                }
+            }
+        }
+
+        // Convert multipliers to same base
+        var decimalPoint = 1
+        for (i in 0..<biggestDecimalPoint) {
+            decimalPoint *= 10
+        }
+        for (fraction in allNumeratorMultipliers) {
+            (fraction.numerator.last() as UnknownEntity).multiplier = (fraction.numerator.last() as UnknownEntity).multiplier?.times(
+                decimalPoint
+            )
+            fraction.denominator = mutableListOf()
+            fraction.denominator!!.add(UnknownEntity(decimalPoint.toDouble()))
+        }
+
+        // Find gcd
+        val allGCD = mutableListOf<MutableList<Int>>()
+        var currentGCD = mutableListOf<Int>()
+
+        for (multiplierA in allNumeratorMultipliers) {
+            for (multiplierB in allNumeratorMultipliers) {
+                val value = gcd((multiplierA.numerator.last() as UnknownEntity).multiplier!!.toInt(), (multiplierB.numerator.last() as UnknownEntity).multiplier!!.toInt())
+                currentGCD.add(value)
+            }
+            if (currentGCD.isNotEmpty()) {
+                allGCD.add(currentGCD)
+                currentGCD = mutableListOf()
+            }
+        }
+
+        // Get common gcd
+        val commonGCD = hashMapOf<Int, Int>()
+        for (list in allGCD) {
+            var biggestValue = 0
+            for (gcd in list) {
+                if (gcd > biggestValue) {
+                    biggestValue = gcd
+                }
+            }
+
+            val allDivisors = mutableListOf<Int>()
+            for (i in 1..biggestValue) {
+                if (biggestValue % i == 0) {
+                    allDivisors.add(i)
+                }
+            }
+
+            for (divisor in allDivisors) {
+                commonGCD[divisor] = commonGCD.getOrDefault(divisor, 0) + 1
+            }
+        }
+
+        val allCommonGCD = commonGCD.filter { (_, v) -> v == allGCD.size }.keys
+
+        var gcd = if (allCommonGCD.isNotEmpty()) allCommonGCD.last() else 1
+        for (value in allCommonGCD) {
+            if (input != null) {
+                if (gcd < value && value <= input) {
+                    gcd = value
+                }
+            }
+            else {
+                if (gcd < value) {
+                    gcd = value
+                }
+            }
+        }
+
+        return Pair(gcd.toDouble(), decimalPoint.toDouble())
+    }
+
+    private fun findGCDDenominator(input: Double? = null): Pair<Double, Double> {
+        // Get all multipliers of unknown entities
+        val allNumeratorMultipliers = mutableListOf<Fraction>()
+        var biggestDecimalPoint = 0
+        for (list in denominatorElements) {
+            for (element in list) {
+                if (element is UnknownEntity) {
+                    allNumeratorMultipliers.add(Fraction(mutableListOf(UnknownEntity(ceil(round(element.multiplier!! * 1000) / 1000)))))
+                    val decimalPoint = countDecimalPlaces(ceil(round(element.multiplier!! * 1000) / 1000))
+                    if (decimalPoint > biggestDecimalPoint) {
+                        biggestDecimalPoint = decimalPoint
+                    }
+                }
+            }
+        }
+
+        // Convert multipliers to same base
+        var decimalPoint = 1
+        for (i in 0..<biggestDecimalPoint) {
+            decimalPoint *= 10
+        }
+        for (fraction in allNumeratorMultipliers) {
+            (fraction.numerator.last() as UnknownEntity).multiplier = (fraction.numerator.last() as UnknownEntity).multiplier?.times(
+                decimalPoint
+            )
+            fraction.denominator = mutableListOf()
+            fraction.denominator!!.add(UnknownEntity(decimalPoint.toDouble()))
+        }
+
+        // Find gcd
+        val allGCD = mutableListOf<MutableList<Int>>()
+        var currentGCD = mutableListOf<Int>()
+
+        for (multiplierA in allNumeratorMultipliers) {
+            for (multiplierB in allNumeratorMultipliers) {
+                val value = gcd((multiplierA.numerator.last() as UnknownEntity).multiplier!!.toInt(), (multiplierB.numerator.last() as UnknownEntity).multiplier!!.toInt())
+                currentGCD.add(value)
+            }
+            if (currentGCD.isNotEmpty()) {
+                allGCD.add(currentGCD)
+                currentGCD = mutableListOf()
+            }
+        }
+
+        // Get common gcd
+        val commonGCD = hashMapOf<Int, Int>()
+        for (list in allGCD) {
+            var biggestValue = 0
+            for (gcd in list) {
+                if (gcd > biggestValue) {
+                    biggestValue = gcd
+                }
+            }
+
+            val allDivisors = mutableListOf<Int>()
+            for (i in 1..biggestValue) {
+                if (biggestValue % i == 0) {
+                    allDivisors.add(i)
+                }
+            }
+
+            for (divisor in allDivisors) {
+                commonGCD[divisor] = commonGCD.getOrDefault(divisor, 0) + 1
+            }
+        }
+
+        val allCommonGCD = commonGCD.filter { (_, v) -> v == allGCD.size }.keys
+
+        var gcd = if (allCommonGCD.isNotEmpty()) allCommonGCD.last() else 1
+        for (value in allCommonGCD) {
+            if (input != null) {
+                if (gcd < value && value <= input) {
+                    gcd = value
+                }
+            }
+            else {
+                if (gcd < value) {
+                    gcd = value
+                }
+            }
+        }
+
+        return Pair(gcd.toDouble(), decimalPoint.toDouble())
+    }
+
     private fun getMultiplicativeNumerator(): MutableList<Any> {
         // Find commons for numerator
         if (numeratorMaps.isNotEmpty()) {
@@ -2239,16 +2409,36 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
             }
         }
 
+        // Get possible gcd
+        val gcdList = mutableListOf<Pair<Double, Double>>()
+        for (element in commonForNumerator) {
+            if (itIsUnknown(element.key)) {
+                val gcd = findGCDNumerator(element.value)
+                gcdList.add(gcd)
+            }
+        }
+
+        var gcd = Double.MAX_VALUE
+        var decimalPoint = 1.0
+        for (element in gcdList) {
+            if (gcd > element.first) {
+                gcd = element.first
+                decimalPoint = element.second
+            }
+        }
+
         // Remove commons from fraction numerator
         for (map in numeratorMaps) {
-            for ((original, _) in map) {
+            for ((original) in map) {
                 for ((common, count) in commonForNumerator) {
                     if (itIsUnknown(original)) {
                         if (common.last() == 'f') {
-                            map[original] = map[original]!! / count
+                            map[original] = map[original]!! / gcd * decimalPoint
+                            commonForNumerator[common] = gcd
                         }
                         else if (original == common) {
-                            map[original] = map[original]!! / count
+                            map[original] = map[original]!! / gcd * decimalPoint
+                            commonForNumerator[common] = gcd
                         }
                     }
                     else if (original == common) {
@@ -2258,7 +2448,7 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
             }
         }
 
-        // Make a fraction out of found commons
+        // Get all common entities
         val numeratorOutput = mutableListOf<Any>()
         val commonsToFind = hashMapOf<MutableList<Any>, Double>()
         val entities = mutableListOf<UnknownEntity>()
@@ -2335,82 +2525,8 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
         }
 
         if (entities.isNotEmpty()) {
-            // Get all multipliers of unknown entities
-            val allNumeratorMultipliers = mutableListOf<Fraction>()
-            var biggestDecimalPoint = 0
-            for (list in numeratorElements) {
-                for (element in list) {
-                    if (element is UnknownEntity) {
-                        allNumeratorMultipliers.add(Fraction(mutableListOf(UnknownEntity(ceil(round(element.multiplier!! * 1000) / 1000)))))
-                        val decimalPoint = countDecimalPlaces(ceil(round(element.multiplier!! * 1000) / 1000))
-                        if (decimalPoint > biggestDecimalPoint) {
-                            biggestDecimalPoint = decimalPoint
-                        }
-                    }
-                }
-            }
-
-            // Convert multipliers to same base
-            var decimalPoint = 1
-            for (i in 0..<biggestDecimalPoint) {
-                decimalPoint *= 10
-            }
-            for (fraction in allNumeratorMultipliers) {
-                (fraction.numerator.last() as UnknownEntity).multiplier = (fraction.numerator.last() as UnknownEntity).multiplier?.times(
-                    decimalPoint
-                )
-                fraction.denominator = mutableListOf()
-                fraction.denominator!!.add(UnknownEntity(decimalPoint.toDouble()))
-            }
-
-            // Find gcd
-            val allGCD = mutableListOf<MutableList<Int>>()
-            var currentGCD = mutableListOf<Int>()
-
-            for (multiplierA in allNumeratorMultipliers) {
-                for (multiplierB in allNumeratorMultipliers) {
-                    val value = gcd((multiplierA.numerator.last() as UnknownEntity).multiplier!!.toInt(), (multiplierB.numerator.last() as UnknownEntity).multiplier!!.toInt())
-                    currentGCD.add(value)
-                }
-                if (currentGCD.isNotEmpty()) {
-                    allGCD.add(currentGCD)
-                    currentGCD = mutableListOf()
-                }
-            }
-
-            // Get common gcd
-            val commonGCD = hashMapOf<Int, Int>()
-            for (list in allGCD) {
-                var biggestValue = 0
-                for (gcd in list) {
-                    if (gcd > biggestValue) {
-                        biggestValue = gcd
-                    }
-                }
-
-                val allDivisors = mutableListOf<Int>()
-                for (i in 1..biggestValue) {
-                    if (biggestValue % i == 0) {
-                        allDivisors.add(i)
-                    }
-                }
-
-                for (divisor in allDivisors) {
-                    commonGCD[divisor] = commonGCD.getOrDefault(divisor, 0) + 1
-                }
-            }
-
-            val allCommonGCD = commonGCD.filter { (_, v) -> v == allGCD.size }.keys
-
-            var gcd = if (allCommonGCD.isNotEmpty()) allCommonGCD.last() else 1
-            for (value in allCommonGCD) {
-                if (gcd < value) {
-                    gcd = value
-                }
-            }
-
             for (entity in entities) {
-                entity.multiplier = gcd.toDouble()
+                entity.multiplier = gcd
             }
 
             var i = 0
@@ -2471,7 +2587,7 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                     entity.variable = 'f'
                 }
                 if (!(entity.multiplier == 1.0 && entity.onlyNumber())) {
-                    numeratorOutput.add(Fraction(mutableListOf(entity), mutableListOf(UnknownEntity(decimalPoint.toDouble()))))
+                    numeratorOutput.add(Fraction(mutableListOf(entity), mutableListOf(UnknownEntity(decimalPoint))))
                 }
             }
             for (element in numeratorOutput) {
@@ -2621,11 +2737,38 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
             }
         }
 
+        val gcdList = mutableListOf<Pair<Double, Double>>()
+        for (element in commonForDenominator) {
+            if (itIsUnknown(element.key)) {
+                val gcd = findGCDDenominator(element.value)
+                gcdList.add(gcd)
+            }
+        }
+
+        var gcd = Double.MAX_VALUE
+        var decimalPoint = 1.0
+        for (element in gcdList) {
+            if (gcd > element.first) {
+                gcd = element.first
+                decimalPoint = element.second
+            }
+        }
+
         // Remove commons from fraction denominator
         for (map in denominatorMaps) {
             for ((original, _) in map) {
                 for ((common, count) in commonForDenominator) {
-                    if (original == common) {
+                    if (itIsUnknown(original)) {
+                        if (common.last() == 'f') {
+                            map[original] = map[original]!! / gcd * decimalPoint
+                            commonForDenominator[common] = gcd
+                        }
+                        else if (original == common) {
+                            map[original] = map[original]!! / gcd * decimalPoint
+                            commonForDenominator[common] = gcd
+                        }
+                    }
+                    else if (original == common) {
                         map[original] = map[original]!! - count
                     }
                 }
@@ -2710,82 +2853,8 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
         }
 
         if (entities.isNotEmpty()) {
-            // Get all multipliers of unknown entities
-            val allDenominatorMultipliers = mutableListOf<Fraction>()
-            var biggestDecimalPoint = 0
-            for (list in denominatorElements) {
-                for (element in list) {
-                    if (element is UnknownEntity) {
-                        allDenominatorMultipliers.add(Fraction(mutableListOf(UnknownEntity(ceil(round(element.multiplier!! * 1000) / 1000)))))
-                        val decimalPoint = countDecimalPlaces(ceil(round(element.multiplier!! * 1000) / 1000))
-                        if (decimalPoint > biggestDecimalPoint) {
-                            biggestDecimalPoint = decimalPoint
-                        }
-                    }
-                }
-            }
-
-            // Convert multipliers to same base
-            var decimalPoint = 1
-            for (i in 0..<biggestDecimalPoint) {
-                decimalPoint *= 10
-            }
-            for (fraction in allDenominatorMultipliers) {
-                (fraction.numerator.last() as UnknownEntity).multiplier = (fraction.numerator.last() as UnknownEntity).multiplier?.times(
-                    decimalPoint
-                )
-                fraction.denominator = mutableListOf()
-                fraction.denominator!!.add(UnknownEntity(decimalPoint.toDouble()))
-            }
-
-            // Find gcd
-            val allGCD = mutableListOf<MutableList<Int>>()
-            var currentGCD = mutableListOf<Int>()
-
-            for (multiplierA in allDenominatorMultipliers) {
-                for (multiplierB in allDenominatorMultipliers) {
-                    val value = gcd((multiplierA.numerator.last() as UnknownEntity).multiplier!!.toInt(), (multiplierB.numerator.last() as UnknownEntity).multiplier!!.toInt())
-                    currentGCD.add(value)
-                }
-                if (currentGCD.isNotEmpty()) {
-                    allGCD.add(currentGCD)
-                    currentGCD = mutableListOf()
-                }
-            }
-
-            // Get common gcd
-            val commonGCD = hashMapOf<Int, Int>()
-            for (list in allGCD) {
-                var biggestValue = 0
-                for (gcd in list) {
-                    if (gcd > biggestValue) {
-                        biggestValue = gcd
-                    }
-                }
-
-                val allDivisors = mutableListOf<Int>()
-                for (i in 1..biggestValue) {
-                    if (biggestValue % i == 0) {
-                        allDivisors.add(i)
-                    }
-                }
-
-                for (divisor in allDivisors) {
-                    commonGCD[divisor] = commonGCD.getOrDefault(divisor, 0) + 1
-                }
-            }
-
-            val allCommonGCD = commonGCD.filter { (_, v) -> v == allGCD.size }.keys
-
-            var gcd = if (allCommonGCD.isNotEmpty()) allCommonGCD.last() else 1
-            for (value in allCommonGCD) {
-                if (gcd < value) {
-                    gcd = value
-                }
-            }
-
             for (entity in entities) {
-                entity.multiplier = gcd.toDouble()
+                entity.multiplier = gcd
             }
 
             var i = 0
@@ -2847,7 +2916,7 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                     entity.variable = 'f'
                 }
                 if (!(entity.multiplier == 1.0 && entity.onlyNumber())) {
-                    denominatorOutput.add(Fraction(mutableListOf(entity), mutableListOf(UnknownEntity(decimalPoint.toDouble()))))
+                    denominatorOutput.add(Fraction(mutableListOf(entity), mutableListOf(UnknownEntity(decimalPoint))))
                 }
             }
             for (element in denominatorOutput) {
@@ -2981,13 +3050,35 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
             commons = newCommons
         }
 
+        val gcdList = mutableListOf<Pair<Double, Double>>()
+        for (element in commons) {
+            if (itIsUnknown(element.key)) {
+                val gcd = findGCDNumerator(element.value)
+                gcdList.add(gcd)
+            }
+        }
+        for (element in commons) {
+            if (itIsUnknown(element.key)) {
+                val gcd = findGCDDenominator(element.value)
+                gcdList.add(gcd)
+            }
+        }
+
+        var gcd = Double.MAX_VALUE
+        var decimalPoint = 1.0
+        for (element in gcdList) {
+            if (gcd > element.first) {
+                gcd = element.first
+                decimalPoint = element.second
+            }
+        }
+
         for (element in commons) {
             for (map in numeratorMaps) {
-                for ((key, value) in map) {
+                for ((key, _) in map) {
                     if (key == element.key) {
                         if (itIsUnknown(key)) {
-                            val gcd = gcd(ceil(round(element.value * 1000) / 1000).toInt(), ceil(round(value * 1000) / 1000).toInt())
-                            map[key] = map[key]!! / gcd
+                            map[key] = map[key]!! / gcd * decimalPoint
                         }
                         else {
                             map[key] = map[key]!! - element.value
@@ -2997,11 +3088,10 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
             }
 
             for (map in denominatorMaps) {
-                for ((key, value) in map) {
+                for ((key, _) in map) {
                     if (key == element.key) {
                         if (itIsUnknown(key)) {
-                            val gcd = gcd(ceil(round(element.value * 1000) / 1000).toInt(), ceil(round(value * 1000) / 1000).toInt())
-                            map[key] = map[key]!! / gcd
+                            map[key] = map[key]!! / gcd * decimalPoint
                         }
                         else {
                             map[key] = map[key]!! - element.value
@@ -3013,7 +3103,7 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
 
         updateNumeratorMaps()
         updateDenominatorMaps()
-
+//
 //        println("OUTPUT")
 //        println(numeratorMaps)
 //        println(denominatorMaps)
