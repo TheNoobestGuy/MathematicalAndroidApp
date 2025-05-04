@@ -1334,6 +1334,11 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
         }
 
         this.makeCalculations()
+
+        this.getOutMultiplication()
+        this.getOutCount()
+        this.getOutPowerTo()
+        this.setFraction()
     }
 
     private fun shortenEverything() {
@@ -1349,7 +1354,10 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
 
         for (element in numerator) {
             if (element is Function) return false
-            else if (element is Fraction) if (!element.calculationsPossible()) return false
+            else if (element is Fraction) {
+                if (element.powerTo != 1.0) return false
+                else if (!element.calculationsPossible()) return false
+            }
         }
 
         return true
@@ -1675,6 +1683,9 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
             }
         }
 
+        this.getOutMultiplication()
+        this.getOutCount()
+        this.getOutPowerTo()
         this.setFraction()
     }
 
@@ -1683,6 +1694,8 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
 
 //        println("INPUT")
 //        println(this)
+
+
 
         updateFractionNumerator()
         if (denominator != null) updateFractionDenominator()
@@ -2734,10 +2747,13 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
         if (numeratorMaps.isNotEmpty() && numeratorMaps.size != 1) {
             var startCommonForNumerator = numeratorMaps.first()
 
+            println("INPUT")
+            println(numeratorMaps)
+
             var noCommonEntity = false
             val toRemove = mutableListOf<MutableList<Any>>()
             for (map in numeratorMaps) {
-                if (map === startCommonForNumerator) break
+                if (map === startCommonForNumerator) continue
                 var found = false
                 for ((key, value) in startCommonForNumerator) {
                     if (itIsUnknown(key) && !noCommonEntity) {
@@ -2791,11 +2807,11 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                     noCommonEntity = true
                 }
 
-                startCommonForNumerator = commonForNumerator
-            }
+                for (i in toRemove) {
+                    commonForNumerator.remove(i)
+                }
 
-            for (i in toRemove) {
-                commonForNumerator.remove(i)
+                startCommonForNumerator = commonForNumerator
             }
 
             // Get possible gcd
@@ -2808,6 +2824,11 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                     }
                 }
             }
+
+
+            println("INPUT")
+            println(numeratorMaps)
+            println(commonForNumerator)
 
             var gcd = if (gcdList.isNotEmpty()) gcdList.last().first else 1.0
             var decimalPoint = 1.0
@@ -2896,7 +2917,7 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                         when (numeratorElements[index][element]) {
                             is Function -> {
                                 if (key == (numeratorElements[index][element] as Function).getKey()) {
-                                    if (commonsToFind[key]!! > 0) {
+                                    if (commonsToFind[key] != null && commonsToFind[key]!! > 0) {
                                         numeratorOutput.add((numeratorElements[index][element] as Function).copy())
                                         (numeratorOutput.last() as Function).powerTo = v
                                         commonsToFind[key] = 0.0
@@ -2909,7 +2930,7 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
 
                                 for (k in keys) {
                                     if (key == k.first) {
-                                        if (commonsToFind[key]!! > 0) {
+                                        if (commonsToFind[key] != null && commonsToFind[key]!! > 0) {
                                             when (k.third) {
                                                 is Function -> {
                                                     numeratorOutput.add((k.third as Function).copy())
@@ -2963,12 +2984,12 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
 
         // Find commons for denominator
         if (denominatorMaps.isNotEmpty() && denominatorMaps.size != 1) {
-            var startCommonForDenominator = denominatorMaps.last()
+            var startCommonForDenominator = denominatorMaps.first()
 
             var noCommonEntity = false
             val toRemove = mutableListOf<MutableList<Any>>()
             for (map in denominatorMaps) {
-                if (map === startCommonForDenominator) break
+                if (map === startCommonForDenominator) continue
                 var found = false
                 for ((key, value) in startCommonForDenominator) {
                     if (itIsUnknown(key) && !noCommonEntity) {
@@ -3127,7 +3148,7 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                         when (denominatorElements[index][element]) {
                             is Function -> {
                                 if (key == (denominatorElements[index][element] as Function).getKey()) {
-                                    if (commonsToFind[key]!! > 0) {
+                                    if (commonsToFind[key] != null && commonsToFind[key]!! > 0) {
                                         denominatorOutput.add((denominatorElements[index][element] as Function).copy())
                                         (denominatorOutput.last() as Function).powerTo = v
                                         commonsToFind[key] = 0.0
@@ -3140,7 +3161,7 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
 
                                 for (k in keys) {
                                     if (key == k.first) {
-                                        if (commonsToFind[key]!! > 0) {
+                                        if (commonsToFind[key] != null && commonsToFind[key]!! > 0) {
                                             when (k.third) {
                                                 is Function -> {
                                                     denominatorOutput.add((k.third as Function).copy())
