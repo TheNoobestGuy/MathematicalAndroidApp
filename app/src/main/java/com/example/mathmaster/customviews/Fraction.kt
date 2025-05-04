@@ -1333,10 +1333,10 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
             }
         }
 
-        this.makeCalculations()
-
         this.getOutMultiplication()
         this.getOutCount()
+        this.makeCalculations()
+
         this.getOutPowerTo()
         this.setFraction()
     }
@@ -1381,6 +1381,24 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
             }
         }
 
+        val toRemove = mutableListOf<UnknownEntity>()
+        val newEntity = UnknownEntity(1.0, 'f', 0.0)
+        for (element in output) {
+            if (element is UnknownEntity) {
+                newEntity.multiplier = newEntity.multiplier?.times(element.multiplier!!)
+                element.multiplier = 1.0
+
+                if (element.onlyNumber()) {
+                    toRemove.add(element)
+                }
+            }
+        }
+        output.add(newEntity)
+
+        for (i in toRemove) {
+            output.remove(i)
+        }
+
         return output
     }
 
@@ -1397,7 +1415,7 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                         if (bufferList.isNotEmpty()) {
                             bufferList.addAll(buffer)
                             bufferList.addAll(multiplication)
-                            newList.add(makeMultiplication(bufferList))
+                            newList.add(sortFragment(makeMultiplication(bufferList)))
                             bufferList.clear()
 
                             if (negative) {
@@ -1412,7 +1430,7 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                         if (bufferList.isNotEmpty()) {
                             bufferList.addAll(buffer)
                             bufferList.addAll(multiplication)
-                            newList.add(makeMultiplication(bufferList))
+                            newList.add(sortFragment(makeMultiplication(bufferList)))
                             bufferList.clear()
 
                             if (negative) {
@@ -1430,7 +1448,7 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                 if (bufferList.isNotEmpty()) {
                     bufferList.addAll(buffer)
                     bufferList.addAll(multiplication)
-                    newList.add(makeMultiplication(bufferList))
+                    newList.add(sortFragment(makeMultiplication(bufferList)))
                 }
 
                 output.addAll(newList)
@@ -1442,7 +1460,7 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                     if (piece is Char) {
                         if (bufferList.isNotEmpty()) {
                             bufferList.addAll(multiplication)
-                            output.add(makeMultiplication(bufferList))
+                            output.add(sortFragment(makeMultiplication(bufferList)))
                             output.add(mutableListOf(piece))
                             bufferList.clear()
                         }
@@ -1453,7 +1471,7 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                 }
                 if (bufferList.isNotEmpty()) {
                     bufferList.addAll(multiplication)
-                    output.add(makeMultiplication(bufferList))
+                    output.add(sortFragment(makeMultiplication(bufferList)))
                 }
             }
         }
@@ -1465,7 +1483,7 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                     if (piece is Char) {
                         if (bufferList.isNotEmpty()) {
                             bufferList.addAll(multiplication)
-                            output.add(makeMultiplication(bufferList))
+                            output.add(sortFragment(makeMultiplication(bufferList)))
                             output.add(mutableListOf(piece))
                             bufferList.clear()
                         }
@@ -1476,7 +1494,7 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                 }
                 if (bufferList.isNotEmpty()) {
                     bufferList.addAll(multiplication)
-                    output.add(makeMultiplication(bufferList))
+                    output.add(sortFragment(makeMultiplication(bufferList)))
                 }
             }
         }
@@ -1558,15 +1576,13 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
     private fun calculateBasicOperations(input: MutableList<MutableList<Any>>): MutableList<Any> {
         val output = mutableListOf<Any>()
 
+        println("INPUT")
+        println(input)
+
         var operator = '+'
         var operatorList = mutableListOf<Any>()
         for ((index, listA) in input.withIndex()) {
             if (listA.isEmpty()) continue
-            if (listA.size == 1 && listA.last() is Char) {
-                operator = listA.last() as Char
-                operatorList = listA
-                continue
-            }
             for (listB in input.drop(index+1)) {
                 if (listB.isEmpty()) continue
                 if (listB.size == 1 && listB.last() is Char) {
@@ -1597,6 +1613,8 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                                 if (element.onlyNumber()) {
                                     element.multiplier = element.multiplier?.times(2)
                                 }
+                                listB.clear()
+                                operatorList.clear()
                                 break
                             }
                         }
@@ -1606,14 +1624,13 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                             if (element is UnknownEntity) {
                                 if (element.onlyNumber()) {
                                     listA[i] = element - listB[i] as UnknownEntity
+                                    listB.clear()
+                                    operatorList.clear()
                                     break
                                 }
                             }
                         }
                     }
-                    listB.clear()
-                    operatorList.clear()
-                    break
                 }
                 else {
                     if (listA.size == listB.size) {
@@ -1639,15 +1656,23 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                                         else {
                                             listA[i] = element - listB[i] as UnknownEntity
                                         }
+
+                                        listB.clear()
+                                        operatorList.clear()
                                         break
                                     }
                                 }
                             }
-
-                            listB.clear()
-                            operatorList.clear()
-                            break
                         }
+                    }
+                }
+            }
+
+            for (element in listA) {
+                if (element is UnknownEntity) {
+                    if (element.multiplier == 0.0) {
+                        listA.clear()
+                        break
                     }
                 }
             }
@@ -1656,6 +1681,9 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
         for (list in input) {
             output.addAll(list)
         }
+
+        println("output")
+        println(output)
 
         return output
     }
@@ -1694,8 +1722,6 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
 
 //        println("INPUT")
 //        println(this)
-
-
 
         updateFractionNumerator()
         if (denominator != null) updateFractionDenominator()
@@ -2747,9 +2773,6 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
         if (numeratorMaps.isNotEmpty() && numeratorMaps.size != 1) {
             var startCommonForNumerator = numeratorMaps.first()
 
-            println("INPUT")
-            println(numeratorMaps)
-
             var noCommonEntity = false
             val toRemove = mutableListOf<MutableList<Any>>()
             for (map in numeratorMaps) {
@@ -2824,11 +2847,6 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                     }
                 }
             }
-
-
-            println("INPUT")
-            println(numeratorMaps)
-            println(commonForNumerator)
 
             var gcd = if (gcdList.isNotEmpty()) gcdList.last().first else 1.0
             var decimalPoint = 1.0
