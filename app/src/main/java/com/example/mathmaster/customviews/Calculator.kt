@@ -3435,6 +3435,7 @@ class Calculator {
 
         val result = calculateFractions(stackForEquation, withoutGCD = withoutGCD)
         result.calculateFraction()
+        result.finalShort()
 
         return Pair(result.getFraction(withMultiplication = false), i+1)
     }
