@@ -1593,88 +1593,36 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
     private fun calculateBasicOperations(input: MutableList<MutableList<Any>>): MutableList<Any> {
         val output = mutableListOf<Any>()
 
-        var operator = '+'
         var operatorList = mutableListOf<Any>()
         for ((index, listA) in input.withIndex()) {
             if (listA.isEmpty()) continue
             for (listB in input.drop(index+1)) {
                 if (listB.isEmpty()) continue
                 if (listB.size == 1 && listB.last() is Char) {
-                    operator = listB.last() as Char
                     operatorList = listB
                     continue
                 }
 
-                var same = true
                 if (listA.size == listB.size) {
+                    var same = true
                     for ((i, element) in listA.withIndex()) {
-                        if (element::class == listB[i]::class) {
-                            if (!((element as UnknownEntity).multiplier == (listB[i] as UnknownEntity).multiplier && element == listB[i])) {
-                                same = false
-                                break
-                            }
-                        }
-                    }
-                }
-                else {
-                    same = false
-                }
-
-                if (same) {
-                    if (operator == '+') {
-                        for (element in listA) {
-                            if (element is UnknownEntity) {
-                                if (element.onlyNumber()) {
-                                    element.multiplier = element.multiplier?.times(2)
+                        if (element is UnknownEntity) {
+                            if (listB[i] is UnknownEntity) {
+                                if (element != listB[i]) {
+                                    same = false
                                 }
-                                listB.clear()
-                                operatorList.clear()
-                                break
                             }
                         }
                     }
-                    else {
+
+                    if (same) {
                         for ((i, element) in listA.withIndex()) {
                             if (element is UnknownEntity) {
                                 if (element.onlyNumber()) {
-                                    listA[i] = element - listB[i] as UnknownEntity
+                                    listA[i] = element + listB[i] as UnknownEntity
                                     listB.clear()
                                     operatorList.clear()
                                     break
-                                }
-                            }
-                        }
-                    }
-                }
-                else {
-                    if (listA.size == listB.size) {
-                        same = true
-
-                        for ((i, element) in listA.withIndex()) {
-                            if (element is UnknownEntity) {
-                                if (listB[i] is UnknownEntity) {
-                                    if (element != listB[i]) {
-                                        same = false
-                                    }
-                                }
-                            }
-                        }
-
-                        if (same) {
-                            for ((i, element) in listA.withIndex()) {
-                                if (element is UnknownEntity) {
-                                    if (element.onlyNumber()) {
-                                        if (operator == '+') {
-                                            listA[i] = element + listB[i] as UnknownEntity
-                                        }
-                                        else {
-                                            listA[i] = element - listB[i] as UnknownEntity
-                                        }
-
-                                        listB.clear()
-                                        operatorList.clear()
-                                        break
-                                    }
                                 }
                             }
                         }
