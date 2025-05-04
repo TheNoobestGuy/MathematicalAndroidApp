@@ -1333,11 +1333,7 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
             }
         }
 
-        this.getOutMultiplication()
-        this.getOutCount()
         this.makeCalculations()
-
-        this.getOutPowerTo()
         this.setFraction()
     }
 
@@ -1351,12 +1347,12 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
 
     private fun calculationsPossible(): Boolean {
         if (denominator != null) return false
+        else if (this.powerTo != 1.0) return false
 
         for (element in numerator) {
             if (element is Function) return false
             else if (element is Fraction) {
-                if (element.powerTo != 1.0) return false
-                else if (!element.calculationsPossible()) return false
+                if (!element.calculationsPossible()) return false
             }
         }
 
@@ -1402,110 +1398,99 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
         return output
     }
 
-    private fun sortCalculable(buffer: MutableList<Any>, multiplication: MutableList<Any>, fractionList: MutableList<Any>, negative: Boolean): MutableList<MutableList<Any>> {
+    private fun sortCalculable(input: MutableList<Any>, multiplication: MutableList<Any>, additional: MutableList<Any>, negative: Boolean): MutableList<MutableList<Any>> {
         val output = mutableListOf<MutableList<Any>>()
 
-        if (buffer.isNotEmpty()) {
-            if (fractionList.isNotEmpty()) {
-                val bufferList = mutableListOf<Any>()
-                val newList = mutableListOf<MutableList<Any>>()
-
-                for (piece in fractionList){
-                    if (piece == '+') {
-                        if (bufferList.isNotEmpty()) {
-                            bufferList.addAll(buffer)
-                            bufferList.addAll(multiplication)
-                            newList.add(sortFragment(makeMultiplication(bufferList)))
-                            bufferList.clear()
-
-                            if (negative) {
-                                newList.add(mutableListOf('-'))
-                            }
-                            else {
-                                newList.add(mutableListOf('+'))
-                            }
-                        }
+        val multiplicative = mutableListOf<MutableList<Any>>()
+        var fragment = mutableListOf<Any>()
+        var operator = '+'
+        for (element in input) {
+            if (element is UnknownEntity) {
+                if (operator == '-') {
+                    if (!negative) {
+                        element.multiplier = -element.multiplier!!
                     }
-                    else if (piece == '-') {
-                        if (bufferList.isNotEmpty()) {
-                            bufferList.addAll(buffer)
-                            bufferList.addAll(multiplication)
-                            newList.add(sortFragment(makeMultiplication(bufferList)))
-                            bufferList.clear()
-
-                            if (negative) {
-                                newList.add(mutableListOf('+'))
-                            }
-                            else {
-                                newList.add(mutableListOf('-'))
-                            }
-                        }
-                    }
-                    else {
-                        bufferList.add(piece)
-                    }
+                    fragment.add(element)
+                    operator = '+'
                 }
-                if (bufferList.isNotEmpty()) {
-                    bufferList.addAll(buffer)
-                    bufferList.addAll(multiplication)
-                    newList.add(sortFragment(makeMultiplication(bufferList)))
+                else {
+                    if (negative) {
+                        element.multiplier = -element.multiplier!!
+                    }
+                    fragment.add(element)
                 }
-
-                output.addAll(newList)
             }
-            else {
-                val bufferList = mutableListOf<Any>()
+            else if (element is Char) {
+                multiplicative.add(sortFragment(makeMultiplication(fragment)))
+                fragment = mutableListOf()
 
-                for (piece in buffer) {
-                    if (piece is Char) {
-                        if (bufferList.isNotEmpty()) {
-                            bufferList.addAll(multiplication)
-                            output.add(sortFragment(makeMultiplication(bufferList)))
-                            output.add(mutableListOf(piece))
-                            bufferList.clear()
-                        }
-                    }
-                    else {
-                        bufferList.add(piece)
-                    }
-                }
-                if (bufferList.isNotEmpty()) {
-                    bufferList.addAll(multiplication)
-                    output.add(sortFragment(makeMultiplication(bufferList)))
-                }
+                operator = element
             }
         }
-        else {
-            if (fractionList.isNotEmpty()) {
-                val bufferList = mutableListOf<Any>()
-
-                for (piece in fractionList) {
-                    if (piece is Char) {
-                        if (bufferList.isNotEmpty()) {
-                            bufferList.addAll(multiplication)
-                            output.add(sortFragment(makeMultiplication(bufferList)))
-                            output.add(mutableListOf(piece))
-                            bufferList.clear()
-                        }
-                    }
-                    else {
-                        bufferList.add(piece)
-                    }
-                }
-                if (bufferList.isNotEmpty()) {
-                    bufferList.addAll(multiplication)
-                    output.add(sortFragment(makeMultiplication(bufferList)))
-                }
-            }
+        if (fragment.isNotEmpty()) {
+            multiplicative.add(sortFragment(makeMultiplication(fragment)))
         }
 
-        if (output.last().size == 1 && output.last().last() is Char) {
+        val base = mutableListOf<MutableList<Any>>()
+        fragment = mutableListOf()
+        operator = '+'
+        for (element in additional) {
+            if (element is UnknownEntity) {
+                if (operator == '-') {
+                    if (!negative) {
+                        element.multiplier = -element.multiplier!!
+                    }
+                    fragment.add(element)
+                    operator = '+'
+                }
+                else {
+                    if (negative) {
+                        element.multiplier = -element.multiplier!!
+                    }
+                    fragment.add(element)
+                }
+            }
+            else if (element is Char) {
+                base.add(sortFragment(makeMultiplication(fragment)))
+                fragment = mutableListOf()
+
+                operator = element
+            }
+        }
+        if (fragment.isNotEmpty()) {
+            base.add(sortFragment(makeMultiplication(fragment)))
+        }
+
+        if (base.isNotEmpty() && multiplicative.isNotEmpty()) {
+            for (listA in base) {
+                for (listB in multiplicative) {
+                    val newElement = (listA + listB + multiplication).toMutableList()
+                    output.add(newElement)
+                    output.add(mutableListOf('+'))
+                }
+            }
+            output.removeLast()
+        }
+        else if (base.isNotEmpty()) {
+            for (list in base) {
+                val newElement = (list + multiplication).toMutableList()
+                output.add(newElement)
+                output.add(mutableListOf('+'))
+            }
+            output.removeLast()
+        }
+        else if (multiplicative.isNotEmpty()) {
+            for (list in multiplicative) {
+                val newElement = (list + multiplication).toMutableList()
+                output.add(newElement)
+                output.add(mutableListOf('+'))
+            }
             output.removeLast()
         }
 
-        fractionList.clear()
-        buffer.clear()
-        
+        input.clear()
+        additional.clear()
+
         return output
     }
 
@@ -1543,25 +1528,57 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
                 }
                 is Fraction -> {
                     if (output.isNotEmpty() && output.last().size == 1 && output.last().last() == '-') {
-                        val result = element.getCalculable(!negative, buffer)
+                        val result = element.getCalculable(!negative, buffer.toMutableList())
+
+                        if (fractionList.isNotEmpty()) {
+                            val newFractionList = mutableListOf<Any>()
+                            for (list in result) {
+                                newFractionList.addAll(list)
+                            }
+
+                            val calculation = sortCalculable(newFractionList, (buffer + multiplication).toMutableList(), fractionList, negative)
+
+                            fractionList.clear()
+
+                            for (list in calculation) {
+                                fractionList.addAll(list)
+                            }
+                        }
+                        else {
+                            for (list in result) {
+                                fractionList.addAll(list)
+                            }
+                        }
 
                         if (result.isNotEmpty()) {
                             buffer.clear()
-                        }
-
-                        for (list in result) {
-                            fractionList.addAll(list)
                         }
                     }
                     else {
-                        val result = element.getCalculable(negative, buffer)
+                        val result = element.getCalculable(negative, buffer.toMutableList())
+
+                        if (fractionList.isNotEmpty()) {
+                            val newFractionList = mutableListOf<Any>()
+                            for (list in result) {
+                                newFractionList.addAll(list)
+                            }
+
+                            val calculation = sortCalculable(newFractionList, (buffer + multiplication).toMutableList(), fractionList, negative)
+
+                            fractionList.clear()
+
+                            for (list in calculation) {
+                                fractionList.addAll(list)
+                            }
+                        }
+                        else {
+                            for (list in result) {
+                                fractionList.addAll(list)
+                            }
+                        }
 
                         if (result.isNotEmpty()) {
                             buffer.clear()
-                        }
-
-                        for (list in result) {
-                            fractionList.addAll(list)
                         }
                     }
                 }
@@ -1575,9 +1592,6 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
 
     private fun calculateBasicOperations(input: MutableList<MutableList<Any>>): MutableList<Any> {
         val output = mutableListOf<Any>()
-
-        println("INPUT")
-        println(input)
 
         var operator = '+'
         var operatorList = mutableListOf<Any>()
@@ -1681,9 +1695,6 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
         for (list in input) {
             output.addAll(list)
         }
-
-        println("output")
-        println(output)
 
         return output
     }
@@ -3398,7 +3409,13 @@ data class Fraction(var numerator: MutableList<Any> = mutableListOf(), var denom
             if (numeratorMaps[index].isEmpty()) {
                 numeratorMaps[index][mutableListOf(0.0, '^', 'f')] = 1.0
             }
-         }
+        }
+
+        for (map in numeratorMaps) {
+            for (element in map) {
+
+            }
+        }
     }
 
     private fun updateDenominatorMaps() {
