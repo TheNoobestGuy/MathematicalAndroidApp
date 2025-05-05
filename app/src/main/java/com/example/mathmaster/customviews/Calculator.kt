@@ -430,47 +430,6 @@ data class Function(var content: MutableList<Any> = mutableListOf(), var powerTo
         return output
     }
 
-    private fun equationHasOperators(equation: MutableList<Any>): Boolean {
-        val operators = listOf('+', '-')
-
-        for (element in equation) {
-            if (element is Char) {
-                for (operator in operators)  {
-                    if (element == operator) {
-                        return true
-                    }
-                }
-            }
-        }
-
-        return false
-    }
-
-    init {
-        cleanFunction()
-    }
-
-    fun cleanFunction() {
-        val toRemove = mutableListOf<Any>()
-
-        if (!equationHasOperators(content)) {
-            for (i in content) {
-                when (i) {
-                    is Fraction -> if (i.isEmpty()) toRemove.add(i)
-                    is Function -> if (!i.isNotEmpty()) toRemove.add(i)
-                    is UnknownEntity -> {
-                        if (i.isEmpty()) toRemove.add(i)
-                        else if (i.isOne()) toRemove.add(i)
-                    }
-                }
-            }
-        }
-
-        for (i in toRemove) {
-            content.remove(i)
-        }
-    }
-
     fun getKey(): MutableList<Any> {
         return getInsideOfFunction(getFunction(flatFunction = true, withMultiplication =  false), key = true, withMultiplication = false)
             .filter { it != '(' && it != ')' }.sortedWith(
